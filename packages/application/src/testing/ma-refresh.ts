@@ -357,8 +357,7 @@ async function testUpdateDatacapInfo(container: Container) {
             organization: 'organization',
             address: allocatorAddress,
             github: 'github',
-            location: 'location',
-            type: 'type',
+            allocationTrancheScheduleType: 'type',
             datacap: 0,
             status: ApplicationStatus.SUBMISSION_PHASE,
         }, 0)
@@ -436,8 +435,7 @@ async function testSubmitRefreshMetaAllocatorCommand(container: Container) {
         organization: 'organization',
         address: allocatorAddress,
         github: 'github',
-        location: 'location',
-        type: 'type',
+        allocationTrancheScheduleType: 'type',
         datacap: 0,
         status: ApplicationStatus.APPROVED,
         applicationInstructions: [

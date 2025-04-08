@@ -9,8 +9,7 @@ interface ApplicationDetails {
   actorId?: string
   address: string
   github: string
-  location: string
-  type: string
+  allocationTrancheScheduleType: string
   datacap: number
   status: ApplicationStatus
   applicationDetails?: {

@@ -129,22 +129,18 @@ export class DatacapAllocator extends AggregateRoot {
     applicationId: string
     applicationNumber: number
     applicantName: string
-    applicantLocation: string
-    applicantGithubHandle: string
-    applicantSlackHandle: string
     applicantAddress: string
     applicantOrgName: string
     applicantOrgAddresses: string[]
-    allocationStandardizedAllocations: string[]
-    allocationTargetClients: string[]
-    allocationRequiredReplicas: string
+    allocationTrancheScheduleType: string
+    audit: string
+    distributionRequired: string
     allocationRequiredStorageProviders: string
-    allocationTooling: string[]
-    allocationDataTypes: string[]
-    allocationProjected12MonthsUsage: string
-    allocationBookkeepingRepo: string
-    type: string
-    datacap: number
+    allocationRequiredReplicas: string
+    datacapAllocationLimits: string
+    applicantGithubHandle: string
+    otherGithubHandles: string[]
+    onChainAddressForDataCapAllocation: string
   }): DatacapAllocator {
     const allocator = new DatacapAllocator(params.applicationId)
     allocator.applyChange(
@@ -152,22 +148,18 @@ export class DatacapAllocator extends AggregateRoot {
         allocator.guid,
         params.applicationNumber,
         params.applicantName,
-        params.applicantLocation,
-        params.applicantGithubHandle,
-        params.applicantSlackHandle,
         params.applicantAddress,
         params.applicantOrgName,
         params.applicantOrgAddresses,
-        params.allocationStandardizedAllocations,
-        params.allocationTargetClients,
-        params.allocationRequiredReplicas,
+        params.allocationTrancheScheduleType,
+        params.audit,
+        params.distributionRequired,
         params.allocationRequiredStorageProviders,
-        params.allocationTooling,
-        params.allocationDataTypes,
-        params.allocationProjected12MonthsUsage,
-        params.allocationBookkeepingRepo,
-        params.type,
-        params.datacap,
+        params.allocationRequiredReplicas,
+        params.datacapAllocationLimits,
+        params.applicantGithubHandle,
+        params.otherGithubHandles,
+        params.onChainAddressForDataCapAllocation
       ),
     )
     return allocator
@@ -359,31 +351,27 @@ export class DatacapAllocator extends AggregateRoot {
 
     this.applicationNumber = event.applicationNumber
     this.applicantName = event.applicantName
-    this.applicantLocation = event.applicantLocation
-    this.applicantGithubHandle = event.applicantGithubHandle
-    this.applicantSlackHandle = event.applicantSlackHandle
     this.applicantAddress = event.applicantAddress
     this.applicantOrgName = event.applicantOrgName
     this.applicantOrgAddresses = event.applicantOrgAddresses
+    this.applicantGithubHandle = event.applicantGithubHandle
+    this.otherGithubHandles = event.otherGithubHandles
 
-    this.allocationStandardizedAllocations = event.allocationStandardizedAllocations
-    this.allocationTargetClients = event.allocationTargetClients
-    this.allocationRequiredReplicas = event.allocationRequiredReplicas
+    this.allocationTrancheScheduleType = event.allocationTrancheScheduleType
+    this.audit = event.audit
+    this.distributionRequired = event.distributionRequired
     this.allocationRequiredStorageProviders = event.allocationRequiredStorageProviders
-    this.allocationTooling = event.allocationTooling
-    this.allocationDataTypes = event.allocationDataTypes
-    this.allocationProjected12MonthsUsage = event.allocationProjected12MonthsUsage
-    this.allocationBookkeepingRepo = event.allocationBookkeepingRepo
-
-    this.type = event.type
-    this.datacap = event.datacap
+    this.allocationRequiredReplicas = event.allocationRequiredReplicas
+    this.allocationTooling = []
+    this.datacapAllocationLimits = event.datacapAllocationLimits
+    this.onChainAddressForDataCapAllocation = event.onChainAddressForDataCapAllocation
 
     this.applicationStatus = ApplicationStatus.SUBMISSION_PHASE
 
     this.applicationInstructions = [
       {
         method: ApplicationAllocator.META_ALLOCATOR,
-        datacap_amount: 1,
+        datacap_amount: 5,
         timestamp: event.timestamp.getTime(),
         status: ApplicationInstructionStatus.PENDING,
       },

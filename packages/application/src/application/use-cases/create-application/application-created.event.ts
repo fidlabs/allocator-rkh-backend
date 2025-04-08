@@ -22,9 +22,8 @@ export class ApplicationCreatedEventHandler implements IEventHandler<Application
       organization: event.applicantOrgName,
       address: event.applicantAddress,
       github: event.applicantGithubHandle,
-      location: event.applicantLocation,
-      type: event.type,
-      datacap: event.datacap,
+      allocationTrancheScheduleType: event.allocationTrancheScheduleType,
+      datacap: 5,
       status: ApplicationStatus.SUBMISSION_PHASE,
     }
     await this._repository.save(applicationDetails, 0)

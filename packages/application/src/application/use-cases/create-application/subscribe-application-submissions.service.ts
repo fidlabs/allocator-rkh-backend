@@ -6,8 +6,11 @@ import { IAirtableClient } from '@src/infrastructure/clients/airtable'
 import { TYPES } from '@src/types'
 import config from '@src/config'
 
-const MIN_APPLICATION_NUMBER = 1001
-const MAX_APPLICATION_NUMBER = 9999
+const REQUIRED_AIRTABLE_FIELDS = [
+  "Name",
+  "Organization Name",
+  "On-chain address for DC Allocation",
+] // TODO: Add required fields
 
 export async function subscribeApplicationSubmissions(container: Container) {
   const airtableClient = container.get<IAirtableClient>(TYPES.AirtableClient)
@@ -34,49 +37,32 @@ export async function subscribeApplicationSubmissions(container: Container) {
 function shouldProcessRecord(record: any, processedRecords: Set<string>): boolean {
   return (
     !processedRecords.has(record.id) &&
-    isRecordValid(record) &&
-    isApplicationNumberInRange(Number(record.fields['Application Number']))
+    isRecordValid(record) //  && isApplicationNumberInRange(Number(record.fields['Application Number']))
   )
 }
 
 function isRecordValid(record: any): boolean {
-  const requiredFields = ['Allocator Pathway Name', 'Application Number', 'Multisig Address']
-  return requiredFields.every((field) => field in record.fields)
-}
-
-function isApplicationNumberInRange(applicationNumber: number): boolean {
-  return applicationNumber >= MIN_APPLICATION_NUMBER && applicationNumber <= MAX_APPLICATION_NUMBER
+  return REQUIRED_AIRTABLE_FIELDS.every((field) => field in record.fields)
 }
 
 function mapRecordToCommand(record: any): CreateApplicationCommand {
+  console.log('record', record)
   return new CreateApplicationCommand({
     applicationId: record.id,
     applicationNumber: record.fields['Application Number'] as number,
-
-    applicantName: record.fields['Allocator Pathway Name'] as string,
-    applicantLocation: record.fields['Region of Operation'] as string,
-    applicantGithubHandle: record.fields['GitHub ID'] as string,
-    applicantSlackHandle: record.fields['Slack ID'] as string,
-    applicantAddress: record.fields['Multisig Address'] as string,
+    applicantName: record.fields['Name'] as string,
+    applicantAddress: record.fields['On-chain address for DC Allocation'] as string,
     applicantOrgName: record.fields['Organization Name'] as string,
     applicantOrgAddresses: [record.fields['Organization On-Chain address'] as string],
-
-    type: record.fields['Type Of Allocator'] as string,
-    datacap: record.fields['7. DataCap requested for allocator for 12 months of activity'] as number,
-
-    allocationTargetClients: record.fields['Target Clients'] as string[],
-    allocationDataTypes: record.fields['Type of data'] as string[],
-    allocationRequiredReplicas: record.fields['Replicas required, verified by CID checker'] as string,
+    allocationTrancheScheduleType: record.fields['Allocation Tranche Schedule Type'] as string,
+    audit: record.fields['Audit'] as string,
+    distributionRequired: record.fields['Distribution Required'] as string,
     allocationRequiredStorageProviders: record.fields['Number of Storage Providers required'] as string,
-    allocationStandardizedAllocations: [
-      record.fields['Standardized DataCap Schedule - First Allocation (TiB):'],
-      record.fields['Standardized DataCap Schedule - Second Allocation (TiB):'],
-      record.fields['Standardized DataCap Schedule - Third Allocation (TiB):'],
-      record.fields['Standardized DataCap Schedule - Fourth Allocation (TiB):'],
-    ].filter(Boolean),
-    allocationBookkeepingRepo: record.fields['GitHub Bookkeeping Repo Link'] as string,
-
-    allocatorMultisigAddress: record.fields['Multisig Address'] as string | undefined,
+    allocationRequiredReplicas: record.fields['Replicas required, verified by CID checker'] as string,
+    datacapAllocationLimits: record.fields['DataCap Allocation Limits'] as string,
+    applicantGithubHandle: record.fields['Name'] as string,
+    otherGithubHandles: record.fields['Additional GitHub Users'] as string[],
+    onChainAddressForDataCapAllocation: record.fields['On-chain address for DC Allocation'] as string,
   })
 }
 

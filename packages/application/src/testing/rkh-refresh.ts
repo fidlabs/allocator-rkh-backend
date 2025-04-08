@@ -62,8 +62,7 @@ async function testSubmitRefreshRKHAllocatorCommand(
         organization: 'organization',
         address: allocatorAddress,
         github: 'github',
-        location: 'location',
-        type: 'type',
+        allocationTrancheScheduleType: 'type',
         datacap: 0,
         status: ApplicationStatus.APPROVED,
         applicationInstructions: [

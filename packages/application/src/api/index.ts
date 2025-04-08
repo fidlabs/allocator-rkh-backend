@@ -64,14 +64,14 @@ async function main() {
   }
 
   // Start worker services
-  await subscribeApplicationSubmissions(container)
-  await subscribeApplicationEdits(container)
-  await subscribeGovernanceReviews(container)
+  // await subscribeApplicationSubmissions(container)
+  // await subscribeApplicationEdits(container)
+  // await subscribeGovernanceReviews(container)
   await subscribeRKHApprovals(container)
-  await subscribeDatacapAllocations(container)
-  await subscribeMetaAllocatorApprovals(container)
+  // await subscribeDatacapAllocations(container)
+  // await subscribeMetaAllocatorApprovals(container)
   // await subscribeRefreshMetaAllocator(container)
-  await subscribeMetaAllocatorAllowances(container)
+  // await subscribeMetaAllocatorAllowances(container)
   // await subscribeRefreshRKH(container)
 
   // Start the API server

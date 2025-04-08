@@ -16,24 +16,18 @@ export class CreateApplicationCommand extends Command {
   public readonly applicationId: string
   public readonly applicationNumber: number
   public readonly applicantName: string
-  public readonly applicantLocation: string
-  public readonly applicantGithubHandle: string
-  public readonly applicantSlackHandle: string
   public readonly applicantAddress: string
   public readonly applicantOrgName: string
   public readonly applicantOrgAddresses: string[]
-  public readonly allocationStandardizedAllocations: string[]
-  public readonly allocationTargetClients: string[]
-  public readonly allocationRequiredReplicas: string
+  public readonly allocationTrancheScheduleType: string
+  public readonly audit: string
+  public readonly distributionRequired: string
   public readonly allocationRequiredStorageProviders: string
-  public readonly allocationTooallocationTargetClientsling: string[]
-  public readonly allocationTooling: string[]
-  public readonly allocationDataTypes: string[]
-  public readonly allocationProjected12MonthsUsage: string
-  public readonly allocationBookkeepingRepo: string
-  public readonly type: string
-  public readonly datacap: number
-  public readonly allocatorMultisigAddress?: string
+  public readonly allocationRequiredReplicas: string
+  public readonly datacapAllocationLimits: string
+  public readonly applicantGithubHandle: string
+  public readonly otherGithubHandles: string[]
+  public readonly onChainAddressForDataCapAllocation: string
 
   /**
    * Creates a new CreateApplicationCommand instance.
@@ -61,6 +55,7 @@ export class CreateApplicationCommandHandler implements ICommandHandler<CreateAp
   ) {}
 
   async handle(command: CreateApplicationCommand): Promise<Result<{ guid: string }>> {
+    console.log('command', command)
     try {
       await this.repository.getById(command.applicationId)
       return {
@@ -75,29 +70,30 @@ export class CreateApplicationCommandHandler implements ICommandHandler<CreateAp
         applicationId: command.applicationId,
         applicationNumber: command.applicationNumber,
         applicantName: command.applicantName,
-        applicantLocation: command.applicantLocation,
-        applicantGithubHandle: command.applicantGithubHandle,
-        applicantSlackHandle: command.applicantSlackHandle,
         applicantAddress: command.applicantAddress,
         applicantOrgName: command.applicantOrgName,
         applicantOrgAddresses: command.applicantOrgAddresses,
-        allocationStandardizedAllocations: command.allocationStandardizedAllocations,
-        allocationTargetClients: command.allocationTargetClients,
-        allocationRequiredReplicas: command.allocationRequiredReplicas,
+        allocationTrancheScheduleType: command.allocationTrancheScheduleType,
+        audit: command.audit,
+        distributionRequired: command.distributionRequired,
         allocationRequiredStorageProviders: command.allocationRequiredStorageProviders,
-        allocationTooling: command.allocationTooling,
-        allocationDataTypes: command.allocationDataTypes,
-        allocationProjected12MonthsUsage: command.allocationProjected12MonthsUsage,
-        allocationBookkeepingRepo: command.allocationBookkeepingRepo,
-        type: command.type,
-        datacap: command.datacap,
+        allocationRequiredReplicas: command.allocationRequiredReplicas,
+        datacapAllocationLimits: command.datacapAllocationLimits,
+        applicantGithubHandle: command.applicantGithubHandle,
+        otherGithubHandles: command.otherGithubHandles,
+        onChainAddressForDataCapAllocation: command.onChainAddressForDataCapAllocation,
       })
 
-      if (command.allocatorMultisigAddress) {
-        const actorId = await this.lotusClient.getActorId(command.allocatorMultisigAddress)
-        allocator.setAllocatorMultisig(actorId, command.allocatorMultisigAddress, 2, ['s1', 's2'])
+      if (command.onChainAddressForDataCapAllocation) {
+        const actorId = await this.lotusClient.getActorId(command.onChainAddressForDataCapAllocation)
+        allocator.setAllocatorMultisig(
+          actorId,
+          command.onChainAddressForDataCapAllocation,
+          2,
+          [],
+        )
       }
-      this.logger.info("Creating pull request...")
+      this.logger.info('Creating pull request...')
 
       try {
         const pullRequest = await this.pullRequestService.createPullRequest(allocator)

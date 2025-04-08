@@ -4,7 +4,7 @@ dotenv.config()
 const DEFAULT_POLLING_INTERVAL = 10000
 
 export default {
-  API_PORT: process.env.API_PORT || 3000,
+  API_PORT: process.env.API_PORT || 3001,
   MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017',
   DB_NAME: process.env.DB_NAME || 'filecoin-plus',
 
@@ -30,7 +30,7 @@ export default {
   AIRTABLE_TABLE_NAME: process.env.AIRTABLE_TABLE_NAME || 'tblAGAD0kgWxy5kwq',
 
   // Lotus client configuration
-  LOTUS_RPC_URL: process.env.LOTUS_RPC_URL || 'https://api.node.glif.io/rpc/v1',
+  LOTUS_RPC_URL: process.env.LOTUS_RPC_URL || 'https://filecoin.chain.love/',
   LOTUS_AUTH_TOKEN: process.env.LOTUS_AUTH_TOKEN || 'your-lotus-auth-token',
 
   // GitHub handles for the governance team
