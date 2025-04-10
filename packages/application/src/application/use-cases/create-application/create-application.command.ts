@@ -18,7 +18,7 @@ export class CreateApplicationCommand extends Command {
   public readonly applicantName: string
   public readonly applicantAddress: string
   public readonly applicantOrgName: string
-  public readonly applicantOrgAddresses: string[]
+  public readonly applicantOrgAddresses: string
   public readonly allocationTrancheScheduleType: string
   public readonly audit: string
   public readonly distributionRequired: string
@@ -99,6 +99,7 @@ export class CreateApplicationCommandHandler implements ICommandHandler<CreateAp
         const pullRequest = await this.pullRequestService.createPullRequest(allocator)
         allocator.setApplicationPullRequest(pullRequest.number, pullRequest.url, pullRequest.commentId)
       } catch (error) {
+        console.log(error)
         this.logger.error('Unable to create application pull request. The application already exists.')
       }
       await this.repository.save(allocator, -1)

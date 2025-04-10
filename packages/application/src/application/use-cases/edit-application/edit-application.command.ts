@@ -9,12 +9,11 @@ export class EditApplicationCommand extends Command {
   public readonly applicationNumber: number
 
   public readonly applicantName: string
-  public readonly applicantLocation: string
   public readonly applicantGithubHandle: string
   public readonly applicantSlackHandle: string
   public readonly applicantAddress: string
   public readonly applicantOrgName: string
-  public readonly applicantOrgAddresses: string[]
+  public readonly applicantOrgAddresses: string
 
   public readonly allocationStandardizedAllocations: string[]
   public readonly allocationTargetClients: string[]
@@ -105,7 +104,6 @@ export class EditApplicationCommandHandler implements ICommandHandler<EditApplic
     await application.edit({
       applicationNumber: command.applicationNumber,
       applicantName: command.applicantName,
-      applicantLocation: command.applicantLocation,
       applicantGithubHandle: command.applicantGithubHandle,
       applicantSlackHandle: command.applicantSlackHandle,
       applicantAddress: command.applicantAddress,

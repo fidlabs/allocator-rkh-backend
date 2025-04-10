@@ -41,7 +41,6 @@ export class ApplicationEditedEventHandler implements IEventHandler<ApplicationE
       organization: event.applicantOrgName,
       address: event.applicantAddress,
       github: event.applicantGithubHandle,
-      location: event.applicantLocation,
       // xDONE
       applicationInstructions: event.applicationInstructions
       // applicationInstruction: {

@@ -18,7 +18,6 @@ export class MessageService {
 | GitHub Username | [![GitHub](https://img.shields.io/badge/GitHub-${
       application.applicantGithubHandle
     }?style=flat-square&logo=github)](${githubLink}) |
-| Location | ${application.applicantLocation} |
 
 ## Grant Details
 | Field | Value |

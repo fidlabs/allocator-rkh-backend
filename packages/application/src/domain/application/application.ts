@@ -88,9 +88,12 @@ export class DatacapAllocator extends AggregateRoot {
   public applicantSlackHandle: string
   public applicantAddress: string
   public applicantOrgName: string
-  public applicantOrgAddresses: string[]
+  public applicantOrgAddresses: string
+  public applicantOtherGithubHandles: string[]
 
   public allocationStandardizedAllocations: string[]
+  public allocationAudit: string
+  public allocationDistributionRequired: string
   public allocationTargetClients: string[]
   public allocationRequiredReplicas: string
   public allocationRequiredStorageProviders: string
@@ -98,6 +101,7 @@ export class DatacapAllocator extends AggregateRoot {
   public allocationDataTypes: string[]
   public allocationProjected12MonthsUsage: string
   public allocationBookkeepingRepo: string
+  public allocationMaxDcClient: string
   public applicationInstructions: ApplicationInstruction[] = []
 
   public applicationStatus: ApplicationStatus
@@ -117,6 +121,9 @@ export class DatacapAllocator extends AggregateRoot {
 
   public grantCycles: ApplicationGrantCycle[] = []
 
+  public allocationDatacapAllocationLimits: string
+  public onChainAddressForDataCapAllocation: string
+
   constructor(guid?: string) {
     super(guid)
   }
@@ -131,7 +138,7 @@ export class DatacapAllocator extends AggregateRoot {
     applicantName: string
     applicantAddress: string
     applicantOrgName: string
-    applicantOrgAddresses: string[]
+    applicantOrgAddresses: string
     allocationTrancheScheduleType: string
     audit: string
     distributionRequired: string
@@ -158,7 +165,7 @@ export class DatacapAllocator extends AggregateRoot {
         params.allocationRequiredReplicas,
         params.datacapAllocationLimits,
         params.applicantGithubHandle,
-        params.otherGithubHandles,
+        params.otherGithubHandles ?? [],
         params.onChainAddressForDataCapAllocation
       ),
     )
@@ -168,12 +175,11 @@ export class DatacapAllocator extends AggregateRoot {
   edit(params: {
     applicationNumber?: number
     applicantName?: string
-    applicantLocation?: string
     applicantGithubHandle?: string
     applicantSlackHandle?: string
     applicantAddress?: string
     applicantOrgName?: string
-    applicantOrgAddresses?: string[]
+    applicantOrgAddresses?: string
     allocationStandardizedAllocations?: string[]
     allocationTargetClients?: string[]
     allocationRequiredReplicas?: string
@@ -195,7 +201,6 @@ export class DatacapAllocator extends AggregateRoot {
         this.guid,
         params.applicationNumber,
         params.applicantName,
-        params.applicantLocation,
         params.applicantGithubHandle,
         params.applicantSlackHandle,
         params.applicantAddress,
@@ -347,6 +352,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyApplicationCreated(event: ApplicationCreated) {
+    console.log('applyApplicationCreated', event)
     this.guid = event.guid
 
     this.applicationNumber = event.applicationNumber
@@ -385,8 +391,6 @@ export class DatacapAllocator extends AggregateRoot {
     this.address = event.applicantAddress || this.address
     this.githubUsername = event.applicantGithubHandle || this.githubUsername
     this.slackUsername = event.applicantSlackHandle || this.slackUsername
-    this.country = event.applicantLocation || this.country
-    this.region = event.applicantLocation || this.region
     this.allocationStandardizedAllocations = event.standardizedAllocations || this.allocationStandardizedAllocations
 
     this.applicationInstructions = event.applicationInstructions || this.applicationInstructions
