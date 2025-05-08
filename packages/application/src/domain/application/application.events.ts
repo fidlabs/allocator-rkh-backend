@@ -111,6 +111,20 @@ export class KYCApproved extends Event {
   }
 }
 
+export class KYCRevoked extends Event {
+  eventName = KYCRevoked.name
+  aggregateName = 'allocator'
+
+  public timestamp: Date
+
+  constructor(
+    allocatorId: string,
+  ) {
+    super(allocatorId)
+    this.timestamp = new Date()
+  }
+}
+
 export class KYCRejected extends Event {
   eventName = KYCRejected.name
   aggregateName = 'allocator'

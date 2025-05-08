@@ -19,6 +19,7 @@ import {
   ApplicationPullRequestUpdated,
   AllocatorMultisigUpdated,
   DatacapRefreshRequested,
+  KYCRevoked
 } from './application.events'
 import { KYCApprovedData, KYCRejectedData } from '@src/domain/types'
 import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types'
@@ -241,6 +242,12 @@ export class DatacapAllocator extends AggregateRoot {
     this.applyChange(new GovernanceReviewStarted(this.guid))
   }
 
+  revokeKYC() {
+    this.ensureValidApplicationStatus([ApplicationStatus.GOVERNANCE_REVIEW_PHASE])
+
+    this.applyChange(new KYCRevoked(this.guid))
+  }
+
   rejectKYC(data: KYCRejectedData) {
     this.ensureValidApplicationStatus([ApplicationStatus.KYC_PHASE])
 
@@ -434,6 +441,10 @@ export class DatacapAllocator extends AggregateRoot {
 
   applyKYCApproved(_: KYCApproved) {
     this.status["Submitted"] = Math.floor(Date.now() / 1000)
+  }
+
+  applyKYCRevoked(_: KYCApproved) {
+    this.applicationStatus = ApplicationStatus.GOVERNANCE_REVIEW_PHASE
   }
 
   applyKYCRejected(_: KYCRejected) {

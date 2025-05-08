@@ -17,3 +17,13 @@ export class SubmitPhaseResultCommand<A, R> extends Command {
     super()
   }
 }
+
+
+export class RevokeKYCCommand extends Command {
+  constructor(
+    public readonly allocatorId: string,
+    public readonly phase: ApplicationStatus,
+  ) {
+    super()
+  }
+}
