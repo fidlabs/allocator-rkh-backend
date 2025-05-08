@@ -444,7 +444,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyKYCRevoked(_: KYCApproved) {
-    // TODO: ?
+    this.applicationStatus = ApplicationStatus.GOVERNANCE_REVIEW_PHASE
   }
 
   applyKYCRejected(_: KYCRejected) {
