@@ -30,6 +30,7 @@ import {
   MetaAllocatorApprovalStarted,
   MetaAllocatorApprovalCompleted,
   DatacapRefreshRequested,
+  KYCRevoked
 } from '@src/domain/application/application.events'
 import { TYPES } from '@src/types'
 import {
@@ -48,7 +49,7 @@ import {
   RKHApprovalsUpdatedEventHandler,
   MetaAllocatorApprovalStartedEventHandler,
   MetaAllocatorApprovalCompletedEventHandler,
-  DatacapRefreshRequestedEventHandler,
+  DatacapRefreshRequestedEventHandler, KYCRevokedEventHandler
 } from './application/events/handlers'
 import { UpdateRKHApprovalsCommandHandler } from './application/use-cases/update-rkh-approvals/update-rkh-approvals.command'
 import { SubmitGovernanceReviewResultCommandHandler } from './application/use-cases/submit-governance-review/submit-governance-review.command'
@@ -63,6 +64,7 @@ import { UpdateDatacapAllocationCommandHandler } from './application/use-cases/u
 import { UpdateMetaAllocatorApprovalsCommandHandler } from './application/use-cases/update-ma-approvals/update-ma-approvals.command'
 import { CreateRefreshApplicationCommandHandler } from './application/use-cases/create-application/create-refresh-application.command'
 import { RoleService } from './application/services/role.service'
+import { RevokeKYCCommandHandler } from '@src/application/use-cases/revoke-kyc/revoke-kyc.command'
 
 
 export const initialize = async (): Promise<Container> => {
@@ -89,6 +91,7 @@ export const initialize = async (): Promise<Container> => {
   container.bind<IEventHandler<KYCStarted>>(TYPES.Event).to(KYCStartedEventHandler)
   container.bind<IEventHandler<KYCApproved>>(TYPES.Event).to(KYCApprovedEventHandler)
   container.bind<IEventHandler<KYCRejected>>(TYPES.Event).to(KYCRejectedEventHandler)
+  container.bind<IEventHandler<KYCRevoked>>(TYPES.Event).to(KYCRevokedEventHandler)
 
   // TODO: V1 Bind Governance events to their handlers
   container.bind<IEventHandler<GovernanceReviewStarted>>(TYPES.Event).to(GovernanceReviewStartedEventHandler)
@@ -110,6 +113,7 @@ export const initialize = async (): Promise<Container> => {
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(CreateRefreshApplicationCommandHandler)
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(EditApplicationCommandHandler)
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(SubmitKYCResultCommandHandler)
+  container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(RevokeKYCCommandHandler)
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(SubmitGovernanceReviewResultCommandHandler)
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(UpdateRKHApprovalsCommandHandler)
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(UpdateDatacapAllocationCommandHandler)
