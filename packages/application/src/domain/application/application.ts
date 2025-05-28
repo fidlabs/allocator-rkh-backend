@@ -282,7 +282,7 @@ export class DatacapAllocator extends AggregateRoot {
 
     /*
       The choice of type means that:
-        in Automated and Market Based cases:
+        in Automated and Market Based and Metaallocator cases:
           the application should advance to RKH approval
         in Manual:
           pathway field updated to MDMA
@@ -313,6 +313,7 @@ export class DatacapAllocator extends AggregateRoot {
         this.applicationStatus = ApplicationStatus.DC_ALLOCATED
         this.applicationInstructions[lastInstructionIndex].status = ApplicationInstructionStatus.GRANTED
         console.log('apply gov review MDMA', this)
+        //this.applicationInstructions[lastInstructionIndex].isMDMAAllocator = true
         return new MetaAllocatorApprovalCompleted(this.guid, 0, '', this.applicationInstructions)
       }
       if (this.isMetaAllocator && !this.isMDMA) return new MetaAllocatorApprovalStarted(this.guid)
@@ -321,6 +322,7 @@ export class DatacapAllocator extends AggregateRoot {
         this.pathway = 'RKH'
         this.ma_address = this.rkh_address
         this.applicationStatus = ApplicationStatus.DC_ALLOCATED
+       // this.applicationInstructions[lastInstructionIndex].isMDMAAllocator = false
         this.applicationInstructions[lastInstructionIndex].status = ApplicationInstructionStatus.GRANTED
         console.log('apply gov review RKH', this)
         return new RKHApprovalCompleted(this.guid, this.applicationInstructions)

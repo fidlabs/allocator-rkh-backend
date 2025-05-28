@@ -26,7 +26,7 @@ type KYCResultData = {
 export type KYCApprovedData = KYCResultData
 export type KYCRejectedData = KYCApprovedData
 
-export type AllocatorType = 'Manual' | 'Automated' | 'Market Based'
+export type AllocatorType = 'Manual' | 'Automated' | 'Market Based' | 'MetaAllocator'
 
 export type GovernanceReviewApprovedData = {
   finalDataCap: number
