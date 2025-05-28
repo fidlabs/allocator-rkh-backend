@@ -321,7 +321,6 @@ export class DatacapAllocator extends AggregateRoot {
         this.pathway = 'RKH'
         this.ma_address = this.rkh_address
         this.applicationStatus = ApplicationStatus.DC_ALLOCATED
-       // this.applicationInstructions[lastInstructionIndex].isMDMAAllocator = false
         this.applicationInstructions[lastInstructionIndex].status = ApplicationInstructionStatus.GRANTED
         console.log('apply gov review RKH', this)
         return new RKHApprovalCompleted(this.guid, this.applicationInstructions)
