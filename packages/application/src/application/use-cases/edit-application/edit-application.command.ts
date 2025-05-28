@@ -91,11 +91,11 @@ export class EditApplicationCommandHandler implements ICommandHandler<EditApplic
 
     // FIXME ? the original code ALWAYS forced it to META_ALLOCATOR but I think that was wrong (?)
     const currApplicationInstructions =  command.file.audits.map((ao) => ({
-      method: command.file.metapathway_type === "MDMA" ? ApplicationAllocator.META_ALLOCATOR : ApplicationAllocator.RKH_ALLOCATOR,
+      method: command.file.metapathway_type === 'MDMA' ? ApplicationAllocator.META_ALLOCATOR : ApplicationAllocator.RKH_ALLOCATOR,
       startTimestamp: zuluToEpoch(ao.started),
       endTimestamp: zuluToEpoch(ao.ended),
       allocatedTimestamp: zuluToEpoch(ao.dc_allocated),
-      status: ao.outcome || "PENDING",
+      status: ao.outcome || 'PENDING',
       datacap_amount: ao.datacap_amount || 0
     }))
     console.log('prevApplicationInstructions', prevApplicationInstructions)

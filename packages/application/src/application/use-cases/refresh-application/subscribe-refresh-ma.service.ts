@@ -70,7 +70,7 @@ export async function subscribeMetaAllocatorAllowances(container: Container) {
                 datacapCache.set(allocator.address, currentDatacap)
             }
         }catch (error) {
-            console.error('Error subscribing to MA events', error)
+            console.error('Error subscribing to MDMA events', error)
         }
     }, config.SUBSCRIBE_REFRESH_META_ALLOCATOR_POLLING_INTERVAL)
 }

@@ -282,13 +282,13 @@ export class DatacapAllocator extends AggregateRoot {
 
     /*
       The choice of type means that:
-        in Automated and Market Based cases:
+        in Automated and Market Based and Metaallocator cases:
           the application should advance to RKH approval
         in Manual:
           pathway field updated to MDMA
-          the address changed to MA address from env variable
+          the address changed to MDMA address from env variable
           the tooling field should get "smart_contract_allocator" entry
-          the application should advance to MA approval
+          the application should advance to MDMA approval
     */
     const approvedMethod =
       details?.allocatorType === 'Manual' ? ApplicationAllocator.META_ALLOCATOR : ApplicationAllocator.RKH_ALLOCATOR
