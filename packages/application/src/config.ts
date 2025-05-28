@@ -44,7 +44,7 @@ export default {
   RKH_ADDRESSES: process.env.RKH_ADDRESSES
   ? process.env.RKH_ADDRESSES.split(',').map((handle) => handle.trim())
   : [],
-  //MA addresses
+  //MDMA addresses
   MA_ADDRESSES: process.env.MA_ADDRESSES 
   ? process.env.MA_ADDRESSES.split(',').map((handle) => handle.trim())
   : ["0xB6F5d279AEad97dFA45209F3E53969c2EF43C21d"],
