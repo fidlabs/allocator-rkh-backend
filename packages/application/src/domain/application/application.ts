@@ -313,7 +313,6 @@ export class DatacapAllocator extends AggregateRoot {
         this.applicationStatus = ApplicationStatus.DC_ALLOCATED
         this.applicationInstructions[lastInstructionIndex].status = ApplicationInstructionStatus.GRANTED
         console.log('apply gov review MDMA', this)
-        //this.applicationInstructions[lastInstructionIndex].isMDMAAllocator = true
         return new MetaAllocatorApprovalCompleted(this.guid, 0, '', this.applicationInstructions)
       }
       if (this.isMetaAllocator && !this.isMDMA) return new MetaAllocatorApprovalStarted(this.guid)
