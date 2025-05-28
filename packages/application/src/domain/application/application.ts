@@ -285,7 +285,7 @@ export class DatacapAllocator extends AggregateRoot {
         in Automated and Market Based cases:
           the application should advance to RKH approval
         in Manual:
-          pathway field updated to MA
+          pathway field updated to MDMA
           the address changed to MA address from env variable
           the tooling field should get "smart_contract_allocator" entry
           the application should advance to MA approval
@@ -496,7 +496,7 @@ export class DatacapAllocator extends AggregateRoot {
     this.allocatorMultisigSigners = event.file.pathway_addresses?.signers || this.allocatorMultisigSigners
 
     this.applicationInstructions = event.file.audits.map((ao) => ({
-      method: event.file.metapathway_type === "MA" ? ApplicationAllocator.META_ALLOCATOR : ApplicationAllocator.RKH_ALLOCATOR,
+      method: event.file.metapathway_type === "MDMA" ? ApplicationAllocator.META_ALLOCATOR : ApplicationAllocator.RKH_ALLOCATOR,
       startTimestamp: zuluToEpoch(ao.started),
       endTimestamp: zuluToEpoch(ao.ended),
       allocatedTimestamp: zuluToEpoch(ao.dc_allocated),
