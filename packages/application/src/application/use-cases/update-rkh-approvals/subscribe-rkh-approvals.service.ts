@@ -107,7 +107,11 @@ async function findProcessApprovals(
         console.log('Application details not found for proposal ID', proposal)
         continue
       }
-      await commandBus.send(new UpdateRKHApprovalsCommand(applicationDetails.id, 0, [], "Approved"))
+      
+      // Don't constantly re-approve if we've already done this one
+      if (applicationDetails.status != 'DC_ALLOCATED') {
+        await commandBus.send(new UpdateRKHApprovalsCommand(applicationDetails.id, 0, [], "Approved"))
+      }
     } catch (error) {
       console.error('Error updating RKH completed approvals', { error })
       // swallow and move on to the next one, it's probably just not for us
