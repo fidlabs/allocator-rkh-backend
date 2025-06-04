@@ -20,9 +20,9 @@ export async function subscribeGovernanceReviews(container: Container) {
 
   try {
     setInterval(() => processApplications(db, client, commandBus, logger), config.SUBSCRIBE_GOVERNANCE_REVIEWS_POLLING_INTERVAL)
-  } catch (error) {
-    logger.error('Failed to initialize the application', { error })
-    process.exit(1)
+  } catch (err) {
+    logger.error("subscribeGovernanceReviews uncaught exception", err)
+    // swallow error and wait for next tick
   }
 }
 

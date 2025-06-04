@@ -28,15 +28,17 @@ constructor(
         let allocator: DatacapAllocator
         try {
             allocator = await this._repository.getById(command.allocatorId)
+            allocator.completeMetaAllocatorApproval(
+                command.blockNumber,
+                command.txHash,
+            )
+            this._repository.save(allocator, -1)
         } catch (error) {
+            this._logger.error(`Error processing UpdateMetaAllocatorApprovalsCommand for allocator ${command.allocatorId}`)
             this._logger.error(error)
             return
         }
-        allocator.completeMetaAllocatorApproval(
-            command.blockNumber,
-            command.txHash,
-        )
-        this._repository.save(allocator, -1)
+
     }
 
 }

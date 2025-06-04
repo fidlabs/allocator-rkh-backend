@@ -37,6 +37,7 @@ export async function subscribeMetaAllocatorAllowances(container: Container) {
     const datacapCache = new Map<string, bigint>()
     
     logger.info('Subscribing to Meta Allocator allowances...')
+
     setInterval(async () => {
         try {
             const approvedAllocators = await repository.getPaginated(1, 1000, [ApplicationStatus.DC_ALLOCATED])
@@ -69,8 +70,9 @@ export async function subscribeMetaAllocatorAllowances(container: Container) {
                 }
                 datacapCache.set(allocator.address, currentDatacap)
             }
-        }catch (error) {
-            console.error('Error subscribing to MDMA events', error)
+        } catch (err) {
+            logger.error("subscribeMetaAllocatorAllowances uncaught exception", err)
+            // swallow error and wait for next tick
         }
     }, config.SUBSCRIBE_REFRESH_META_ALLOCATOR_POLLING_INTERVAL)
 }

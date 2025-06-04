@@ -175,46 +175,51 @@ export async function subscribeMetaAllocatorApprovals(container: Container) {
 
     logger.info("Subscribing to MetaAllocator proposals...")
 
-    let lastBlock = await fetchLastBlockMetaAllocator('filecoin-plus', 'applicationDetails')
-    const approvals = await fetchApprovals(lastBlock + 1)
-    logger.info(`Found ${approvals.length} AllowanceChanged events since block ${lastBlock + 1}.`)
+    try {
+      let lastBlock = await fetchLastBlockMetaAllocator('filecoin-plus', 'applicationDetails')
+      const approvals = await fetchApprovals(lastBlock + 1)
+      logger.info(`Found ${approvals.length} AllowanceChanged events since block ${lastBlock + 1}.`)
 
-    for (let approval of approvals) {
-      console.log(`Processing approval ${approval.txHash}, approved by ${approval.contractAddress}...`)
-      console.log(approval)
-      if (config.VALID_META_ALLOCATOR_ADDRESSES.includes(approval.contractAddress)) {
-        let actorId = approval.allocatorAddress
-        if (actorId.startsWith('0x')) {
-          console.log(`Allocator Id is an Ethereum address: ${actorId}`)
-          // If the address is an Ethereum address, convert to Filecoin Id first
-          const provider = new ethers.providers.JsonRpcProvider(config.EVM_RPC_URL)
-          const filecoinId = await provider.send(
-            "Filecoin.EthAddressToFilecoinAddress",
-            [actorId],
-          )
-          console.log(`Converted to Filecoin id: ${filecoinId}`)
-          if (!filecoinId) {
-            logger.error('Failed to convert Ethereum address to Filecoin address:', actorId);
+      for (let approval of approvals) {
+        console.log(`Processing approval ${approval.txHash}, approved by ${approval.contractAddress}...`)
+        console.log(approval)
+        if (config.VALID_META_ALLOCATOR_ADDRESSES.includes(approval.contractAddress)) {
+          let actorId = approval.allocatorAddress
+          if (actorId.startsWith('0x')) {
+            console.log(`Allocator Id is an Ethereum address: ${actorId}`)
+            // If the address is an Ethereum address, convert to Filecoin Id first
+            const provider = new ethers.providers.JsonRpcProvider(config.EVM_RPC_URL)
+            const filecoinId = await provider.send(
+              "Filecoin.EthAddressToFilecoinAddress",
+              [actorId],
+            )
+            console.log(`Converted to Filecoin id: ${filecoinId}`)
+            if (!filecoinId) {
+              logger.error('Failed to convert Ethereum address to Filecoin address:', actorId);
+            }
+            actorId = filecoinId
           }
-          actorId = filecoinId
+          const applicationDetails = await applicationDetailsRepository.getByActorId(actorId)
+          if (!applicationDetails) {
+            logger.info('Application details not found for address:', actorId)
+            continue
+          }
+          try {
+            logger.info("Sending UpdateMetaAllocatorApprovalsCommand...")
+            const allocatorId = applicationDetails.id
+            const command = new UpdateMetaAllocatorApprovalsCommand(allocatorId, approval.blockNumber, approval.txHash)
+            await commandBus.send(command)
+          } catch (error) {
+            logger.error('Error updating Meta Allocator approvals', error)
+          }
+        } else {
+          logger.debug(`Invalid contract address: ${approval.contractAddress}`)
+          logger.debug(config.VALID_META_ALLOCATOR_ADDRESSES)
         }
-        const applicationDetails = await applicationDetailsRepository.getByActorId(actorId)
-        if (!applicationDetails) {
-          logger.info('Application details not found for address:', actorId)
-          continue
-        }
-        try {
-          logger.info("Sending UpdateMetaAllocatorApprovalsCommand...")
-          const allocatorId = applicationDetails.id
-          const command = new UpdateMetaAllocatorApprovalsCommand(allocatorId, approval.blockNumber, approval.txHash)
-          await commandBus.send(command)
-        } catch (error) {
-          logger.error('Error updating Meta Allocator approvals', error)
-        }
-      } else {
-        logger.debug(`Invalid contract address: ${approval.contractAddress}`)
-        logger.debug(config.VALID_META_ALLOCATOR_ADDRESSES)
       }
+    } catch (err) {
+      logger.error("subscribeMetaAllocatorApprovals uncaught exception", err)
+      // swallow error and wait for next tick
     }
   }, config.SUBSCRIBE_META_ALLOCATOR_APPROVALS_POLLING_INTERVAL)
 

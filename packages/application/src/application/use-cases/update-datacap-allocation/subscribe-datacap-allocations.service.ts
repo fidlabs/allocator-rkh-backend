@@ -69,8 +69,9 @@ export async function subscribeDatacapAllocations(container: Container) {
         datacapCache.set(it[0], it[1])
         break
       }
-    }catch(error){
-          console.error('subscribeDatacapAllocations', error)
-      }
+    } catch(err){
+      logger.error("subscribeDatacapAllocations uncaught exception", err)
+      // swallow error and wait for next tick
+    }
   }, config.SUBSCRIBE_DATACAP_ALLOCATIONS_POLLING_INTERVAL)
 }

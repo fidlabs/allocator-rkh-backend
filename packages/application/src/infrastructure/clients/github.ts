@@ -218,6 +218,7 @@ export class GithubClient implements IGithubClient {
     pullNumber: number,
     body: string,
   ): Promise<PullRequestReview> {
+    console.log(`>>> Creating Review! <<< ${owner}, ${repo}, ${pullNumber}, ${body}`)
     const { data } = await this.octokit.pulls.createReview({
       owner,
       repo,
@@ -236,6 +237,7 @@ export class GithubClient implements IGithubClient {
     commentId: number,
     body: string,
   ): Promise<PullRequestReview> {
+    console.log(`>>> Updating Review! <<< ${owner}, ${repo}, ${pullNumber}, ${commentId}, ${body}`)
     const { data } = await this.octokit.pulls.updateReview({
       owner,
       repo,

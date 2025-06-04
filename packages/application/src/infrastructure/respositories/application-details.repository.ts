@@ -28,6 +28,7 @@ export interface IApplicationDetailsRepository extends IRepository<ApplicationDe
 
   getByActorId(actorId: string): Promise<ApplicationDetails | null>
   getByAddress(address: string): Promise<ApplicationDetails | null>
+  getByProposalId(proposalId: number): Promise<ApplicationDetails | null>
 }
 
 @injectable()
@@ -112,6 +113,13 @@ class ApplicationDetailsRepository implements IRepository<ApplicationDetails> {
   async getByAddress(address: string): Promise<ApplicationDetails | null> {
     console.log('getByAddress', address)
     return this._db.collection<ApplicationDetails>('applicationDetails').findOne({ address })
+  }
+
+  async getByProposalId(proposalId: number): Promise<ApplicationDetails | null> {
+    console.log('getByProposalId', proposalId)
+    return this._db.collection<ApplicationDetails>('applicationDetails').findOne({
+      "rkhPhase.approvalMessageId": proposalId
+    });
   }
 }
 

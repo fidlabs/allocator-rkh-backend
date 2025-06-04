@@ -297,8 +297,7 @@ export class DatacapAllocator extends AggregateRoot {
     this.applicationInstructions[lastInstructionIndex].datacap_amount = details?.finalDataCap
     this.applicationInstructions[lastInstructionIndex].status = ApplicationInstructionStatus.PENDING
     this.applicationInstructions[lastInstructionIndex].isMDMAAllocator = details?.isMDMAAllocator
-
-    //this.applicationInstructions[lastInstructionIndex].timestamp = Math.floor(Date.now() / 1000)
+    this.applicationInstructions[lastInstructionIndex].endTimestamp = Math.floor(Date.now() / 1000)
 
     this.applyChange(new GovernanceReviewApproved(this.guid, this.applicationInstructions))
 
@@ -315,7 +314,11 @@ export class DatacapAllocator extends AggregateRoot {
         console.log('apply gov review MDMA', this)
         return new MetaAllocatorApprovalCompleted(this.guid, 0, '', this.applicationInstructions)
       }
-      if (this.isMetaAllocator && !this.isMDMA) return new MetaAllocatorApprovalStarted(this.guid)
+
+      if (this.isMetaAllocator && !this.isMDMA) {
+        return new MetaAllocatorApprovalStarted(this.guid)
+      }
+
       if (!this.isMetaAllocator && this.isMDMA){
         this.allocationTooling = []
         this.pathway = 'RKH'
@@ -325,11 +328,12 @@ export class DatacapAllocator extends AggregateRoot {
         console.log('apply gov review RKH', this)
         return new RKHApprovalCompleted(this.guid, this.applicationInstructions)
       }
+
       return new RKHApprovalStarted(this.guid, 2) // TODO: Hardcoded 2 for multisig threshold
     }
 
     this.applyChange(action())
-    console.log('apply gov review none', this)
+    console.log('apply gov review done', this)
   }
 
   rejectGovernanceReview(details: GovernanceReviewRejectedData) {

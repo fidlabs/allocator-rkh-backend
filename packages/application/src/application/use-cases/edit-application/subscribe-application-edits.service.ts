@@ -66,8 +66,9 @@ export async function subscribeApplicationEdits(container: Container) {
           logger.error(`Error processing application ${application.id}: ${error.message}`)
         }
       }
-    } catch (error: any) {
-      logger.error(`Error in subscribeApplicationChanges: ${error.message}`)
+    } catch (err) {
+      logger.error("subscribeApplicationEdits uncaught exception", err)
+      // swallow error and wait for next tick
     }
   }, config.SUBSCRIBE_APPLICATION_EDITS_POLLING_INTERVAL)
 }
