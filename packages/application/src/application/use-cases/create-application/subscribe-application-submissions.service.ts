@@ -1,4 +1,4 @@
-import { ICommandBus } from '@filecoin-plus/core'
+import { ICommandBus, Logger } from '@filecoin-plus/core'
 import { Container } from 'inversify'
 
 import { CreateApplicationCommand } from '@src/application/use-cases/create-application/create-application.command'
@@ -13,13 +13,20 @@ const REQUIRED_AIRTABLE_FIELDS = [
 ] // TODO: Add required fields
 
 export async function subscribeApplicationSubmissions(container: Container) {
-  // Do the first pass immediately
-  await processRecords(container)
+  const logger = container.get<Logger>(TYPES.Logger)
+
+  // Uncomment if you want to do the first pass immediately
+  // await processRecords(container)
 
   // And now poll for updates periodically
   console.log(`Start loop (${config.SUBSCRIBE_APPLICATION_SUBMISSIONS_POLLING_INTERVAL})`)
   setInterval(async () => {
-    processRecords(container)
+    try {
+      processRecords(container)
+    } catch (err) {
+      logger.error("subscribeApplicationSubmissions uncaught exception", err)
+      // swallow error and wait for next tick
+    }
   }, config.SUBSCRIBE_APPLICATION_SUBMISSIONS_POLLING_INTERVAL)
 }
 
@@ -27,34 +34,34 @@ async function processRecords(container: Container) {
   const airtableClient = container.get<IAirtableClient>(TYPES.AirtableClient)
   const commandBus = container.get<ICommandBus>(TYPES.CommandBus)
   const processedRecords = new Set<string>()
+  const logger = container.get<Logger>(TYPES.Logger)
 
   try {
     const newRecords = await airtableClient.getTableRecords()
-    console.log(`Fetched ${newRecords.length} records from Airtable`)
+    logger.debug(`Fetched ${newRecords.length} records from Airtable`)
 
     for (const record of newRecords) {
       if (shouldProcessRecord(record, processedRecords)) {
-        console.log(`Processing record ${record.id}...`)
-        console.log(record)
+        logger.debug(`Processing record ${record.id}...`, record)
+
         const command = mapRecordToCommand(record)
         processedRecords.add(record.id)
-        console.log(`Finalising record ${record.id}...`)
+        logger.debug(`Finalising record ${record.id}...`)
         await commandBus.send(command)
       } else {
-        console.log(`Skipping record ${record.id}...`)
-        console.log(record)
+        logger.debug(`Skipping record ${record.id}...`, record)
       }
     }
   } catch (error) {
     processedRecords.clear()
-    console.error('Error processing application submissions:', error)
+    logger.error('Error processing application submissions:', error)
   }
 }
 
 function shouldProcessRecord(record: any, processedRecords: Set<string>): boolean {
   const alreadyDone = processedRecords.has(record.id)
   const isValid = isRecordValid(record)
-  console.log(`Record ${record.id} is valid?: ${isValid} and already done?: ${alreadyDone}`)
+
   return (
     !alreadyDone && isValid //  && isApplicationNumberInRange(Number(record.fields['Application Number']))
   )

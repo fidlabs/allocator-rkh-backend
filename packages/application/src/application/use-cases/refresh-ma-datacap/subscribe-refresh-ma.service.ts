@@ -377,19 +377,25 @@ export async function subscribeRefreshMetaAllocator(container: Container) {
         }
 
         logger.info("Subscribing to Meta Allocator refresh applications...")
-        const lastBlock = await fetchDatacapLatestUpdateBlock('filecoin-plus', 'applicationDetails')
-        const datacapMap = await updateDatacapInfo('filecoin-plus', 'applicationDetails', lastBlock + 1)
 
-        for (let [allocatorAddress, allocatorData] of datacapMap) {
-            console.log(`Checking allocator: ${allocatorAddress}`)
-            await submitRefreshMetaAllocatorCommand(
-                allocatorAddress,
-                allocatorData.datacapInfo,
-                config.REFRESH_MIN_THRESHOLD_PCT,
-                repository,
-                commandBus,
-                logger,
-            )
+        try {
+            const lastBlock = await fetchDatacapLatestUpdateBlock('filecoin-plus', 'applicationDetails')
+            const datacapMap = await updateDatacapInfo('filecoin-plus', 'applicationDetails', lastBlock + 1)
+
+            for (let [allocatorAddress, allocatorData] of datacapMap) {
+                console.log(`Checking allocator: ${allocatorAddress}`)
+                await submitRefreshMetaAllocatorCommand(
+                    allocatorAddress,
+                    allocatorData.datacapInfo,
+                    config.REFRESH_MIN_THRESHOLD_PCT,
+                    repository,
+                    commandBus,
+                    logger,
+                )
+            }
+        } catch (err) {
+            logger.error("subscribeRefreshMetaAllocator uncaught exception", err)
+            // swallow error and wait for next tick
         }
 
     }, config.SUBSCRIBE_REFRESH_META_ALLOCATOR_POLLING_INTERVAL)

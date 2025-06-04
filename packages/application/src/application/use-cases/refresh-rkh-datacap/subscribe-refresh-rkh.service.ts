@@ -127,14 +127,14 @@ export async function subscribeRefreshRKH(container: Container) {
     let shouldContinue = true
 
     const intervalId = setInterval(async () => {
-        try{
-            if (!shouldContinue) {
-                logger.info("Unsubscribing from Refresh RKH...")
-                clearInterval(intervalId)
-                return
-            }
-            logger.info("Subscribing to Refresh RKH...")
+        if (!shouldContinue) {
+            logger.info("Unsubscribing from Refresh RKH...")
+            clearInterval(intervalId)
+            return
+        }
+        logger.info("Subscribing to Refresh RKH...")
 
+        try{
             const currentDatacapCache = await fetchCurrentDatacapCache(container)
             console.log('currentDatacapCache', currentDatacapCache)
             const applicationDetailsRepository = container.get<IApplicationDetailsRepository>(TYPES.ApplicationDetailsRepository)
@@ -149,8 +149,9 @@ export async function subscribeRefreshRKH(container: Container) {
                     logger,
                 )
             }
-        }catch(error){
-            console.error('Error in subscribeRefreshRKH', error)
+        } catch (err) {
+            logger.error("subscribeRefreshRKH uncaught exception", err)
+            // swallow error and wait for next tick
         }
     }, config.SUBSCRIBE_REFRESH_RKH_POLLING_INTERVAL)
 

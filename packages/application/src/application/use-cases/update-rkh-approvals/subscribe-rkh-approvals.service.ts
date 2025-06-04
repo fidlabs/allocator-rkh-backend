@@ -11,9 +11,9 @@ import * as address from '@glif/filecoin-address'
 import cbor from "cbor";
 
 const RKH_MULTISIG_ACTOR_ADDRESS = 'f080'
-
 const VERIFIED_REGISTRY_ACTOR_METHODS = {
-  ADD_VERIFIER: 2,
+  PROPOSE_ADD_VERIFIER: 2,
+  APPROVE_ADD_VERIFIER: 3
 }
 
 const getVerifierFromParams = (params: string, logger: Logger): string => {
@@ -29,10 +29,35 @@ const getVerifierFromParams = (params: string, logger: Logger): string => {
     return ""
   }
 
-  const addr = new address.Address(paramsCbor[0])
-  const verifier = address.encode('f', addr)
+  const addressParam = 0
 
-  return verifier
+  try {
+    logger.debug(`Trying to construct address from ${paramsCbor[addressParam]}`)
+    const addr = new address.Address(paramsCbor[addressParam])
+    const verifier = address.encode('f', addr)
+    return verifier
+  } catch (err) {
+    logger.debug("Could not extract address from CBOR", paramsCbor)
+    return ""
+  }
+}
+
+const getProposalIdFromParams = (params: string, logger: Logger): number => {
+  const paramsBytes = Uint8Array.from(Buffer.from(params, 'base64'));
+  const paramsCbor = cbor.decode(paramsBytes)
+
+  const proposalIdParam = 0
+
+  try {
+    logger.debug(`Trying to find proposal ID from ${paramsCbor[proposalIdParam]}`)
+    return paramsCbor[proposalIdParam]
+  } catch (err) {
+    logger.debug("Could not extract proposal ID from CBOR", paramsCbor)
+    console.log(params)
+    console.log(paramsCbor)
+    console.log(paramsCbor[proposalIdParam])
+    return 0
+  }
 }
 
 async function findProcessApprovals(
@@ -50,7 +75,7 @@ async function findProcessApprovals(
   for (const tx of msigState.pendingTxs) {
     logger.debug(`Processing pending transaction: ${JSON.stringify(tx)}`)
 
-    if (tx.to != config.VERIFIED_REGISTRY_ACTOR_ADDRESS || tx.method != VERIFIED_REGISTRY_ACTOR_METHODS.ADD_VERIFIER) {
+    if (tx.to != config.VERIFIED_REGISTRY_ACTOR_ADDRESS || tx.method != VERIFIED_REGISTRY_ACTOR_METHODS.PROPOSE_ADD_VERIFIER) {
       logger.debug("Skipping irrelevant RKH multisig proposal", tx)
     }
 
@@ -73,15 +98,15 @@ async function findProcessApprovals(
   logger.debug(`Found ${msigState.approvedTxs.length} approved transactions`)
   for (const tx of msigState.approvedTxs) {
     try {
-      const verifier = getVerifierFromParams(tx.params, logger)
-
-      const applicationDetails = await applicationDetailsRepository.getByAddress(verifier)
+      // If the last person approves rather than adding to the proposal count
+      // then what we get doesn't include the actual address or params, it's just
+      // an approval on the proposal ID
+      const proposal = getProposalIdFromParams(tx.params, logger)
+      const applicationDetails = await applicationDetailsRepository.getByProposalId(proposal)
       if (!applicationDetails) {
-        console.log('Application details not found for address', verifier)
+        console.log('Application details not found for proposal ID', proposal)
         continue
       }
-
-      await commandBus.send(new UpdateRKHApprovalsCommand(applicationDetails.id, 0, [], "Approved"))
     } catch (error) {
       console.error('Error updating RKH completed approvals', { error })
       // swallow and move on to the next one, it's probably just not for us
@@ -101,8 +126,8 @@ export async function subscribeRKHApprovals(container: Container) {
   setInterval(async () => {
     try{
       await findProcessApprovals(lotusClient, commandBus, applicationDetailsRepository, methods, logger)
-    }catch (err) {
-      console.error("RKH subscription failed:", err);
+    } catch (err) {
+      logger.error("subscribeRKHApprovals uncaught exception:", err);
       // swallow error and wait for next tick
     }
   }, config.SUBSCRIBE_RKH_APPROVALS_POLLING_INTERVAL)
