@@ -107,6 +107,7 @@ async function findProcessApprovals(
         console.log('Application details not found for proposal ID', proposal)
         continue
       }
+      await commandBus.send(new UpdateRKHApprovalsCommand(applicationDetails.id, 0, [], "Approved"))
     } catch (error) {
       console.error('Error updating RKH completed approvals', { error })
       // swallow and move on to the next one, it's probably just not for us
