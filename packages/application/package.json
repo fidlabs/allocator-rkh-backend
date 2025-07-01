@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc --build --force && tsc-alias",
+    "build": "tsc --build --force tsconfig.build.json && tsc-alias",
     "start": "npm run build && TS_NODE_BASEURL=dist node -r tsconfig-paths/register dist/api/index.js",
     "start:worker:governance-review": "npm run build && TS_NODE_BASEURL=dist node -r tsconfig-paths/register dist/worker/subscribe-governance-review-status.js",
     "start:worker:rkh": "npm run build && TS_NODE_BASEURL=dist node -r tsconfig-paths/register dist/worker/subscribe-rkh.js",
