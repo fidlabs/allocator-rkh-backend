@@ -3,22 +3,41 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "lib": ["ESNext", "dom"],
+    "lib": [
+      "ESNext",
+      "dom"
+    ],
     "composite": true,
     "rootDir": "src",
     "baseUrl": "src",
     "outDir": "dist",
     "paths": {
-      "@src/*": ["*"]
+      "@src/*": [
+        "*"
+      ],
+      "@mocks/*": [
+        "./testing/mocks/*"
+      ]
     },
-    "types": ["reflect-metadata"],
+    "types": [
+      "reflect-metadata"
+    ],
     "noImplicitAny": false
   },
   "tsc-alias": {
     "resolveFullPaths": true,
     "verbose": false
   },
-  "include": ["src"],
-  "exclude": ["node_modules"],
-  "references": [{ "path": "../core" }],
+  "include": [
+    "src",
+    "src/testing/mocks"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "references": [
+    {
+      "path": "../core"
+    }
+  ]
 }

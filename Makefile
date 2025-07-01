@@ -11,3 +11,4 @@ restart:
 
 logs:
 	docker compose logs -f
+

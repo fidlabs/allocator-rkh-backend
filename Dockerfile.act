@@ -1,0 +1,16 @@
+FROM alpine:3.19
+
+RUN apk add --no-cache \
+    bash \
+    curl \
+    jq \
+    git \
+    docker-cli \
+    ca-certificates
+
+RUN curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | bash
+
+WORKDIR /workspace
+
+ENTRYPOINT ["act"]
+CMD ["--help"]
