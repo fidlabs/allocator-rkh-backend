@@ -33,7 +33,7 @@ export class BulkCreateIssueCommandHandler {
         data: bulkResults,
       };
     } catch (e) {
-      this.logger.error('Bulk operation failed:', e);
+      this.logger.error(LOG.FAILED_TO_CREATE_ISSUES, e);
       return {
         success: false,
         error: e,

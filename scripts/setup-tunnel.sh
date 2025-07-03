@@ -35,7 +35,9 @@ cleanup() {
     fi
 }
 
-trap cleanup EXIT INT TERM
+trap cleanup EXIT INT TERM ERR QUIT HUP ABRT
+
+set -e
 
 echo "Starting localtunel and GitHub integration on port $PORT..."
 

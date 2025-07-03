@@ -4,7 +4,11 @@ import { Container } from 'inversify';
 import { IIssueMapper, IssueMapper } from './issue-mapper';
 import { GithubIssueFactory } from '@mocks/factories';
 import { TYPES } from '@src/types';
-import { ILLEGAL_CHARACTERS_REGEX, JSON_NUMBER_REGEX } from '@src/infrastructure/mappers/constants';
+import {
+  ILLEGAL_CHARACTERS_REGEX,
+  ISSUE_TITLE_REGEX,
+  JSON_NUMBER_REGEX,
+} from '@src/infrastructure/mappers/constants';
 
 describe('IssueMapper', () => {
   let container: Container;
@@ -24,6 +28,7 @@ describe('IssueMapper', () => {
 
     expect(result).toEqual({
       githubIssueId: issue.id,
+      githubIssueNumber: issue.number,
       title: issue.title,
       creator: {
         userId: issue.user?.id,
@@ -61,18 +66,15 @@ describe('IssueMapper regex test', () => {
     ${"### What is your JSON hash (starts with 'rec')\n\nrec123abc"}             | ${'rec123abc'}
     ${"What is your JSON hash (starts with 'rec')\n\nrec456def"}                 | ${'rec456def'}
     ${"Some other text What is your JSON hash (starts with 'rec')\n\nrecABC123"} | ${'recABC123'}
-    ${'json: 12345'}                                                             | ${null}
-    ${"What is your JSON hash (starts with 'rec')\n\n123abc"}                    | ${null}
-    ${"What is your JSON hash (starts with 'rec')\n\nnotrecabc"}                 | ${null}
-    ${"What is your JSON hash (starts with 'rec')\n\nrec"}                       | ${null}
+    ${'json: 12345'}                                                             | ${undefined}
+    ${"What is your JSON hash (starts with 'rec')\n\n123abc"}                    | ${'123abc'}
+    ${"What is your JSON hash (starts with 'rec')\n\n123321321"}                 | ${'123321321'}
+    ${"What is your JSON hash (starts with 'rec')\n\nnotrecabc"}                 | ${'notrecabc'}
+    ${"What is your JSON hash (starts with 'rec')\n\nrec"}                       | ${'rec'}
   `('should extract jsonNumber from "$given"', ({ given, expected }) => {
     const match = given.match(JSON_NUMBER_REGEX);
 
-    if (expected === null) {
-      expect(match).toBeNull();
-    } else {
-      expect(match?.[1]).toBe(expected);
-    }
+    expect(match?.[1]).toBe(expected);
   });
 
   it.each`
@@ -81,9 +83,24 @@ describe('IssueMapper regex test', () => {
     ${'rec@#$123'}     | ${'rec123'}
     ${'rec-123_abc'}   | ${'rec-123_abc'}
     ${'rec!@#$%^&*()'} | ${'rec'}
+    ${'!@1#$%^2&*()3'} | ${'123'}
   `('should clean illegal chars: "$given" -> "$expected"', ({ given, expected }) => {
     const result = given.replace(ILLEGAL_CHARACTERS_REGEX, '');
 
     expect(result).toBe(expected);
+  });
+
+  it.each`
+    given                  | expected
+    ${'Datacap refresh'}   | ${undefined}
+    ${'[Datacap refresh]'} | ${undefined}
+    ${'DataCap refresh'}   | ${undefined}
+    ${'[DataCap refresh]'} | ${undefined}
+    ${'DataCap Refresh'}   | ${undefined}
+    ${'[DataCap Refresh]'} | ${'[DataCap Refresh]'}
+  `('should extract correct text: "$given" -> "$expected"', ({ given, expected }) => {
+    const result = given.match(ISSUE_TITLE_REGEX);
+
+    expect(result?.[0]).toBe(expected);
   });
 });

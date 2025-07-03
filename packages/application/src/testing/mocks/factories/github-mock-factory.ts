@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 
 export class GithubMockFactory {
   static create() {
-    return vi.hoisted(() => ({
+    return {
       createBranch: vi.fn(),
       deleteBranch: vi.fn(),
       createPullRequest: vi.fn(),
@@ -16,6 +16,6 @@ export class GithubMockFactory {
       getPullRequest: vi.fn(),
       getFile: vi.fn(),
       getIssues: vi.fn(),
-    }));
+    };
   }
 }

@@ -14,6 +14,7 @@ export class IssueMapper implements IIssueMapper {
   fromDomainToIssue(githubIssue: RepoIssue): IssueDetails {
     return {
       githubIssueId: githubIssue.id,
+      githubIssueNumber: githubIssue.number,
       title: githubIssue.title,
       creator: {
         userId: githubIssue.user?.id || 0,

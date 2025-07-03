@@ -17,7 +17,7 @@ export class RefreshIssuesCommand extends Command {
 }
 
 @injectable()
-export class RefreshIssuesCommandCommandHandler implements ICommandHandler<RefreshIssuesCommand> {
+export class RefreshIssuesCommandHandler implements ICommandHandler<RefreshIssuesCommand> {
   commandToHandle: string = RefreshIssuesCommand.name;
 
   constructor(
@@ -51,20 +51,20 @@ export class RefreshIssuesCommandCommandHandler implements ICommandHandler<Refre
   private async handleFetchIssues(): Promise<IssueDetails[]> {
     this.logger.info(LOG.REFRESHING_ISSUES);
 
-    const data = await this.commandBus.send(
+    const commandResponse = await this.commandBus.send(
       new FetchIssuesCommand(config.GITHUB_ISSUES_OWNER, config.GITHUB_ISSUES_REPO),
     );
 
-    if (data.error) throw data.error;
-    return data.data;
+    if (commandResponse.error) throw commandResponse.error;
+    return commandResponse.data;
   }
 
   private async handleBulkCreateIssue(issuesDetails: IssueDetails[]): Promise<BulkWriteResult> {
     this.logger.info(LOG.UPDATING_ISSUES);
 
-    const data = await this.commandBus.send(new BulkCreateIssueCommand(issuesDetails));
+    const commandResponse = await this.commandBus.send(new BulkCreateIssueCommand(issuesDetails));
 
-    if (data.error) throw data.error;
-    return data.data;
+    if (commandResponse.error) throw commandResponse.error;
+    return commandResponse.data;
   }
 }

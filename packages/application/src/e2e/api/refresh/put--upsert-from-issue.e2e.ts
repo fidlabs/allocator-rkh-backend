@@ -1,12 +1,12 @@
 import 'reflect-metadata';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { Application, json, urlencoded } from 'express';
 import { Container } from 'inversify';
 import { Db } from 'mongodb';
 import { InversifyExpressServer } from 'inversify-express-utils';
 import * as dotenv from 'dotenv';
-import { DatabaseRefreshFactory, GithubIssueFactory } from '@mocks/factories';
+import { DatabaseRefreshFactory, GithubIssueFactory, GithubMockFactory } from '@mocks/factories';
 import { TestContainerBuilder } from '@mocks/builders';
 import '@src/api/http/controllers/refresh.controller';
 
@@ -18,6 +18,15 @@ describe('Refresh from Issue E2E', () => {
   let container: Container;
   let db: Db;
 
+  const githubMock = GithubMockFactory.create();
+  const mockFileContent = {
+    content: JSON.stringify({
+      pathway_addresses: {
+        msig: 'f2abcdef1234567890',
+      },
+    }),
+  };
+
   beforeAll(async () => {
     const testBuilder = new TestContainerBuilder();
     await testBuilder.withDatabase();
@@ -26,7 +35,7 @@ describe('Refresh from Issue E2E', () => {
       .withEventBus()
       .withCommandBus()
       .withQueryBus()
-      .withGithubClient()
+      .withGithubClient(githubMock)
       .withRepositories()
       .withCommandHandlers()
       .withQueryHandlers()
@@ -44,8 +53,10 @@ describe('Refresh from Issue E2E', () => {
 
     app = server.build();
     app.listen();
+  });
 
-    console.log(`Test setup complete. Database: ${db.databaseName}`);
+  beforeEach(() => {
+    githubMock.getFile.mockResolvedValue(mockFileContent);
   });
 
   afterEach(async () => {

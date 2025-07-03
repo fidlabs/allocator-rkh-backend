@@ -66,11 +66,12 @@ import { UpdateMetaAllocatorApprovalsCommandHandler } from './application/use-ca
 import { CreateRefreshApplicationCommandHandler } from './application/use-cases/create-application/create-refresh-application.command';
 import { RoleService } from './application/services/role.service';
 import { RevokeKYCCommandHandler } from '@src/application/use-cases/revoke-kyc/revoke-kyc.command';
-import { RefreshIssuesCommandCommandHandler } from '@src/application/use-cases/refresh-issues/refresh-issues.command';
+import { RefreshIssuesCommandHandler } from '@src/application/use-cases/refresh-issues/refresh-issues.command';
 import { FetchIssuesCommandHandler } from '@src/application/use-cases/refresh-issues/fetch-issues.command';
 import { BulkCreateIssueCommandHandler } from '@src/application/use-cases/refresh-issues/bulk-create-issue.command';
 import { GetRefreshesQueryHandler } from '@src/application/queries/get-refreshes/get-refreshes.query';
 import { UpsertIssueCommandCommandHandler } from '@src/application/use-cases/refresh-issues/upsert-issue.command';
+import { FetchAllocatorCommandHandler } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
 
 export const initialize = async (): Promise<Container> => {
   const container = new Container();
@@ -155,14 +156,13 @@ export const initialize = async (): Promise<Container> => {
   container
     .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
     .to(UpdateMetaAllocatorApprovalsCommandHandler);
-  container
-    .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
-    .to(RefreshIssuesCommandCommandHandler);
+  container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(RefreshIssuesCommandHandler);
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(FetchIssuesCommandHandler);
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(BulkCreateIssueCommandHandler);
   container
     .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
     .to(UpsertIssueCommandCommandHandler);
+  container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(FetchAllocatorCommandHandler);
 
   const commandBus = container.get<ICommandBus>(TYPES.CommandBus);
   container

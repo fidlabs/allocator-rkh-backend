@@ -22,7 +22,7 @@ import {
   IssueDetailsRepository,
 } from '@src/infrastructure/respositories/issue-details.repository';
 import { IIssueMapper, IssueMapper } from '@src/infrastructure/mappers/issue-mapper';
-import { RefreshIssuesCommandCommandHandler } from '@src/application/use-cases/refresh-issues/refresh-issues.command';
+import { RefreshIssuesCommandHandler } from '@src/application/use-cases/refresh-issues/refresh-issues.command';
 import { FetchIssuesCommandHandler } from '@src/application/use-cases/refresh-issues/fetch-issues.command';
 import { BulkCreateIssueCommandHandler } from '@src/application/use-cases/refresh-issues/bulk-create-issue.command';
 import { UpsertIssueCommandCommandHandler } from '@src/application/use-cases/refresh-issues/upsert-issue.command';
@@ -84,7 +84,7 @@ export class TestContainerBuilder {
   }
 
   withCommandHandlers() {
-    this.container.bind(TYPES.CommandHandler).to(RefreshIssuesCommandCommandHandler);
+    this.container.bind(TYPES.CommandHandler).to(RefreshIssuesCommandHandler);
     this.container.bind(TYPES.CommandHandler).to(FetchIssuesCommandHandler);
     this.container.bind(TYPES.CommandHandler).to(BulkCreateIssueCommandHandler);
     this.container.bind(TYPES.CommandHandler).to(UpsertIssueCommandCommandHandler);

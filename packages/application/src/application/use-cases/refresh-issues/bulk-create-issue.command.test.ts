@@ -13,6 +13,8 @@ describe('BulkCreateIssueCommand', () => {
   const loggerMock = { info: vi.fn(), error: vi.fn() } as unknown as Logger;
   const repositoryMock = { bulkUpsertByField: vi.fn() };
 
+  const issues = [DatabaseRefreshFactory.create(), DatabaseRefreshFactory.create()];
+
   beforeEach(() => {
     container = new Container();
 
@@ -28,23 +30,27 @@ describe('BulkCreateIssueCommand', () => {
   });
 
   it('should successfully create multiple issues', async () => {
-    const issues = [DatabaseRefreshFactory.create(), DatabaseRefreshFactory.create()];
-    repositoryMock.bulkUpsertByField.mockResolvedValue(undefined);
+    repositoryMock.bulkUpsertByField.mockResolvedValue('bulkWriteResults');
 
     const result = await handler.handle(new BulkCreateIssueCommand(issues));
 
-    expect(result.success).toBe(true);
     expect(repositoryMock.bulkUpsertByField).toHaveBeenCalledTimes(1);
+    expect(repositoryMock.bulkUpsertByField).toHaveBeenCalledWith(issues, 'githubIssueId');
+    expect(result).toStrictEqual({
+      success: true,
+      data: 'bulkWriteResults',
+    });
   });
 
-  it('should handle errors when creating issues fails', async () => {
-    const issues = [DatabaseRefreshFactory.create()];
+  it('should handle errors when bulk creating issues fails', async () => {
     const error = new Error('Failed to save');
     repositoryMock.bulkUpsertByField.mockRejectedValue(error);
 
     const result = await handler.handle(new BulkCreateIssueCommand(issues));
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(error);
+    expect(result).toStrictEqual({
+      success: false,
+      error,
+    });
   });
 });

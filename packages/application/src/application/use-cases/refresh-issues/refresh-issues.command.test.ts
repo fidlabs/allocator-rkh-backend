@@ -1,57 +1,137 @@
 import 'reflect-metadata';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Container } from 'inversify';
 import { TYPES } from '@src/types';
-import { FetchIssuesCommand, FetchIssuesCommandHandler } from './fetch-issues.command';
-import { Logger } from '@filecoin-plus/core';
-import { GithubClient } from '@src/infrastructure/clients/github';
-import { IIssueMapper } from '@src/infrastructure/mappers/issue-mapper';
-import { GithubIssueFactory } from '@mocks/factories';
+import { RefreshIssuesCommand, RefreshIssuesCommandHandler } from './refresh-issues.command';
+import { ICommandBus, Logger } from '@filecoin-plus/core';
+import { DatabaseRefreshFactory } from '@mocks/factories';
+import { FetchIssuesCommand } from '@src/application/use-cases/refresh-issues/fetch-issues.command';
+import { BulkCreateIssueCommand } from '@src/application/use-cases/refresh-issues/bulk-create-issue.command';
 
-describe('FetchIssuesCommand', () => {
+describe.only('RefreshIssuesCommand', () => {
   let container: Container;
-  let handler: FetchIssuesCommandHandler;
-  const loggerMock = { info: vi.fn() };
-  const githubClientMock = { getIssues: vi.fn() };
-  const issueMapperMock = { fromDomainListToIssueList: vi.fn() };
+  let handler: RefreshIssuesCommandHandler;
+  const loggerMock = { info: vi.fn(), error: vi.fn() };
+  const commandBusMock = { send: vi.fn() };
+  const fixtureIssues = [
+    DatabaseRefreshFactory.create(),
+    DatabaseRefreshFactory.create(),
+    DatabaseRefreshFactory.create(),
+  ];
 
   beforeEach(() => {
     container = new Container();
     container.bind<Logger>(TYPES.Logger).toConstantValue(loggerMock as unknown as Logger);
     container
-      .bind<GithubClient>(TYPES.GithubClient)
-      .toConstantValue(githubClientMock as unknown as GithubClient);
-    container
-      .bind<IIssueMapper>(TYPES.IssueMapper)
-      .toConstantValue(issueMapperMock as unknown as IIssueMapper);
-    container.bind(FetchIssuesCommandHandler).toSelf();
+      .bind<ICommandBus>(TYPES.CommandBus)
+      .toConstantValue(commandBusMock as unknown as ICommandBus);
+    container.bind<RefreshIssuesCommandHandler>(RefreshIssuesCommandHandler).toSelf();
 
-    handler = container.get(FetchIssuesCommandHandler);
+    handler = container.get(RefreshIssuesCommandHandler);
   });
 
-  it('should fetch and map issues successfully', async () => {
-    const mockIssues = [GithubIssueFactory.createOpened().issue];
-    const mappedIssues = [{ id: 1, title: 'Test Issue' }];
-
-    githubClientMock.getIssues.mockResolvedValue(mockIssues);
-    issueMapperMock.fromDomainListToIssueList.mockReturnValue(mappedIssues);
-
-    const result = await handler.handle(new FetchIssuesCommand('owner', 'repo'));
-
-    expect(result.success).toBe(true);
-    expect(result.data).toEqual(mappedIssues);
-    expect(githubClientMock.getIssues).toHaveBeenCalledWith('owner', 'repo');
-    expect(issueMapperMock.fromDomainListToIssueList).toHaveBeenCalledWith(mockIssues);
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('should handle errors and return failure response', async () => {
-    const error = new Error('Test error');
-    githubClientMock.getIssues.mockRejectedValue(error);
+  it('should refresh issues successfully', async () => {
+    commandBusMock.send
+      .mockResolvedValueOnce({
+        data: fixtureIssues,
+        success: true,
+      })
+      .mockResolvedValueOnce({
+        data: 'bulkCreateResults',
+        success: true,
+      });
 
-    const result = await handler.handle(new FetchIssuesCommand('owner', 'repo'));
+    const result = await handler.handle(new RefreshIssuesCommand());
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(error);
+    expect(commandBusMock.send).toHaveBeenNthCalledWith(1, expect.any(FetchIssuesCommand));
+    expect(commandBusMock.send).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        guid: expect.any(String),
+        owner: expect.any(String),
+        repo: expect.any(String),
+      }),
+    );
+    expect(commandBusMock.send).toHaveBeenNthCalledWith(2, expect.any(BulkCreateIssueCommand));
+    expect(commandBusMock.send).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        guid: expect.any(String),
+        githubIssues: fixtureIssues,
+      }),
+    );
+    expect(commandBusMock.send).toHaveBeenCalledTimes(2);
+    expect(result).toStrictEqual({
+      success: true,
+      data: 'bulkCreateResults',
+    });
+  });
+
+  it('should handle fetch errors and return failure response', async () => {
+    const error = new Error('Fetch error');
+    commandBusMock.send.mockResolvedValueOnce({
+      error,
+      success: false,
+    });
+
+    const result = await handler.handle(new RefreshIssuesCommand());
+
+    expect(result).toStrictEqual({
+      success: false,
+      error,
+    });
+    expect(commandBusMock.send).toHaveBeenCalledWith(expect.any(FetchIssuesCommand));
+    expect(commandBusMock.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        guid: expect.any(String),
+        owner: expect.any(String),
+        repo: expect.any(String),
+      }),
+    );
+    expect(commandBusMock.send).toHaveBeenCalledTimes(1);
     expect(loggerMock.info).toHaveBeenCalled();
+  });
+
+  it('should handle bulk ipsert error and return failure response', async () => {
+    const error = new Error('Fetch error');
+
+    commandBusMock.send
+      .mockResolvedValueOnce({
+        data: fixtureIssues,
+        success: true,
+      })
+      .mockResolvedValueOnce({
+        error,
+        success: false,
+      });
+
+    const result = await handler.handle(new RefreshIssuesCommand());
+
+    expect(commandBusMock.send).toHaveBeenNthCalledWith(1, expect.any(FetchIssuesCommand));
+    expect(commandBusMock.send).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        guid: expect.any(String),
+        owner: expect.any(String),
+        repo: expect.any(String),
+      }),
+    );
+    expect(commandBusMock.send).toHaveBeenNthCalledWith(2, expect.any(BulkCreateIssueCommand));
+    expect(commandBusMock.send).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        guid: expect.any(String),
+        githubIssues: fixtureIssues,
+      }),
+    );
+    expect(commandBusMock.send).toHaveBeenCalledTimes(2);
+    expect(result).toStrictEqual({
+      success: false,
+      error,
+    });
   });
 });

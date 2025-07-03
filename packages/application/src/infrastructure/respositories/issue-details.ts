@@ -1,5 +1,3 @@
-import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
-
 interface User {
   userId: number;
   name: string;
@@ -7,6 +5,7 @@ interface User {
 
 export interface IssueDetails {
   githubIssueId: number;
+  githubIssueNumber: number;
   title: string;
   creator: User;
   assignees: User[] | null;
@@ -16,5 +15,5 @@ export interface IssueDetails {
   updatedAt: Date | null;
   closedAt: Date | null;
   jsonNumber: string;
-  allocatorDetails?: ApplicationPullRequestFile;
+  msigAddress?: string;
 }
