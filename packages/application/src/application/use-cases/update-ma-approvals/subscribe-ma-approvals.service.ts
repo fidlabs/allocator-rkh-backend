@@ -77,7 +77,7 @@ async function fetchApprovals(fromBlock: number): Promise<any[]> {
 
   const iface = new ethers.utils.Interface(ALLOWANCE_CHANGED_EVENT_ABI)
   const eventTopic = iface.getEventTopic("AllowanceChanged")
-  console.log(`Ethers returned topic: ${eventTopic}...`)
+
   const filter = {
       fromBlock: from,
       toBlock: head,
@@ -85,10 +85,8 @@ async function fetchApprovals(fromBlock: number): Promise<any[]> {
   }
   let logs: any[]
   try {
-    console.log(`Ethers getting logs...`)
     logs = await provider.getLogs(filter);
     console.log(`Ethers returned ${logs.length} logs...`)
-    console.log(logs)
   } catch (error) {
     console.log(`Ethers fetch FAILED...`)
     console.error(error)
@@ -122,6 +120,8 @@ async function fetchApprovals(fromBlock: number): Promise<any[]> {
     }
   }
 
+  console.log(`Found ${approvals.length} AllowanceChanged events...`)
+  console.log(approvals)
   return approvals
 
 }
@@ -181,8 +181,7 @@ export async function subscribeMetaAllocatorApprovals(container: Container) {
       logger.info(`Found ${approvals.length} AllowanceChanged events since block ${lastBlock + 1}.`)
 
       for (let approval of approvals) {
-        console.log(`Processing approval ${approval.txHash}, approved by ${approval.contractAddress}...`)
-        console.log(approval)
+        logger.info(`Processing approval ${approval.txHash}, approved by ${approval.contractAddress}...`)
         if (config.VALID_META_ALLOCATOR_ADDRESSES.includes(approval.contractAddress)) {
           let actorId = approval.allocatorAddress
           if (actorId.startsWith('0x')) {
