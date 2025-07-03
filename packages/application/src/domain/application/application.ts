@@ -353,7 +353,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   async completeMetaAllocatorApproval(blockNumber: number, txHash: string) {
-    console.log('completeMetaAllocatorApproval...')
+    console.log('completeMetaAllocatorApproval...', this.guid, txHash)
     /* Big hack warning (AKA "TODO")
      * All throughout the various steps of the code it's really good at updating the Mongo, so
      * things like changes in DataCap allowance are properly reflected in the JSON and the PR and
@@ -588,7 +588,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyRKHApprovalsUpdated(event: RKHApprovalsUpdated) {
-    console.log(' applyRKHApprovalsUpdated')
+    console.log('applyRKHApprovalsUpdated')
     this.applicationStatus =
       event.approvals.length < event.approvalThreshold
         ? ApplicationStatus.RKH_APPROVAL_PHASE
@@ -619,6 +619,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyMetaAllocatorApprovalCompleted(event: MetaAllocatorApprovalCompleted) {
+    console.log('applyMetaAllocatorApprovalCompleted: ', this.guid, this.applicationPullRequest)
     this.ensureValidApplicationStatus([ApplicationStatus.GOVERNANCE_REVIEW_PHASE,ApplicationStatus.META_APPROVAL_PHASE, ApplicationStatus.DC_ALLOCATED])
     this.status['DC Allocated'] ??= event.timestamp.getTime()
     this.applicationStatus = ApplicationStatus.DC_ALLOCATED
