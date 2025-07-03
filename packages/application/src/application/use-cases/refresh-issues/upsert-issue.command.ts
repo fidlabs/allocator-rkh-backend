@@ -29,7 +29,6 @@ export class UpsertIssueCommandCommandHandler implements ICommandHandler<UpsertI
 
     try {
       const extendedIssueDetails = await this.connectMsigToIssue(command.githubIssue);
-      console.log(extendedIssueDetails);
       await this.saveIssue(extendedIssueDetails);
 
       return {

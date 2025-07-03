@@ -110,4 +110,18 @@ describe('UpsertIssueCommand', () => {
     });
     expect(loggerMock.error).toHaveBeenCalled();
   });
+
+  it('should throw and error when issue does not have a jsonNumber', async () => {
+    const command = new UpsertIssueCommand({ ...fixtureIssueDetails, jsonNumber: '' });
+    const result = await handler.handle(command);
+
+    expect(commandBusMock.send).not.toHaveBeenCalled();
+    expect(repositoryMock.save).not.toHaveBeenCalled();
+    expect(result).toStrictEqual({
+      success: false,
+      error: expect.objectContaining({
+        message: 'Issue does not have a jsonNumber',
+      }),
+    });
+  });
 });
