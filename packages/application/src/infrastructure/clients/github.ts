@@ -172,7 +172,7 @@ export class GithubClient implements IGithubClient {
     baseBranch: string,
   ): Promise<Branch> {
     // Get the latest commit SHA of the base branch.
-    const sha = await this.getReferenceHash(owner, repo, baseBranch);
+    const sha = await this.getCommitSha(owner, repo, baseBranch);
 
     // Create a new branch with the latest commit SHA.
     const { data } = await this.octokit.git.createRef({
@@ -427,7 +427,7 @@ export class GithubClient implements IGithubClient {
     });
   }
 
-  private async getReferenceHash(owner: string, repo: string, branch: string): Promise<string> {
+  private async getCommitSha(owner: string, repo: string, branch: string): Promise<string> {
     const { data } = await this.octokit.git.getRef({
       owner: owner,
       repo: repo,
