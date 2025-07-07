@@ -4,29 +4,39 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc --build --force && tsc-alias",
+    "build": "tsc --build --force tsconfig.build.json && tsc-alias",
     "start": "npm run build && TS_NODE_BASEURL=dist node -r tsconfig-paths/register dist/api/index.js",
     "start:worker:governance-review": "npm run build && TS_NODE_BASEURL=dist node -r tsconfig-paths/register dist/worker/subscribe-governance-review-status.js",
     "start:worker:rkh": "npm run build && TS_NODE_BASEURL=dist node -r tsconfig-paths/register dist/worker/subscribe-rkh.js",
     "fmt": "prettier --write 'src/**/*.{js,ts,json}'",
-    "fmt:check": "prettier --check src test"
+    "fmt:check": "prettier --check src test",
+    "test": "vitest",
+    "test:unit": "vitest --config vitest.unit.config.ts",
+    "test:e2e": "vitest --config vitest.e2e.config.ts",
+    "test:all": "npm run test:unit run && npm run test:e2e run"
   },
   "repository": "git@github.com:threesigmaxyz/filecoin-plus.git",
   "author": "Afonso Oliveira <afonso.oliveira@threesigma.xyz>",
   "license": "MIT",
   "devDependencies": {
+    "@faker-js/faker": "^9.8.0",
+    "@types/supertest": "^6.0.3",
+    "@vitest/ui": "^3.2.4",
     "@types/amqplib": "^0.10.5",
     "@types/cors": "^2.8.17",
     "tsc-alias": "^1.8.10",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "prettier": "^3.3.3",
+    "supertest": "^7.1.1",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@filecoin-plus/core": "^1.0.0",
     "@glif/filecoin-address": "^4.0.0",
     "@ipld/dag-cbor": "^9.2.1",
     "@noble/hashes": "^1.8.0",
-    "@noble/secp256k1":"^2.2.3",
+    "@noble/secp256k1": "^2.2.3",
     "@octokit/core": "^6.1.2",
     "@octokit/plugin-throttling": "^9.3.1",
     "@octokit/rest": "^21.0.0",

@@ -1,8 +1,9 @@
-import { BAD_REQUEST, CONFLICT, NOT_FOUND } from 'http-status-codes';
+import { StatusCodes } from 'http-status-codes';
 
 export class ApplicationError extends Error {
   public readonly httpCode: number;
   public readonly statusCode: string;
+
   constructor(httpCode: number, statusCode: string, message: string) {
     super(message);
     this.httpCode = httpCode;
@@ -12,18 +13,18 @@ export class ApplicationError extends Error {
 
 export class NotFoundException extends ApplicationError {
   constructor(public readonly message: string) {
-    super(NOT_FOUND, '404', message || 'Entity not found');
+    super(StatusCodes.NOT_FOUND, '404', message || 'Entity not found');
   }
 }
 
 export class ConcurrencyException extends ApplicationError {
   constructor(public readonly message: string) {
-    super(CONFLICT, '409', message || 'Concurrency detected');
+    super(StatusCodes.CONFLICT, '409', message || 'Concurrency detected');
   }
 }
 
 export class DomainException extends ApplicationError {
   constructor(public readonly message: string) {
-    super(BAD_REQUEST, '5310', message || 'Domain exception detected');
+    super(StatusCodes.BAD_REQUEST, '5310', message || 'Domain exception detected');
   }
 }
