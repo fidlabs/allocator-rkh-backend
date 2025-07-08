@@ -254,6 +254,8 @@ export class GovernanceReviewRejectedEventHandler implements IEventHandler<Gover
           // FIXME need to harmonise the status enum with the new strings
           status: ApplicationStatus.REJECTED,
           applicationInstructions: event.applicationInstructions,
+          // Hide the actorId for rejected applications
+          actorId: 'f00000000',
         },
       },
     )
