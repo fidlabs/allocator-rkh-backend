@@ -573,6 +573,14 @@ export class DatacapAllocator extends AggregateRoot {
 
   applyGovernanceReviewRejected(event: GovernanceReviewRejected) {
     this.applicationStatus = ApplicationStatus.REJECTED
+
+    /* We zero out the actorId for rejected applications so that they don't get picked up
+       by the on chain data scanners and confuse them. This is because it is never legal for
+       the same actor to have multiple applications open, but REJECT closes the application
+       and the same allocator can apply again. */
+    console.log('Zeroing out allocatorActorId for rejected application', this.guid)
+    this.allocatorActorId = 'f00000000'
+
     if (!this.status['Declined']) {
       this.status['Declined'] = event.timestamp.getTime()
     }
