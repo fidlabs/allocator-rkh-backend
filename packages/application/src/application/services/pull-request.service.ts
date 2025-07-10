@@ -78,7 +78,10 @@ export class PullRequestService {
   }
 
   async updatePullRequest(application: DatacapAllocator): Promise<void> {
+    if (!application.applicationPullRequest?.prNumber) return
+
     this._logger.debug(`Updating pull request message: ${application.applicationPullRequest?.prNumber}`)
+    console.log('Updating pull request message:', application)
     let title: string
     if (application.refresh) {
       title = `Refresh allocator: ${application.applicantName}`

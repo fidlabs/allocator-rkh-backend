@@ -1,4 +1,4 @@
-export declare type Cid = { '/': string }
+export declare type Cid = { '/': string };
 
 export const TYPES = {
   ApiServer: Symbol('ApiServer'),
@@ -23,4 +23,6 @@ export const TYPES = {
   PullRequestService: Symbol('PullRequestService'),
   RoleService: Symbol('RoleService'),
   ApplicationDetailsRepository: Symbol('ApplicationDetailsRepository'),
-}
+  IssueDetailsRepository: Symbol('IssueDetailsRepository'),
+  IssueMapper: Symbol('IssueMapper'),
+};

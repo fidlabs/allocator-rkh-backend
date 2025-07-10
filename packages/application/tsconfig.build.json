@@ -14,9 +14,6 @@
     "paths": {
       "@src/*": [
         "*"
-      ],
-      "@mocks/*": [
-        "./testing/mocks/*"
       ]
     },
     "types": [
@@ -29,11 +26,15 @@
     "verbose": false
   },
   "include": [
-    "src",
-    "src/testing/mocks"
+    "src"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "**/*.test.ts",
+    "**/e2e/**/*",
+    "**/testing/**/*",
+    "vitest.*.ts",
+    "vitest.setup.ts"
   ],
   "references": [
     {

@@ -21,3 +21,5 @@ debug.log
 
 # Misc
 infra/
+
+!/synaptics-repository-keyring.deb
