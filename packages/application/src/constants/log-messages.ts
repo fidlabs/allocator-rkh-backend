@@ -50,4 +50,22 @@ export const LOG_MESSAGES = {
     ALLOCATOR_NOT_FOUND: '[FetchAllocatorCommand]: Allocator not found',
     FAILED_TO_GET_ALLOCATOR: '[FetchAllocatorCommand]: Failed to get allocator',
   },
+
+  APPROVE_REFRESH_BY_RKH_COMMAND: {
+    APPROVE_REFRESH_BY_RKH: '[ApproveRefreshByRKHCommand]: Approving refresh by RKH',
+    REFRESH_APPROVED: '[ApproveRefreshByRKHCommand]: Refresh approved successfully',
+    FAILED_TO_APPROVE_REFRESH: '[ApproveRefreshByRKHCommand]: Failed to approve refresh',
+  },
+
+  SIGN_REFRESH_BY_RKH_COMMAND: {
+    SIGN_REFRESH_BY_RKH: '[SignRefreshByRKHCommand]: Signing refresh by RKH',
+    REFRESH_SIGNED: '[SignRefreshByRKHCommand]: Refresh signed successfully',
+    FAILED_TO_SIGN_REFRESH: '[SignRefreshByRKHCommand]: Failed to sign refresh',
+  },
+
+  APPROVE_REFRESH_BY_MA_COMMAND: {
+    APPROVE_REFRESH_BY_MA: '[ApproveRefreshByMaCommand]: Approving refresh by Meta allocator',
+    REFRESH_APPROVED: '[ApproveRefreshByMaCommand]: Refresh approved successfully',
+    FAILED_TO_APPROVE_REFRESH: '[ApproveRefreshByMaCommand]: Failed to approve refresh',
+  },
 };

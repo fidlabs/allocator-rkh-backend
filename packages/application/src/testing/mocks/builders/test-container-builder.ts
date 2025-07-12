@@ -15,7 +15,6 @@ import {
 import { InMemoryEventBus } from '@src/infrastructure/event-bus/in-memory-event-bus';
 import { CommandBus } from '@src/infrastructure/command-bus';
 import { QueryBus } from '@src/infrastructure/query-bus';
-import { GithubMockFactory } from '@mocks/factories';
 import { IGithubClient } from '@src/infrastructure/clients/github';
 import {
   IIssueDetailsRepository,
@@ -27,6 +26,7 @@ import { FetchIssuesCommandHandler } from '@src/application/use-cases/refresh-is
 import { BulkCreateIssueCommandHandler } from '@src/application/use-cases/refresh-issues/bulk-create-issue.command';
 import { UpsertIssueCommandCommandHandler } from '@src/application/use-cases/refresh-issues/upsert-issue.command';
 import { GetRefreshesQueryHandler } from '@src/application/queries/get-refreshes/get-refreshes.query';
+import { FetchAllocatorCommandHandler } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
 
 export class TestContainerBuilder {
   private container: Container;
@@ -68,7 +68,7 @@ export class TestContainerBuilder {
     return this;
   }
 
-  withGithubClient(client = GithubMockFactory.create()) {
+  withGithubClient(client = {} as IGithubClient) {
     this.container.bind<IGithubClient>(TYPES.GithubClient).toConstantValue(client);
     return this;
   }
@@ -88,6 +88,7 @@ export class TestContainerBuilder {
     this.container.bind(TYPES.CommandHandler).to(FetchIssuesCommandHandler);
     this.container.bind(TYPES.CommandHandler).to(BulkCreateIssueCommandHandler);
     this.container.bind(TYPES.CommandHandler).to(UpsertIssueCommandCommandHandler);
+    this.container.bind(TYPES.CommandHandler).to(FetchAllocatorCommandHandler);
     return this;
   }
 

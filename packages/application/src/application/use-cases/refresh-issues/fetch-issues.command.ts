@@ -7,6 +7,7 @@ import { IIssueMapper } from '@src/infrastructure/mappers/issue-mapper';
 import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
 import { FetchAllocatorCommand } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
 import { ISSUE_TITLE_REGEX } from '@src/infrastructure/mappers/constants';
+import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
 
 const LOG = LOG_MESSAGES.FETCH_ISSUES_COMMAND;
 
@@ -35,7 +36,7 @@ export class FetchIssuesCommandHandler implements ICommandHandler<FetchIssuesCom
       const repoIssues = await this.handleFetchIssues(command.owner, command.repo);
       const filteredIssues = this.filterIssuesByTitle(repoIssues);
       const mappedIssues = this.handleMapIssues(filteredIssues);
-      const settledExtendedIssues = await this.connectMsigsToIssues(mappedIssues);
+      const settledExtendedIssues = await this.connectAllocatorsToIssues(mappedIssues);
       const issuesWithCorrectAllocatorJson =
         this.omitIssuesWithoutCorrectAllocatorJson(settledExtendedIssues);
 
@@ -52,7 +53,7 @@ export class FetchIssuesCommandHandler implements ICommandHandler<FetchIssuesCom
     }
   }
 
-  async connectMsigsToIssues(
+  async connectAllocatorsToIssues(
     issuesDetails: IssueDetails[],
   ): Promise<PromiseSettledResult<IssueDetails>[]> {
     this.logger.info(LOG.CONNECTING_ALLOCATORS_TO_ISSUES);
@@ -65,13 +66,9 @@ export class FetchIssuesCommandHandler implements ICommandHandler<FetchIssuesCom
       );
 
       if (!commandResponse.success) throw commandResponse.error;
+      const data = commandResponse.data as ApplicationPullRequestFile;
 
-      const extendedIssue: IssueDetails = {
-        ...issue,
-        msigAddress: commandResponse.data.pathway_addresses.msig,
-      };
-
-      return extendedIssue;
+      return this.issueMapper.extendWithAllocatorData(issue, data);
     });
 
     const settledResults = await Promise.allSettled(extendedIssuesPromises);

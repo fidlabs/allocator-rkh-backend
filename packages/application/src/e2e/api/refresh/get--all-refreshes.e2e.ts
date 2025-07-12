@@ -90,9 +90,14 @@ describe('GET /api/v1/refreshes', () => {
         },
         results: response.body.data.results.map(item => ({
           _id: item._id,
+          actorId: item.actorId,
+          maAddress: item.maAddress,
+          msigAddress: item.msigAddress,
           githubIssueId: item.githubIssueId,
           githubIssueNumber: item.githubIssueNumber,
-          msigAddress: item.msigAddress,
+          metapathwayType: item.metapathwayType,
+          refreshStatus: item.refreshStatus,
+          dataCap: item.dataCap,
           title: item.title,
           creator: {
             name: item.creator.name,
