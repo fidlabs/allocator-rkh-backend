@@ -111,7 +111,7 @@ async function findProcessApprovals(
         onSuccess: command => commandBus.send(command),
       });
     } catch (error) {
-      console.error('Error updating RKH signs', { error });
+      console.error('Error updating RKH open proposals', { error });
     }
   }
 
