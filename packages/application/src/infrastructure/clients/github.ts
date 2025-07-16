@@ -65,7 +65,7 @@ export interface IGithubClient {
     title?: string,
     body?: string,
     files?: { path: string; content: string }[],
-  ): Promise<PullRequest>;
+  ): Promise<PullRequest | null>;
 
   closePullRequest(owner: string, repo: string, pullNumber: number): Promise<void>;
 
@@ -82,7 +82,7 @@ export interface IGithubClient {
     pullNumber: number,
     commentId: number,
     body: string,
-  ): Promise<PullRequestReview>;
+  ): Promise<PullRequestReview | null>;
 
   updatePullRequestReviewers(
     owner: string,
@@ -227,11 +227,16 @@ export class GithubClient implements IGithubClient {
     title?: string,
     body?: string,
     files?: { path: string; content: string }[],
-  ): Promise<PullRequest> {
+  ): Promise<PullRequest | null> {
+    // Do not update PRs that are already closed
+    const pr = await this.getPullRequest(owner, repo, pullNumber);
+    if (pr.state === 'closed') {
+      console.log(`Pull request ${pullNumber} is already closed. Skipping update.`);
+      return null;
+    } 
+
     // Update files if provided
     if (files) {
-      // Get the PR details to get the head branch
-      const pr = await this.getPullRequest(owner, repo, pullNumber);
       const headBranch = pr.head.ref;
 
       // Update each file in the branch
@@ -254,6 +259,10 @@ export class GithubClient implements IGithubClient {
 
     if (title) updateParams.title = title;
     if (body) updateParams.body = body;
+
+    if (!title || !body ) {
+      console.log(`>>> Updating PR ${pullNumber} with empty elements! Body is ${body}, Title is ${title}, Files length is ${files?.length} <<<`)
+    }
 
     const { data } = await this.octokit.pulls.update(updateParams);
     return data;
@@ -292,8 +301,16 @@ export class GithubClient implements IGithubClient {
     pullNumber: number,
     commentId: number,
     body: string,
-  ): Promise<PullRequestReview> {
+  ): Promise<PullRequestReview | null> {
     console.log(`>>> Updating Review! <<< ${owner}, ${repo}, ${pullNumber}, ${commentId}, ${body}`);
+    
+    // Do not update PRs that are already closed
+    const pr = await this.getPullRequest(owner, repo, pullNumber);
+    if (pr.state === 'closed') {
+      console.log(`Pull request ${pullNumber} is already closed. Skipping comment update.`);
+      return null;
+    } 
+    
     const { data } = await this.octokit.pulls.updateReview({
       owner,
       repo,
