@@ -67,18 +67,25 @@ export class SignRefreshByRKHCommandHandler implements ICommandHandler<SignRefre
     const datacap = paramsCbor[1];
 
     try {
-      let datacapBytes: bigint;
-
-      if (Buffer.isBuffer(datacap)) {
-        datacapBytes = BigInt('0x' + datacap.toString('hex'));
-      } else {
-        datacapBytes = BigInt(datacap.toString());
-      }
-
-      const PiB = BigInt('1125899906842624');
-      return Number(datacapBytes) / Number(PiB);
+      const datacapBytes = this.extractDataCapBytes(datacap);
+      return this.convertToPib(datacapBytes);
     } catch {
       return 0;
     }
+  }
+
+  private extractDataCapBytes(datacap: Buffer | string): bigint {
+    return Buffer.isBuffer(datacap)
+      ? BigInt('0x' + datacap.toString('hex'))
+      : BigInt(datacap.toString());
+  }
+
+  private convertToPib(datacapBytes: bigint): number {
+    const PiB = BigInt('1125899906842624');
+    const integerFromDivision = datacapBytes / PiB;
+    const remainder = datacapBytes % PiB;
+    const fraction = Number(remainder) / Number(PiB);
+
+    return Number(integerFromDivision) + fraction;
   }
 }
