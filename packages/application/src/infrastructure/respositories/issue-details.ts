@@ -27,4 +27,7 @@ export interface IssueDetails {
     messageId: number;
     approvals: string[];
   };
+  metaAllocator?: {
+    blockNumber: number;
+  };
 }
