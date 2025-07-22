@@ -64,10 +64,7 @@ export function ensureSubscribeMetaAllocatorApprovalsConfig() {
 
 async function fetchApprovals(fromBlock: number): Promise<any[]> {
   console.log(`Fetching approvals from block ${fromBlock}...`);
-  const provider = new ethers.providers.JsonRpcProvider(config.EVM_RPC_URL, {
-    name: 'filecoin-local',
-    chainId: 31415926,
-  });
+  const provider = new ethers.providers.JsonRpcProvider(config.EVM_RPC_URL);
 
   /* Ensure 'fromBlock' is within the allowed lookback range.
      Lotus enforces exactly that “no more than 16h40m” window, which is 2000 epochs.
@@ -209,10 +206,7 @@ export async function subscribeMetaAllocatorApprovals(container: Container) {
           if (actorId.startsWith('0x')) {
             console.log(`Allocator Id is an Ethereum address: ${actorId}`);
             // If the address is an Ethereum address, convert to Filecoin Id first
-            const provider = new ethers.providers.JsonRpcProvider(config.EVM_RPC_URL, {
-              name: 'filecoin-local',
-              chainId: 31415926,
-            });
+            const provider = new ethers.providers.JsonRpcProvider(config.EVM_RPC_URL);
             const filecoinId = await provider.send('Filecoin.EthAddressToFilecoinAddress', [
               actorId,
             ]);
