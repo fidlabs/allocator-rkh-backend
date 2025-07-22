@@ -116,31 +116,33 @@ Before running the Docker setup, you need to have the following tools installed:
 
 The Docker setup can be configured by setting the following environment variables:
 
-| Environment Variable             | Description                                               | Example Values                               |
-|----------------------------------|-----------------------------------------------------------|----------------------------------------------|
-| `API_PORT`                       | Port number for the API service                           | `3000`                                       |
-| `MONGODB_URI`                    | URI for connecting to MongoDB                             | `mongodb://host.docker.internal:27017/`      |
-| `RABBITMQ_URL`                   | URL for connecting to RabbitMQ                            | `localhost:5672`                             |
-| `RABBITMQ_USERNAME`              | Username for RabbitMQ authentication                      | `admin`                                      |
-| `RABBITMQ_PASSWORD`              | Password for RabbitMQ authentication                      | `admin`                                      |
-| `RABBITMQ_EXCHANGE_NAME`         | Name of the RabbitMQ exchange                             | `filecoin-plus`                              |
-| `RABBITMQ_EXCHANGE_TYPE`         | Type of the RabbitMQ exchange                             | `topic`                                      |
-| `RABBITMQ_QUEUE_NAME`            | Name of the RabbitMQ queue                                | `allocator`                                  |
-| `GITHUB_OWNER`                   | Owner of the GitHub repository                            | `fidlabs`                                    |
-| `GITHUB_REPO`                    | Name of the GitHub repository                             | `filecoin-plus-backend`                      |
-| `GITHUB_APP_ID`                  | ID of the GitHub App                                      | `1`                                          |
-| `GITHUB_APP_PRIVATE_KEY`         | Private key for the GitHub App                            | `-----BEGIN RSA PRIVATE KEY-----...`         |
-| `GITHUB_APP_INSTALLATION_ID`     | Installation ID for the GitHub App                        | `1337`                                       |
-| `GITHUB_TOKEN`                   | GitHub Token for the GitHub App                           |                                              |
-| `GOVERNANCE_TEAM_GITHUB_HANDLES` | github handles of the governance team                     | 'galen-mcandrew'                             
-| `GOVERNANCE_REVIEW_ADDRESSES`    | Wallet addresses of people on the Fil+ governance team    | 'f1..., f1....'                              
-| `RKH_ADDRESSES`                  | Wallet addresses of Root Key Holders                      | 'f1..., f1....'                              
-| `MA_ADDRESSES`                   | Addresses of contracts controlling Metaallocator Pathways | ' 0xB6F5d279AEad97dFA45209F3E53969c2EF43C21d 
-| `AIRTABLE_API_KEY`               | API key for accessing the Airtable API                    | `pat*******************`                     |
-| `AIRTABLE_BASE_ID`               | ID of the Airtable base                                   | `app*******************`                     |
-| `AIRTABLE_TABLE_NAME`            | Name of the Airtable table                                | `tbl*******************`                     |
-| `LOTUS_RPC_URL`                  | URL for connecting to the Lotus RPC API                   | `http://localhost:1234/rpc/v0`               |
-| `LOTUS_AUTH_TOKEN`               | Token for authenticating with the Lotus RPC API           | `lotus_token_*****************`              |
+| Environment Variable             | Description                                                  | Example Values                               |
+|----------------------------------|--------------------------------------------------------------|----------------------------------------------|
+| `API_PORT`                       | Port number for the API service                              | `3000`                                       |
+| `MONGODB_URI`                    | URI for connecting to MongoDB                                | `mongodb://host.docker.internal:27017/`      |
+| `RABBITMQ_URL`                   | URL for connecting to RabbitMQ                               | `localhost:5672`                             |
+| `RABBITMQ_USERNAME`              | Username for RabbitMQ authentication                         | `admin`                                      |
+| `RABBITMQ_PASSWORD`              | Password for RabbitMQ authentication                         | `admin`                                      |
+| `RABBITMQ_EXCHANGE_NAME`         | Name of the RabbitMQ exchange                                | `filecoin-plus`                              |
+| `RABBITMQ_EXCHANGE_TYPE`         | Type of the RabbitMQ exchange                                | `topic`                                      |
+| `RABBITMQ_QUEUE_NAME`            | Name of the RabbitMQ queue                                   | `allocator`                                  |
+| `GITHUB_OWNER`                   | Owner of the GitHub repository                               | `fidlabs`                                    |
+| `GITHUB_REPO`                    | Name of the GitHub repository                                | `filecoin-plus-backend`                      |
+| `GITHUB_APP_ID`                  | ID of the GitHub App                                         | `1`                                          |
+| `GITHUB_APP_PRIVATE_KEY`         | Private key for the GitHub App                               | `-----BEGIN RSA PRIVATE KEY-----...`         |
+| `GITHUB_APP_INSTALLATION_ID`     | Installation ID for the GitHub App                           | `1337`                                       |
+| `GITHUB_TOKEN`                   | GitHub Token for the GitHub App                              |                                              |
+| `GOVERNANCE_TEAM_GITHUB_HANDLES` | github handles of the governance team                        | 'galen-mcandrew'                             
+| `GOVERNANCE_REVIEW_ADDRESSES`    | Wallet addresses of people on the Fil+ governance team       | 'f1..., f1....'                              
+| `RKH_ADDRESSES`                  | Wallet addresses of Root Key Holders                         | 'f1..., f1....'                              
+| `MA_ADDRESSES`                   | Addresses of contracts controlling Metaallocator Pathways    | ' 0xB6F5d279AEad97dFA45209F3E53969c2EF43C21d 
+| `AIRTABLE_API_KEY`               | API key for accessing the Airtable API                       | `pat*******************`                     |
+| `AIRTABLE_BASE_ID`               | ID of the Airtable base                                      | `app*******************`                     |
+| `AIRTABLE_TABLE_NAME`            | Name of the Airtable table                                   | `tbl*******************`                     |
+| `LOTUS_RPC_URL`                  | URL for connecting to the Lotus RPC API                      | `http://localhost:1234/rpc/v0`               |
+| `LOTUS_AUTH_TOKEN`               | Token for authenticating with the Lotus RPC API              | `lotus_token_*****************`              |
+| `GITHUB_ISSUES_REPO`             | Name of the Governance GitHub repository (added for forking) | `Allocator-Governance`                       |
+| `GITHUB_ISSUES_OWNER`            | Owner for Governance github respository (added for forking)  | `filecoin-project`                           |
 
 #### Running
 

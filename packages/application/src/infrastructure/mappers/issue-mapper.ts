@@ -2,11 +2,14 @@ import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
 import { RepoIssue } from '@src/infrastructure/clients/github';
 import { injectable } from 'inversify';
 import { ILLEGAL_CHARACTERS_REGEX, JSON_NUMBER_REGEX } from './constants';
+import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
 
 export interface IIssueMapper {
   fromDomainToIssue(githubIssue: RepoIssue): IssueDetails;
 
   fromDomainListToIssueList(githubIssues: RepoIssue[]): IssueDetails[];
+
+  extendWithAllocatorData(issue: IssueDetails, allocator: ApplicationPullRequestFile): IssueDetails;
 }
 
 @injectable()
@@ -15,7 +18,7 @@ export class IssueMapper implements IIssueMapper {
     return {
       githubIssueId: githubIssue.id,
       githubIssueNumber: githubIssue.number,
-      title: githubIssue.title,
+      title: githubIssue.title.replace('[DataCap Refresh]', '').trim(),
       creator: {
         userId: githubIssue.user?.id || 0,
         name: githubIssue.user?.login || 'Unknown',
@@ -36,6 +39,19 @@ export class IssueMapper implements IIssueMapper {
 
   fromDomainListToIssueList(githubIssues: RepoIssue[]): IssueDetails[] {
     return githubIssues.map(issue => this.fromDomainToIssue(issue));
+  }
+
+  extendWithAllocatorData(
+    issue: IssueDetails,
+    allocator: ApplicationPullRequestFile,
+  ): IssueDetails {
+    return {
+      ...issue,
+      msigAddress: allocator?.pathway_addresses?.msig,
+      maAddress: allocator?.ma_address,
+      metapathwayType: allocator?.metapathway_type,
+      actorId: allocator?.allocator_id,
+    };
   }
 
   private extractJsonNumber(body: string): string {

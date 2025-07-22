@@ -29,7 +29,7 @@ describe('IssueMapper', () => {
     expect(result).toEqual({
       githubIssueId: issue.id,
       githubIssueNumber: issue.number,
-      title: issue.title,
+      title: issue.title.replace('[DataCap Refresh] ', ''),
       creator: {
         userId: issue.user?.id,
         name: issue.user?.login,

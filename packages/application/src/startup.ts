@@ -72,6 +72,8 @@ import { BulkCreateIssueCommandHandler } from '@src/application/use-cases/refres
 import { GetRefreshesQueryHandler } from '@src/application/queries/get-refreshes/get-refreshes.query';
 import { UpsertIssueCommandCommandHandler } from '@src/application/use-cases/refresh-issues/upsert-issue.command';
 import { FetchAllocatorCommandHandler } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
+import { SignRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/sign-refresh-by-rkh.command';
+import { ApproveRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/approve-refresh-by-rkh.command';
 
 export const initialize = async (): Promise<Container> => {
   const container = new Container();
@@ -163,6 +165,12 @@ export const initialize = async (): Promise<Container> => {
     .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
     .to(UpsertIssueCommandCommandHandler);
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(FetchAllocatorCommandHandler);
+  container
+    .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
+    .to(SignRefreshByRKHCommandHandler);
+  container
+    .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
+    .to(ApproveRefreshByRKHCommandHandler);
 
   const commandBus = container.get<ICommandBus>(TYPES.CommandBus);
   container

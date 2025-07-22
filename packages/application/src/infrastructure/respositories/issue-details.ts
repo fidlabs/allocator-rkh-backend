@@ -16,4 +16,15 @@ export interface IssueDetails {
   closedAt: Date | null;
   jsonNumber: string;
   msigAddress?: string;
+  metapathwayType?: string;
+  maAddress?: string;
+  refreshStatus?: 'DC_ALLOCATED' | 'REJECTED' | 'PENDING' | 'SIGNED_BY_RKH';
+  actorId?: string;
+  transactionCid?: string;
+  blockNumber?: number;
+  dataCap?: number;
+  rkhPhase?: {
+    messageId: number;
+    approvals: string[];
+  };
 }
