@@ -27,6 +27,12 @@ import {
   IssueDetailsRepository,
 } from '@src/infrastructure/respositories/issue-details.repository';
 import { IIssueMapper, IssueMapper } from '@src/infrastructure/mappers/issue-mapper';
+import {
+  IRpcProvider,
+  RpcProvider,
+  RpcProviderConfig,
+} from '@src/infrastructure/clients/rpc-provider';
+import { DataCapMapper, IDataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
 
 export const infrastructureModule = new AsyncContainerModule(async (bind: interfaces.Bind) => {
   // MongoDB setup
@@ -45,6 +51,18 @@ export const infrastructureModule = new AsyncContainerModule(async (bind: interf
   };
   bind<GithubClientConfig>(TYPES.GithubClientConfig).toConstantValue(githubClientConfig);
   bind<IGithubClient>(TYPES.GithubClient).to(GithubClient).inSingletonScope();
+
+  const rpcProviderConfig: RpcProviderConfig = {
+    useTestNet: config.USE_LOCAL_TEST_NET,
+    evmRpcUrl: config.EVM_RPC_URL,
+    localTestNet: {
+      chainId: config.LOCAL_TEST_NET_CHAIN_ID,
+      url: config.LOCAL_TEST_NET_URL,
+      networkName: config.LOCAL_TEST_NET_NETWORK_NAME,
+    },
+  };
+  bind<RpcProviderConfig>(TYPES.RpcProviderConfig).toConstantValue(rpcProviderConfig);
+  bind<IRpcProvider>(TYPES.RpcProvider).to(RpcProvider).inSingletonScope();
 
   // Airtable client configuration
   const airtableClientConfig: AirtableClientConfig = {
@@ -81,4 +99,5 @@ export const infrastructureModule = new AsyncContainerModule(async (bind: interf
 
   // Mappers
   bind<IIssueMapper>(TYPES.IssueMapper).to(IssueMapper).inSingletonScope();
+  bind<IDataCapMapper>(TYPES.DataCapMapper).to(DataCapMapper).inSingletonScope();
 });

@@ -10,6 +10,7 @@ import { MongoClient } from 'mongodb';
 import { IIssueDetailsRepository } from '@src/infrastructure/respositories/issue-details.repository';
 import { ApproveRefreshByMaCommand } from '@src/application/use-cases/update-ma-approvals/approve-refresh-by-ma.command';
 import { executeWithFallback } from '@src/patterns/execution/executeWithFallback';
+import { IRpcProvider } from '@src/infrastructure/clients/rpc-provider';
 
 const ALLOWANCE_CHANGED_EVENT_ABI = [
   {
@@ -62,19 +63,21 @@ export function ensureSubscribeMetaAllocatorApprovalsConfig() {
   }
 }
 
-async function fetchApprovals(fromBlock: number): Promise<any[]> {
-  console.log(`Fetching approvals from block ${fromBlock}...`);
-  const provider = new ethers.providers.JsonRpcProvider(config.EVM_RPC_URL);
-
+async function fetchApprovals(
+  fromBlock: number,
+  logger: Logger,
+  rpcProvider: IRpcProvider,
+): Promise<Approval[]> {
+  logger.info(`Fetching approvals from block ${fromBlock}...`);
   /* Ensure 'fromBlock' is within the allowed lookback range.
      Lotus enforces exactly that “no more than 16h40m” window, which is 2000 epochs.
      Any lookback more than that will be rejected so we have to accept some
      lossiness here if (eg the service goes down for a bit).
      Using 1990 to allow a little headroom for race conditions */
-  const head = await provider.getBlockNumber();
-  console.log(`Head block is ${head}.`);
+  const head = await rpcProvider.getBlockNumber();
+  logger.info(`Head block is ${head}.`);
   const from = fromBlock > head - 2000 ? fromBlock : head - 1990;
-  console.log(`After adjustment fetching approvals from block ${from}...`);
+  logger.info(`After adjustment fetching approvals from block ${from}...`);
 
   const iface = new ethers.utils.Interface(ALLOWANCE_CHANGED_EVENT_ABI);
   const eventTopic = iface.getEventTopic('AllowanceChanged');
@@ -84,12 +87,12 @@ async function fetchApprovals(fromBlock: number): Promise<any[]> {
     toBlock: head,
     topics: [eventTopic],
   };
-  let logs: any[];
+  let logs: ethers.providers.Log[];
   try {
-    logs = await provider.getLogs(filter);
-    console.log(`Ethers returned ${logs.length} logs...`);
+    logs = await rpcProvider.getLogs(filter);
+    logger.info(`Ethers returned ${logs.length} logs...`);
   } catch (error) {
-    console.log(`Ethers fetch FAILED...`);
+    logger.info(`Ethers fetch FAILED...`);
     console.error(error);
     return [];
   }
@@ -159,9 +162,8 @@ export async function subscribeMetaAllocatorApprovals(container: Container) {
   const applicationDetailsRepository = container.get<IApplicationDetailsRepository>(
     TYPES.ApplicationDetailsRepository,
   );
-  const issuesRepository = container.get<IIssueDetailsRepository>(
-    TYPES.ApplicationDetailsRepository,
-  );
+  const issuesRepository = container.get<IIssueDetailsRepository>(TYPES.IssueDetailsRepository);
+  const rpcProvider = container.get<IRpcProvider>(TYPES.RpcProvider);
 
   let shouldContinue = true;
 
@@ -184,71 +186,32 @@ export async function subscribeMetaAllocatorApprovals(container: Container) {
 
     try {
       logger.info('Fetching lastBlock...');
-      const applicationLastBlock = await fetchLastBlockMetaAllocator(
-        'filecoin-plus',
-        'applicationDetails',
-      );
-      const issueLastBlock = await fetchLastBlockMetaAllocator('filecoin-plus', 'issueDetails');
+
+      const [applicationLastBlock, issueLastBlock] = await Promise.all([
+        fetchLastBlockMetaAllocator('filecoin-plus', 'applicationDetails'),
+        fetchLastBlockMetaAllocator('filecoin-plus', 'issueDetails'),
+      ]);
       const lastBlock = Math.max(applicationLastBlock, issueLastBlock);
       logger.info(`Last block is ${lastBlock}.`);
       logger.info('Fetching approvals...');
-      const approvals = await fetchApprovals(lastBlock + 1);
+
+      const approvals = await fetchApprovals(lastBlock + 1, logger, rpcProvider);
       logger.info(
         `Found ${approvals.length} AllowanceChanged events since block ${lastBlock + 1}.`,
       );
 
-      for (let approval of approvals) {
-        logger.info(
-          `Processing approval ${approval.txHash}, approved by ${approval.contractAddress}...`,
-        );
-        if (config.VALID_META_ALLOCATOR_ADDRESSES.includes(approval.contractAddress)) {
-          let actorId = approval.allocatorAddress;
-          if (actorId.startsWith('0x')) {
-            console.log(`Allocator Id is an Ethereum address: ${actorId}`);
-            // If the address is an Ethereum address, convert to Filecoin Id first
-            const provider = new ethers.providers.JsonRpcProvider(config.EVM_RPC_URL);
-            const filecoinId = await provider.send('Filecoin.EthAddressToFilecoinAddress', [
-              actorId,
-            ]);
-            console.log(`Converted to Filecoin id: ${filecoinId}`);
-            if (!filecoinId) {
-              logger.error('Failed to convert Ethereum address to Filecoin address:', actorId);
-            }
-            actorId = filecoinId;
-          }
-          try {
-            await executeWithFallback<Command>({
-              primary: () =>
-                handleMetaAllocatorIssueApproval({
-                  approval,
-                  actorId,
-                  issuesRepository,
-                }),
-              fallback: () =>
-                handleMetaAllocatorApplicationApproval({
-                  approval,
-                  actorId,
-                  applicationDetailsRepository,
-                }),
-              onPrimaryError: error =>
-                logger.error(
-                  'Error updating Issue MetaAllocator approval, trying Application:',
-                  error,
-                ),
-              onFallbackError: error =>
-                logger.error('Both Issue and Application handlers failed:', error),
-              onSuccess: command => commandBus.send(command),
-            });
-
-            logger.info(`Successfully processed MetaAllocator approval for actorId: ${actorId}`);
-          } catch (error) {
-            logger.error('Error updating Meta Allocator approvals', error);
-          }
-        } else {
-          logger.debug(`Invalid contract address: ${approval.contractAddress}`);
-          logger.debug(config.VALID_META_ALLOCATOR_ADDRESSES);
-        }
-      }
+      await Promise.allSettled(
+        approvals.map(approval =>
+          handleApproval({
+            approval,
+            logger,
+            rpcProvider,
+            applicationDetailsRepository,
+            issuesRepository,
+            commandBus,
+          }),
+        ),
+      );
     } catch (err) {
       logger.error('subscribeMetaAllocatorApprovals uncaught exception', err);
       // swallow error and wait for next tick
@@ -260,6 +223,90 @@ export async function subscribeMetaAllocatorApprovals(container: Container) {
   };
 }
 
+export async function handleApproval({
+  approval,
+  logger,
+  rpcProvider,
+  issuesRepository,
+  applicationDetailsRepository,
+  commandBus,
+}: {
+  approval: Approval;
+  logger: Logger;
+  rpcProvider: IRpcProvider;
+  issuesRepository: IIssueDetailsRepository;
+  applicationDetailsRepository: IApplicationDetailsRepository;
+  commandBus: ICommandBus;
+}) {
+  logger.info(`Processing approval ${approval.txHash}, approved by ${approval.contractAddress}...`);
+
+  if (!config.VALID_META_ALLOCATOR_ADDRESSES.includes(approval.contractAddress)) {
+    logger.debug(`Invalid contract address: ${approval.contractAddress}`);
+    logger.debug(config.VALID_META_ALLOCATOR_ADDRESSES);
+    return;
+  }
+
+  const actorId = await convertToFileCoinAddress({
+    allocatorAddress: approval.allocatorAddress,
+    logger,
+    rpcProvider,
+  });
+
+  if (!actorId) {
+    logger.error('Failed to convert Ethereum address to Filecoin address:', actorId);
+    return;
+  }
+
+  try {
+    await executeWithFallback<Command>({
+      primary: () =>
+        handleMetaAllocatorIssueApproval({
+          approval,
+          actorId,
+          issuesRepository,
+        }),
+      fallback: () =>
+        handleMetaAllocatorApplicationApproval({
+          approval,
+          actorId,
+          applicationDetailsRepository,
+        }),
+      onPrimaryError: error =>
+        logger.error('Error updating Issue MetaAllocator approval, trying Application:', error),
+      onFallbackError: error => logger.error('Both Issue and Application handlers failed:', error),
+      onSuccess: command => commandBus.send(command),
+    });
+
+    logger.info(`Successfully processed MetaAllocator approval for actorId: ${actorId}`);
+  } catch (error) {
+    logger.error('Error updating Meta Allocator approvals', error);
+  }
+}
+
+export async function convertToFileCoinAddress({
+  allocatorAddress,
+  logger,
+  rpcProvider,
+}: {
+  allocatorAddress: string;
+  logger: Logger;
+  rpcProvider: IRpcProvider;
+}) {
+  if (allocatorAddress.startsWith('0x')) {
+    logger.info(
+      `Allocator Id is an Ethereum address: ${allocatorAddress} converting to Filecoin Id`,
+    );
+    const filecoinId = await rpcProvider.send<string>('Filecoin.EthAddressToFilecoinAddress', [
+      allocatorAddress,
+    ]);
+    logger.info(`Converted to Filecoin id: ${filecoinId}`);
+
+    return filecoinId;
+  }
+
+  return allocatorAddress;
+}
+
 export async function handleMetaAllocatorIssueApproval({
   approval,
   actorId,
@@ -269,7 +316,7 @@ export async function handleMetaAllocatorIssueApproval({
   actorId: string;
   issuesRepository: IIssueDetailsRepository;
 }) {
-  const issue = await issuesRepository.findPendingBy({ actorId: actorId });
+  const issue = await issuesRepository.findPendingBy({ actorId });
   if (!issue) throw new Error(`Issue not found for actorId ${actorId}`);
 
   return new ApproveRefreshByMaCommand(issue, approval);

@@ -6,6 +6,7 @@ import { IIssueDetailsRepository } from '@src/infrastructure/respositories/issue
 import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
 import { LOG_MESSAGES } from '@src/constants';
 import { Approval } from '@src/infrastructure/clients/lotus';
+import { DataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
 
 const LOG = LOG_MESSAGES.APPROVE_REFRESH_BY_MA_COMMAND;
 
@@ -29,11 +30,14 @@ export class ApproveRefreshByMaCommandHandler
     private readonly _logger: Logger,
     @inject(TYPES.IssueDetailsRepository)
     private readonly _repository: IIssueDetailsRepository,
+    @inject(TYPES.DataCapMapper)
+    private readonly _dataCapMapper: DataCapMapper,
   ) {}
 
   async handle(command: ApproveRefreshByMaCommand) {
     try {
       this._logger.info(LOG.APPROVE_REFRESH_BY_MA);
+
       const issueWithApprovedStatus: IssueDetails = {
         ...command.issueDetails,
         refreshStatus: 'DC_ALLOCATED',
@@ -42,9 +46,9 @@ export class ApproveRefreshByMaCommandHandler
         metaAllocator: {
           blockNumber: command.approval.blockNumber,
         },
-        dataCap:
-          parseFloat(command.approval.allowanceAfter) -
-          parseFloat(command.approval.allowanceBefore),
+        dataCap: this._dataCapMapper.fromBigIntBytesToPiBNumber(
+          BigInt(command.approval.allowanceAfter) - BigInt(command.approval.allowanceBefore),
+        ),
       };
 
       await this._repository.update(issueWithApprovedStatus);

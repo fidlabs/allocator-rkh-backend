@@ -74,6 +74,7 @@ import { UpsertIssueCommandCommandHandler } from '@src/application/use-cases/ref
 import { FetchAllocatorCommandHandler } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
 import { SignRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/sign-refresh-by-rkh.command';
 import { ApproveRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/approve-refresh-by-rkh.command';
+import { ApproveRefreshByMaCommandHandler } from '@src/application/use-cases/update-ma-approvals/approve-refresh-by-ma.command';
 
 export const initialize = async (): Promise<Container> => {
   const container = new Container();
@@ -171,6 +172,9 @@ export const initialize = async (): Promise<Container> => {
   container
     .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
     .to(ApproveRefreshByRKHCommandHandler);
+  container
+    .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
+    .to(ApproveRefreshByMaCommandHandler);
 
   const commandBus = container.get<ICommandBus>(TYPES.CommandBus);
   container
