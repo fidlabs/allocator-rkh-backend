@@ -68,7 +68,7 @@ export class RefreshController {
     const result = await this._commandBus.send(new UpsertIssueCommand(issueDetails));
 
     if (!result?.success) {
-      return res.status(400).json(badRequest(RES.FAILED_TO_UPSERT_ISSUE, result?.error));
+      return res.status(400).json(badRequest(RES.FAILED_TO_UPSERT_ISSUE, [result.error.message]));
     }
     return res.json(ok(RES.UPSERTED_ISSUE));
   }

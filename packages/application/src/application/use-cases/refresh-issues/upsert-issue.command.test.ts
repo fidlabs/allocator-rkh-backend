@@ -141,7 +141,8 @@ describe('UpsertIssueCommand', () => {
     expect(result).toStrictEqual({
       success: false,
       error: expect.objectContaining({
-        message: 'Issue does not have a jsonNumber',
+        message:
+          'The JSON number or hash does not exist in the issue template, or it has been added incorrectly.',
       }),
     });
   });

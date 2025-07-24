@@ -6,11 +6,12 @@ import { Logger } from '@filecoin-plus/core';
 import { GithubClient, IGithubClient } from '@src/infrastructure/clients/github';
 import { FetchAllocatorCommand, FetchAllocatorCommandHandler } from './fetch-allocator.command';
 import config from '@src/config';
+import { HttpStatusCode } from 'axios';
 
 describe('FetchAllocatorCommand', () => {
   let container: Container;
   let handler: FetchAllocatorCommandHandler;
-  const loggerMock = { info: vi.fn() } as unknown as Logger;
+  const loggerMock = { info: vi.fn(), error: vi.fn() } as unknown as Logger;
   const githubClientMock = { getFile: vi.fn() };
 
   beforeEach(() => {
@@ -42,15 +43,34 @@ describe('FetchAllocatorCommand', () => {
       `Allocators/${jsonNumber}.json`,
     );
   });
-
-  it('should handle errors when fetching allocator file fails', async () => {
+  
+  it('should handle github 404 error when fetching allocator file fails', async () => {
     const jsonNumber = 'rec123';
-    const error = new Error('Failed to fetch');
+    const error = {
+      status: HttpStatusCode.NotFound,
+    };
     githubClientMock.getFile.mockRejectedValueOnce(error);
 
     const result = await handler.handle(new FetchAllocatorCommand(jsonNumber));
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe(error);
+    expect(result.error).toStrictEqual(
+      new Error(
+        `The Allocator could not be found for the given JSON number or hash: ${jsonNumber}`,
+      ),
+    );
+  });
+
+  it('should handle github default error when fetching allocator file fails', async () => {
+    const jsonNumber = 'rec123';
+    const error = {
+      status: HttpStatusCode.BadRequest,
+    };
+    githubClientMock.getFile.mockRejectedValueOnce(error);
+
+    const result = await handler.handle(new FetchAllocatorCommand(jsonNumber));
+
+    expect(result.success).toBe(false);
+    expect(result.error).toStrictEqual(new Error('Failed to fetch JSON number'));
   });
 });

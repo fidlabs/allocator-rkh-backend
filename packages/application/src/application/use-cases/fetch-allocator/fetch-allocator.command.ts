@@ -2,11 +2,19 @@ import { Command, ICommandHandler, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '@src/types';
 import { GithubClient } from '@src/infrastructure/clients/github';
-import { LOG_MESSAGES } from '@src/constants';
+import { LOG_MESSAGES, RESPONSE_MESSAGES } from '@src/constants';
 import config from '@src/config';
 import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
+import { StatusCodes } from 'http-status-codes';
 
 const LOG = LOG_MESSAGES.FETCH_ALLOCATOR_COMMAND;
+const RES = RESPONSE_MESSAGES.FETCH_ALLOCATOR_COMMAND;
+
+interface GithubError extends Error {
+  name: 'HttpError';
+  status: StatusCodes;
+  request?: { url?: string };
+}
 
 export class FetchAllocatorCommand extends Command {
   constructor(public readonly jsonNumber: string) {
@@ -33,10 +41,10 @@ export class FetchAllocatorCommandHandler implements ICommandHandler<FetchAlloca
         success: true,
       };
     } catch (e) {
-      this.logger.info(LOG.FAILED_TO_GET_ALLOCATOR, e);
+      this.logger.error(LOG.FAILED_TO_GET_ALLOCATOR, e);
       return {
         success: false,
-        error: e,
+        error: new Error(this.getGithubErrorMessage(e, command.jsonNumber)),
       };
     }
   }
@@ -61,5 +69,16 @@ export class FetchAllocatorCommandHandler implements ICommandHandler<FetchAlloca
     this.logger.info(LOG.ALLOCATOR_FILE_MAPPED);
 
     return applicationPullRequestFile as ApplicationPullRequestFile;
+  }
+
+  private getGithubErrorMessage(error: unknown, jsonNumber: string) {
+    const { status } = (error as GithubError) || {};
+
+    switch (status) {
+      case StatusCodes.NOT_FOUND:
+        return `${RES.ALLOCATOR_NOT_FOUND}: ${jsonNumber}`;
+      default:
+        return RES.DEFAULT_ERROR;
+    }
   }
 }
