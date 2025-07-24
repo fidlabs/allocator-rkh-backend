@@ -3,12 +3,13 @@ import { inject, injectable } from 'inversify';
 import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
 import { TYPES } from '@src/types';
 import { IIssueDetailsRepository } from '@src/infrastructure/respositories/issue-details.repository';
-import { LOG_MESSAGES } from '@src/constants';
+import { LOG_MESSAGES, RESPONSE_MESSAGES } from '@src/constants';
 import { FetchAllocatorCommand } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
 import { IIssueMapper } from '@src/infrastructure/mappers/issue-mapper';
 import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
 
 const LOG = LOG_MESSAGES.UPSERT_ISSUE_COMMAND;
+const RES = RESPONSE_MESSAGES.UPSERT_ISSUE_COMMAND;
 
 export class UpsertIssueCommand extends Command {
   constructor(public readonly githubIssue: IssueDetails) {
@@ -57,7 +58,7 @@ export class UpsertIssueCommandCommandHandler implements ICommandHandler<UpsertI
   async connectAllocatorToIssue(issueDetails: IssueDetails): Promise<IssueDetails> {
     this.logger.info(LOG.CONNECTING_ALLOCATOR_TO_ISSUE);
 
-    if (!issueDetails.jsonNumber) throw new Error('Issue does not have a jsonNumber');
+    if (!issueDetails.jsonNumber) throw new Error(RES.JSON_HASH_IS_NOT_FOUND_OR_INCORRECT);
 
     const commandResponse = await this.commandBus.send(
       new FetchAllocatorCommand(issueDetails.jsonNumber),

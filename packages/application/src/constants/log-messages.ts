@@ -47,7 +47,6 @@ export const LOG_MESSAGES = {
     ALLOCATOR_FILE_RETRIEVED: '[FetchAllocatorCommand]: Allocator retrieved successfully',
     ALLOCATOR_FILE_MAPPING: '[FetchAllocatorCommand]: Mapping allocator file',
     ALLOCATOR_FILE_MAPPED: '[FetchAllocatorCommand]: Allocator file mapped successfully',
-    ALLOCATOR_NOT_FOUND: '[FetchAllocatorCommand]: Allocator not found',
     FAILED_TO_GET_ALLOCATOR: '[FetchAllocatorCommand]: Failed to get allocator',
   },
 
