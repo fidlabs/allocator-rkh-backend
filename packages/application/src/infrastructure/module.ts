@@ -53,12 +53,12 @@ export const infrastructureModule = new AsyncContainerModule(async (bind: interf
   bind<IGithubClient>(TYPES.GithubClient).to(GithubClient).inSingletonScope();
 
   const rpcProviderConfig: RpcProviderConfig = {
-    useTestNet: config.USE_LOCAL_TEST_NET,
+    useTestNet: config.USE_TEST_NET,
     evmRpcUrl: config.EVM_RPC_URL,
-    localTestNet: {
-      chainId: config.LOCAL_TEST_NET_CHAIN_ID,
-      url: config.LOCAL_TEST_NET_URL,
-      networkName: config.LOCAL_TEST_NET_NETWORK_NAME,
+    testNetConfig: {
+      chainId: config.TEST_NET_CHAIN_ID,
+      url: config.TEST_NET_URL,
+      networkName: config.TEST_NET_NETWORK_NAME,
     },
   };
   bind<RpcProviderConfig>(TYPES.RpcProviderConfig).toConstantValue(rpcProviderConfig);

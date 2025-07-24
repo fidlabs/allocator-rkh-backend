@@ -14,7 +14,7 @@ export interface IRpcProvider {
 export interface RpcProviderConfig {
   evmRpcUrl: string;
   useTestNet: boolean;
-  localTestNet?: {
+  testNetConfig?: {
     url: string;
     chainId: number;
     networkName: string;
@@ -30,10 +30,10 @@ export class RpcProvider implements IRpcProvider {
     config: RpcProviderConfig,
   ) {
     this.rpcProvider =
-      config.useTestNet && !!config.localTestNet
-        ? new ethers.providers.JsonRpcProvider(config.localTestNet?.url, {
-            chainId: config.localTestNet.chainId,
-            name: config.localTestNet.networkName,
+      config.useTestNet && !!config.testNetConfig
+        ? new ethers.providers.JsonRpcProvider(config.testNetConfig?.url, {
+            chainId: config.testNetConfig.chainId,
+            name: config.testNetConfig.networkName,
           })
         : new ethers.providers.JsonRpcProvider(config.evmRpcUrl);
   }

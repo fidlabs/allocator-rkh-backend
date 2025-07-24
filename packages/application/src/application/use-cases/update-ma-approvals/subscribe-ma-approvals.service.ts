@@ -56,10 +56,11 @@ export function ensureSubscribeMetaAllocatorApprovalsConfig() {
     'LOTUS_RPC_URL',
     'MONGODB_URI',
   ];
-  for (let configVar of expectedConfigVars) {
-    if (!config[configVar]) {
-      throw new Error(`Missing config variable: '${configVar}'`);
-    }
+
+  const missingVars = expectedConfigVars.filter(configVar => !config[configVar]);
+
+  if (missingVars.length > 0) {
+    throw new Error(`Missing config variables: ${missingVars.join(', ')}`);
   }
 }
 
@@ -87,6 +88,7 @@ async function fetchApprovals(
     toBlock: head,
     topics: [eventTopic],
   };
+
   let logs: ethers.providers.Log[];
   try {
     logs = await rpcProvider.getLogs(filter);
@@ -100,12 +102,12 @@ async function fetchApprovals(
   const approvals: Approval[] = [];
   for (let log of logs) {
     try {
-      console.log(`Processing log ${log.transactionHash}...`);
-      console.log(log);
+      logger.info(`Processing log ${log.transactionHash}...`);
+      logger.info(log);
       const decoded = iface.decodeEventLog('AllowanceChanged', log.data, log.topics);
       if (decoded) {
-        console.log(`Decoded log ${log.transactionHash} SUCCESS...`);
-        console.log(decoded);
+        logger.info(`Decoded log ${log.transactionHash} SUCCESS...`);
+        logger.info(decoded);
         const approval = {
           blockNumber: log.blockNumber,
           txHash: log.transactionHash,
@@ -116,39 +118,39 @@ async function fetchApprovals(
         };
         approvals.push(approval);
       } else {
-        console.log(`Decoded log ${log.transactionHash} FAILED...`);
+        logger.info(`Decoded log ${log.transactionHash} FAILED...`);
       }
     } catch (error) {
-      console.log(`Decoding log ${log.transactionHash} ERROR...`);
+      logger.info(`Decoding log ${log.transactionHash} ERROR...`);
     }
   }
 
-  console.log(`Found ${approvals.length} AllowanceChanged events...`);
-  console.log(approvals);
+  logger.info(`Found ${approvals.length} AllowanceChanged events...`);
+  logger.info(approvals);
   return approvals;
 }
 
 async function fetchLastBlockMetaAllocator(
   databaseName: string,
   collectionName: string,
+  logger: Logger,
 ): Promise<number> {
   const client = new MongoClient(config.MONGODB_URI);
   try {
     await client.connect();
     const database = client.db(databaseName);
     const collection = database.collection(collectionName);
-    const document = await collection
-      .find({ metaAllocator: { $exists: true } })
-      .sort({ 'metaAllocator.blockNumber': -1 })
-      .limit(1)
-      .toArray();
+    const document = await collection.findOne(
+      { metaAllocator: { $exists: true } },
+      { sort: { 'metaAllocator.blockNumber': -1 } },
+    );
 
-    if (document.length > 0) {
-      return document[0].metaAllocator.blockNumber;
-    } else {
-      return -1;
-    }
+    if (!document) throw new Error('Document not found');
+
+    return document.metaAllocator.blockNumber;
   } catch (error) {
+    logger.error(`Error fetching last block meta allocator: ${error}`);
+    logger.info('Returning -1 as default block value');
     return -1;
   } finally {
     await client.close();
@@ -165,17 +167,16 @@ export async function subscribeMetaAllocatorApprovals(container: Container) {
   const issuesRepository = container.get<IIssueDetailsRepository>(TYPES.IssueDetailsRepository);
   const rpcProvider = container.get<IRpcProvider>(TYPES.RpcProvider);
 
+  try {
+    ensureSubscribeMetaAllocatorApprovalsConfig();
+  } catch (error) {
+    logger.error('Failed to subscribe to MetaAllocator proposals.', error);
+    return;
+  }
+
   let shouldContinue = true;
 
   const intervalId = setInterval(async () => {
-    try {
-      ensureSubscribeMetaAllocatorApprovalsConfig();
-    } catch (error) {
-      logger.error('Failed to subscribe to MetaAllocator proposals.', error);
-      clearInterval(intervalId);
-      return;
-    }
-
     if (!shouldContinue) {
       logger.info('Unsubscribing from MetaAllocator proposals...');
       clearInterval(intervalId);
@@ -188,8 +189,8 @@ export async function subscribeMetaAllocatorApprovals(container: Container) {
       logger.info('Fetching lastBlock...');
 
       const [applicationLastBlock, issueLastBlock] = await Promise.all([
-        fetchLastBlockMetaAllocator('filecoin-plus', 'applicationDetails'),
-        fetchLastBlockMetaAllocator('filecoin-plus', 'issueDetails'),
+        fetchLastBlockMetaAllocator('filecoin-plus', 'applicationDetails', logger),
+        fetchLastBlockMetaAllocator('filecoin-plus', 'issueDetails', logger),
       ]);
       const lastBlock = Math.max(applicationLastBlock, issueLastBlock);
       logger.info(`Last block is ${lastBlock}.`);
