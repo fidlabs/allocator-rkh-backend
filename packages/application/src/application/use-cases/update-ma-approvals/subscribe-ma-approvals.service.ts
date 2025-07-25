@@ -95,7 +95,7 @@ async function fetchApprovals(
     logger.info(`Ethers returned ${logs.length} logs...`);
   } catch (error) {
     logger.info(`Ethers fetch FAILED...`);
-    console.error(error);
+    logger.error(error);
     return [];
   }
 
