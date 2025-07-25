@@ -18,9 +18,10 @@ import { RefreshIssuesCommand } from '@src/application/use-cases/refresh-issues/
 import { GetRefreshesQuery } from '@src/application/queries/get-refreshes/get-refreshes.query';
 import { IIssueMapper } from '@src/infrastructure/mappers/issue-mapper';
 import { UpsertIssueCommand } from '@src/application/use-cases/refresh-issues/upsert-issue.command';
-import { IssuesWebhookPayload } from '@src/infrastructure/clients/github';
+import { GithubClient, IssuesWebhookPayload } from '@src/infrastructure/clients/github';
 import { validateIssueUpsert, validateRefreshesQuery } from '@src/api/http/validators';
 import { RESPONSE_MESSAGES } from '@src/constants';
+import { FetchIssuesCommand } from '@src/application/use-cases/refresh-issues/fetch-issues.command';
 
 const RES = RESPONSE_MESSAGES.REFRESH_CONTROLLER;
 
@@ -30,6 +31,7 @@ export class RefreshController {
     @inject(TYPES.QueryBus) private readonly _queryBus: IQueryBus,
     @inject(TYPES.CommandBus) private readonly _commandBus: ICommandBus,
     @inject(TYPES.IssueMapper) private readonly _issueMapper: IIssueMapper,
+    @inject(TYPES.GithubClient) private readonly _githubClient: GithubClient,
   ) {}
 
   @httpGet('', ...validateRefreshesQuery)
@@ -82,5 +84,18 @@ export class RefreshController {
     }
 
     return res.json(ok(RES.REFRESH_SUCCESS, result));
+  }
+
+  @httpGet('/github-issues')
+  async getGithubIssues(@response() res: Response) {
+    const result = await this._commandBus.send(
+      new FetchIssuesCommand('filecoin-project', 'Allocator-Governance'),
+    );
+
+    if (!result.success) {
+      return res.status(400).json(badRequest(RES.REFRESH_FAILED, result.error));
+    }
+
+    return res.json(ok(RES.REFRESH_SUCCESS, { result }));
   }
 }

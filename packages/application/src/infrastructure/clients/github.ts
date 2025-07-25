@@ -416,6 +416,14 @@ export class GithubClient implements IGithubClient {
     }
   }
 
+  async getIssuesWithCorrectTitle(owner: string, repo: string): Promise<RepoIssue[]> {
+    const { data } = await this.octokit.search.issuesAndPullRequests({
+      q: `repo:${owner}/${repo} is:issue in:title "[Refresh]" state:open`,
+    });
+
+    return data.items as RepoIssue[];
+  }
+
   async createOrUpdateFile(
     owner: string,
     repo: string,
