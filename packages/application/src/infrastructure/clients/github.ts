@@ -233,7 +233,7 @@ export class GithubClient implements IGithubClient {
     if (pr.state === 'closed') {
       console.log(`Pull request ${pullNumber} is already closed. Skipping update.`);
       return null;
-    } 
+    }
 
     // Update files if provided
     if (files) {
@@ -260,8 +260,10 @@ export class GithubClient implements IGithubClient {
     if (title) updateParams.title = title;
     if (body) updateParams.body = body;
 
-    if (!title || !body ) {
-      console.log(`>>> Updating PR ${pullNumber} with empty elements! Body is ${body}, Title is ${title}, Files length is ${files?.length} <<<`)
+    if (!title || !body) {
+      console.log(
+        `>>> Updating PR ${pullNumber} with empty elements! Body is ${body}, Title is ${title}, Files length is ${files?.length} <<<`,
+      );
     }
 
     const { data } = await this.octokit.pulls.update(updateParams);
@@ -303,14 +305,14 @@ export class GithubClient implements IGithubClient {
     body: string,
   ): Promise<PullRequestReview | null> {
     console.log(`>>> Updating Review! <<< ${owner}, ${repo}, ${pullNumber}, ${commentId}, ${body}`);
-    
+
     // Do not update PRs that are already closed
     const pr = await this.getPullRequest(owner, repo, pullNumber);
     if (pr.state === 'closed') {
       console.log(`Pull request ${pullNumber} is already closed. Skipping comment update.`);
       return null;
-    } 
-    
+    }
+
     const { data } = await this.octokit.pulls.updateReview({
       owner,
       repo,
