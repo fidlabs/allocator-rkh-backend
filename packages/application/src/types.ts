@@ -25,4 +25,7 @@ export const TYPES = {
   ApplicationDetailsRepository: Symbol('ApplicationDetailsRepository'),
   IssueDetailsRepository: Symbol('IssueDetailsRepository'),
   IssueMapper: Symbol('IssueMapper'),
+  RpcProvider: Symbol('RpcProvider'),
+  RpcProviderConfig: Symbol('RpcProviderConfig'),
+  DataCapMapper: Symbol('DataCapMapper'),
 };

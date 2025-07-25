@@ -14,6 +14,15 @@ export type PendingTx = {
   approved: string[];
 };
 
+export type Approval = {
+  blockNumber: number;
+  txHash: string;
+  contractAddress: string;
+  allocatorAddress: string;
+  allowanceBefore: string;
+  allowanceAfter: string;
+};
+
 export type ApprovedTx = {
   cid: string;
   to: string;
@@ -22,7 +31,7 @@ export type ApprovedTx = {
   params: string;
 };
 
-type Multisig = {
+export type Multisig = {
   address: string;
   threshold: number;
   signers: string[];

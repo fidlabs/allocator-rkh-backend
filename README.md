@@ -143,6 +143,10 @@ The Docker setup can be configured by setting the following environment variable
 | `LOTUS_AUTH_TOKEN`               | Token for authenticating with the Lotus RPC API              | `lotus_token_*****************`              |
 | `GITHUB_ISSUES_REPO`             | Name of the Governance GitHub repository (added for forking) | `Allocator-Governance`                       |
 | `GITHUB_ISSUES_OWNER`            | Owner for Governance github respository (added for forking)  | `filecoin-project`                           |
+| `USE_TEST_NET`                   | Set it to true when you want to use test net from config     | `false`                                      |
+| `TEST_NET_CHAIN_ID`              | Chain id of the test net                                     | `31415926`                                   |
+| `TEST_NET_URL`                   | Test net url                                                 | `http://host.docker.internal:1234/rpc/v0`    |
+| `TEST_NET_NETWORK_NAME`          | Test net network name                                        | `local-test-net`                             |
 
 #### Running
 

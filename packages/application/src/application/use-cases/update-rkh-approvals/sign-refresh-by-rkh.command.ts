@@ -6,6 +6,7 @@ import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
 import { PendingTx } from '@src/infrastructure/clients/lotus';
 import { LOG_MESSAGES } from '@src/constants';
 import cbor from 'cbor';
+import { DataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
 
 export class SignRefreshByRKHCommand extends Command {
   constructor(
@@ -27,6 +28,8 @@ export class SignRefreshByRKHCommandHandler implements ICommandHandler<SignRefre
     private readonly _logger: Logger,
     @inject(TYPES.IssueDetailsRepository)
     private readonly _repository: IIssueDetailsRepository,
+    @inject(TYPES.DataCapMapper)
+    private readonly _dataCapMapper: DataCapMapper,
   ) {}
 
   async handle(command: SignRefreshByRKHCommand) {
@@ -67,25 +70,9 @@ export class SignRefreshByRKHCommandHandler implements ICommandHandler<SignRefre
     const datacap = paramsCbor[1];
 
     try {
-      const datacapBytes = this.extractDataCapBytes(datacap);
-      return this.convertToPib(datacapBytes);
+      return this._dataCapMapper.fromBufferBytesToPiBNumber(datacap);
     } catch {
       return 0;
     }
-  }
-
-  private extractDataCapBytes(datacap: Buffer | string): bigint {
-    return Buffer.isBuffer(datacap)
-      ? BigInt('0x' + datacap.toString('hex'))
-      : BigInt(datacap.toString());
-  }
-
-  private convertToPib(datacapBytes: bigint): number {
-    const PiB = BigInt('1125899906842624');
-    const integerFromDivision = datacapBytes / PiB;
-    const remainder = datacapBytes % PiB;
-    const fraction = Number(remainder) / Number(PiB);
-
-    return Number(integerFromDivision) + fraction;
   }
 }

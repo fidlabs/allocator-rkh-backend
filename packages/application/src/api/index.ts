@@ -13,14 +13,14 @@ import { InversifyExpressServer } from 'inversify-express-utils';
 import { errorHandler } from './http/middlewares/error-handler';
 import { corsMiddleware } from './http/middlewares/cors-middleware';
 import { Db } from 'mongodb';
+import { subscribeRefreshMetaAllocator } from '@src/application/use-cases/refresh-ma-datacap/subscribe-refresh-ma.service';
 import { subscribeApplicationSubmissions } from '@src/application/use-cases/create-application/subscribe-application-submissions.service';
 import { subscribeApplicationEdits } from '@src/application/use-cases/edit-application/subscribe-application-edits.service';
 import { subscribeGovernanceReviews } from '@src/application/use-cases/submit-governance-review/subscribe-governance-reviews.service';
-import { subscribeRKHApprovals } from '@src/application/use-cases/update-rkh-approvals/subscribe-rkh-approvals.service';
 import { subscribeDatacapAllocations } from '@src/application/use-cases/update-datacap-allocation/subscribe-datacap-allocations.service';
-import { subscribeRefreshMetaAllocator } from '@src/application/use-cases/refresh-ma-datacap/subscribe-refresh-ma.service';
-import { subscribeMetaAllocatorAllowances } from '@src/application/use-cases/refresh-application/subscribe-refresh-ma.service';
+import { subscribeRKHApprovals } from '@src/application/use-cases/update-rkh-approvals/subscribe-rkh-approvals.service';
 import { subscribeMetaAllocatorApprovals } from '@src/application/use-cases/update-ma-approvals/subscribe-ma-approvals.service';
+import { subscribeMetaAllocatorAllowances } from '@src/application/use-cases/refresh-application/subscribe-refresh-ma.service';
 
 dotenv.config();
 
