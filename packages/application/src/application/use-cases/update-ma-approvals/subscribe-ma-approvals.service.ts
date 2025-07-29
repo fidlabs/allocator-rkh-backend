@@ -247,7 +247,7 @@ export async function handleApproval({
     return;
   }
 
-  const actorId = await convertToFileCoinAddress({
+  const actorId = await convertToActorId({
     allocatorAddress: approval.allocatorAddress,
     logger,
     rpcProvider,
@@ -284,7 +284,7 @@ export async function handleApproval({
   }
 }
 
-export async function convertToFileCoinAddress({
+export async function convertToActorId({
   allocatorAddress,
   logger,
   rpcProvider,
