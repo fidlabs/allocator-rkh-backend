@@ -88,6 +88,13 @@ export default {
     : ['0xB6F5d279AEad97dFA45209F3E53969c2EF43C21d'],
 
   EVM_RPC_URL: process.env.EVM_RPC_URL || 'http://localhost:8545',
+
+  // local test net config
+  USE_TEST_NET: Boolean(process.env.USE_TEST_NET) || false,
+  TEST_NET_CHAIN_ID: Number(process.env.EST_NET_CHAIN_ID) || 31415926,
+  TEST_NET_URL: process.env.TEST_NET_URL || 'http://host.docker.internal:1234/rpc/v0',
+  TEST_NET_NETWORK_NAME: process.env.TEST_NET_NETWORK_NAME || 'local-test-net',
+
   META_ALLOCATOR_CONTRACT_ADDRESS:
     process.env.META_ALLOCATOR_CONTRACT_ADDRESS || '0x15A9D9b81E3c67b95Ffedfb4416D25a113C8c6df',
   VERIFIED_REGISTRY_ACTOR_ADDRESS: process.env.VERIFIED_REGISTRY_ACTOR_ADDRESS || 'f06',
