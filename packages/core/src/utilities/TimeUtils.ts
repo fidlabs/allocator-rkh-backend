@@ -9,17 +9,17 @@
 export function epochToZulu(epoch: number): string {
   if (!epoch) {
     // A lot of unitialised timestamps end up here, so quickly and quietly dismiss them
-    return ""
+    return '';
   }
 
   const ms = epoch > 1e12 ? epoch : epoch * 1000;
   const d = new Date(ms);
   if (isNaN(d.getTime())) {
     console.log(`Error in epochToZulu: Invalid timestamp: "${epoch}"`);
-    return "";
+    return '';
   }
   // Epoch time is second resolution so kill the ms
-  d.setUTCMilliseconds(0)
+  d.setUTCMilliseconds(0);
   return d.toISOString();
 }
 
@@ -32,7 +32,7 @@ export function epochToZulu(epoch: number): string {
 export function zuluToEpoch(zulu: string): number {
   if (!zulu) {
     // A lot of unitialised timestamps end up here, so quickly and quietly dismiss them
-    return 0
+    return 0;
   }
 
   const ms = Date.parse(zulu);
