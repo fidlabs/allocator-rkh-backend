@@ -1,5 +1,5 @@
 import { ApplicationInstruction, DatacapAllocator } from '@src/domain/application/application';
-import { ApplicationDetailsRepository } from '@src/infrastructure/respositories/application-details.repository';
+import { ApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import config from '@src/config';
 import { epochToZulu, zuluToEpoch } from '@filecoin-plus/core';
 import { getMultisigInfo } from '@src/infrastructure/clients/filfox';

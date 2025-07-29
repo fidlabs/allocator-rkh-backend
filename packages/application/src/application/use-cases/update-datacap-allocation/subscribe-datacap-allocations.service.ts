@@ -5,7 +5,7 @@ import { ILotusClient } from '@src/infrastructure/clients/lotus';
 import { TYPES } from '@src/types';
 import { methods as m } from 'filecoin-verifier-tools';
 import { UpdateDatacapAllocationCommand } from './update-datacap-allocation';
-import { IApplicationDetailsRepository } from '@src/infrastructure/respositories/application-details.repository';
+import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import config from '@src/config';
 import cbor from 'cbor';
 

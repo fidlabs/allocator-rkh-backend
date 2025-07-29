@@ -4,7 +4,7 @@ import { Container } from 'inversify';
 import { ICommandBus, Logger } from '@filecoin-plus/core';
 import { TYPES } from '@src/types';
 import { UpsertIssueCommand, UpsertIssueCommandCommandHandler } from './upsert-issue.command';
-import { IIssueDetailsRepository } from '@src/infrastructure/respositories/issue-details.repository';
+import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { DatabaseRefreshFactory } from '@mocks/factories';
 import { faker } from '@faker-js/faker';
 import { FetchAllocatorCommand } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';

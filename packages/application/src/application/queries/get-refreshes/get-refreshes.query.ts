@@ -2,7 +2,7 @@ import { IQuery, IQueryHandler } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 
 import { TYPES } from '@src/types';
-import { IIssueDetailsRepository } from '@src/infrastructure/respositories/issue-details.repository';
+import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 
 export class GetRefreshesQuery implements IQuery {
   constructor(

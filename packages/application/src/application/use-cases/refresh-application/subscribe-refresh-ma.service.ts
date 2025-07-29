@@ -3,7 +3,7 @@ import { Container } from 'inversify';
 
 import { ICommandBus, Logger } from '@filecoin-plus/core';
 import { TYPES } from '@src/types';
-import { IApplicationDetailsRepository } from '@src/infrastructure/respositories/application-details.repository';
+import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import config from '@src/config';
 import { ApplicationStatus } from '@src/domain/application/application';
 import { CreateRefreshApplicationCommand } from '../create-application/create-refresh-application.command';

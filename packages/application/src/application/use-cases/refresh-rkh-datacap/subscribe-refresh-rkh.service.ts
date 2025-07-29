@@ -6,8 +6,8 @@ import { TYPES } from '@src/types';
 import { methods as m } from 'filecoin-verifier-tools';
 import config from '@src/config';
 import { CreateRefreshApplicationCommand } from '../create-application/create-refresh-application.command';
-import { IApplicationDetailsRepository } from '@src/infrastructure/respositories/application-details.repository';
-import { ApplicationDetails } from '@src/infrastructure/respositories/application-details.types';
+import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
+import { ApplicationDetails } from '@src/infrastructure/repositories/application-details.types';
 import { ApplicationAllocator, ApplicationInstruction } from '@src/domain/application/application';
 import cbor from 'cbor';
 

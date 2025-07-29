@@ -4,7 +4,7 @@ import { TYPES } from '@src/types';
 import { GithubClient, RepoIssue } from '@src/infrastructure/clients/github';
 import { LOG_MESSAGES } from '@src/constants';
 import { IIssueMapper } from '@src/infrastructure/mappers/issue-mapper';
-import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
+import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 import { FetchAllocatorCommand } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
 import { ISSUE_TITLE_REGEX } from '@src/infrastructure/mappers/constants';
 import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';

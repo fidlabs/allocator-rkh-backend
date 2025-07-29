@@ -6,7 +6,7 @@ import { TYPES } from '@src/types';
 import { CommandBus } from './command-bus';
 
 import { DatacapAllocatorEventStore } from '@src/infrastructure/event-store/datacap-allocator-event-store';
-import { DatacapAllocatorRepository } from '@src/infrastructure/respositories/datacap-allocator-repository';
+import { DatacapAllocatorRepository } from '@src/infrastructure/repositories/datacap-allocator-repository';
 import {
   IDatacapAllocatorEventStore,
   IDatacapAllocatorRepository,
@@ -21,11 +21,11 @@ import { InMemoryEventBus } from './event-bus/in-memory-event-bus';
 import {
   ApplicationDetailsRepository,
   IApplicationDetailsRepository,
-} from './respositories/application-details.repository';
+} from './repositories/application-details.repository';
 import {
   IIssueDetailsRepository,
   IssueDetailsRepository,
-} from '@src/infrastructure/respositories/issue-details.repository';
+} from '@src/infrastructure/repositories/issue-details.repository';
 import { IIssueMapper, IssueMapper } from '@src/infrastructure/mappers/issue-mapper';
 import {
   IRpcProvider,

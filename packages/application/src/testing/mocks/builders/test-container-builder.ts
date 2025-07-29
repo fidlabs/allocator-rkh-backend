@@ -19,7 +19,7 @@ import { IGithubClient } from '@src/infrastructure/clients/github';
 import {
   IIssueDetailsRepository,
   IssueDetailsRepository,
-} from '@src/infrastructure/respositories/issue-details.repository';
+} from '@src/infrastructure/repositories/issue-details.repository';
 import { IIssueMapper, IssueMapper } from '@src/infrastructure/mappers/issue-mapper';
 import { RefreshIssuesCommandHandler } from '@src/application/use-cases/refresh-issues/refresh-issues.command';
 import { FetchIssuesCommandHandler } from '@src/application/use-cases/refresh-issues/fetch-issues.command';

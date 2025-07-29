@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 
 import { ApplicationCreated } from '@src/domain/application/application.events';
 import { TYPES } from '@src/types';
-import { IApplicationDetailsRepository } from '@src/infrastructure/respositories/application-details.repository';
+import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import { ApplicationStatus } from '@src/domain/application/application';
 
 @injectable()

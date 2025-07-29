@@ -23,13 +23,13 @@ import {
   KYCRevoked,
 } from '@src/domain/application/application.events';
 import { TYPES } from '@src/types';
-import { IApplicationDetailsRepository } from '@src/infrastructure/respositories/application-details.repository';
+import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import {
   ApplicationStatus,
   ApplicationAllocator,
   ApplicationInstructionStatus,
 } from '@src/domain/application/application';
-import { ApplicationDetails } from '@src/infrastructure/respositories/application-details.types';
+import { ApplicationDetails } from '@src/infrastructure/repositories/application-details.types';
 
 @injectable()
 export class ApplicationEditedEventHandler implements IEventHandler<ApplicationEdited> {

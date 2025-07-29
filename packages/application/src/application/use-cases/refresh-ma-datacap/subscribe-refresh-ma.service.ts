@@ -1,7 +1,7 @@
 import { ICommandBus, Logger } from '@filecoin-plus/core';
 import { Container } from 'inversify';
 import { TYPES } from '@src/types';
-import { IApplicationDetailsRepository } from '@src/infrastructure/respositories/application-details.repository';
+import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import config from '@src/config';
 import { ethers } from 'ethers';
 import { MongoClient } from 'mongodb';

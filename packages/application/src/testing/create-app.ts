@@ -10,7 +10,7 @@ import { TYPES } from '@src/types';
 import { ICommandBus } from '@filecoin-plus/core';
 import { mapRecordToCommandTest } from '@src/application/use-cases/create-application/subscribe-application-submissions.service';
 import { initialize } from '@src/startup';
-import { IApplicationDetailsRepository } from '@src/infrastructure/respositories/application-details.repository';
+import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import { MongoClient } from 'mongodb';
 
 const MONGO_URI =

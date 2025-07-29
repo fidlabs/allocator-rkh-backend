@@ -5,7 +5,7 @@ import 'reflect-metadata';
 
 import { TYPES } from '@src/types';
 import { initialize } from '@src/startup';
-import { IApplicationDetailsRepository } from '@src/infrastructure/respositories/application-details.repository';
+import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import { createApplicationTest } from './create-app';
 import {
   ApplicationStatus,

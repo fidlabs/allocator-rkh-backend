@@ -18,7 +18,7 @@ import {
   fetchDatacapLatestUpdateBlock,
   submitRefreshMetaAllocatorCommand,
 } from '@src/application/use-cases/refresh-ma-datacap/subscribe-refresh-ma.service';
-import { IApplicationDetailsRepository } from '@src/infrastructure/respositories/application-details.repository';
+import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import {
   ApplicationAllocator,
   ApplicationStatus,

@@ -7,7 +7,7 @@ import {
   SignRefreshByRKHCommand,
   SignRefreshByRKHCommandHandler,
 } from './sign-refresh-by-rkh.command';
-import { IIssueDetailsRepository } from '@src/infrastructure/respositories/issue-details.repository';
+import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { DatabaseRefreshFactory } from '@mocks/factories';
 import { faker } from '@faker-js/faker';
 import { PendingTx } from '@src/infrastructure/clients/lotus';

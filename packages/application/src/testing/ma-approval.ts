@@ -11,7 +11,7 @@ import { MongoClient } from 'mongodb';
 import { Container } from 'inversify';
 import { TYPES } from '@src/types';
 import { initialize } from '@src/startup';
-import { IApplicationDetailsRepository } from '@src/infrastructure/respositories/application-details.repository';
+import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import {
   subscribeMetaAllocatorApprovals,
   ensureSubscribeMetaAllocatorApprovalsConfig,
