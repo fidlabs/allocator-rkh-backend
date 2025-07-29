@@ -1,4 +1,4 @@
-import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
+import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 import { RepoIssue } from '@src/infrastructure/clients/github';
 import { injectable } from 'inversify';
 import { ILLEGAL_CHARACTERS_REGEX, JSON_NUMBER_REGEX } from './constants';

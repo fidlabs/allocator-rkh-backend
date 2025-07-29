@@ -1,8 +1,8 @@
 import { Command, ICommandBus, ICommandHandler, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
-import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
+import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 import { TYPES } from '@src/types';
-import { IIssueDetailsRepository } from '@src/infrastructure/respositories/issue-details.repository';
+import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { LOG_MESSAGES, RESPONSE_MESSAGES } from '@src/constants';
 import { FetchAllocatorCommand } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
 import { IIssueMapper } from '@src/infrastructure/mappers/issue-mapper';

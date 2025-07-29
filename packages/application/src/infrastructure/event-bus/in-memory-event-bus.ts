@@ -1,6 +1,12 @@
-import { EventDescriptor, IEvent, IEventBus, IEventHandler, rehydrateEventFromDescriptor } from '@filecoin-plus/core'
-import { TYPES } from '@src/types'
-import { injectable, multiInject } from 'inversify'
+import {
+  EventDescriptor,
+  IEvent,
+  IEventBus,
+  IEventHandler,
+  rehydrateEventFromDescriptor,
+} from '@filecoin-plus/core';
+import { TYPES } from '@src/types';
+import { injectable, multiInject } from 'inversify';
 
 /**
  * InMemoryEventBus
@@ -11,10 +17,10 @@ import { injectable, multiInject } from 'inversify'
  */
 @injectable()
 export class InMemoryEventBus implements IEventBus {
-  private channels: Map<string, EventDescriptor[]>
+  private channels: Map<string, EventDescriptor[]>;
 
   constructor(@multiInject(TYPES.Event) private readonly eventHandlers: IEventHandler<IEvent>[]) {
-    this.channels = new Map()
+    this.channels = new Map();
   }
 
   /**
@@ -25,12 +31,12 @@ export class InMemoryEventBus implements IEventBus {
    */
   async publish(channel: string, eventDescriptor: EventDescriptor): Promise<void> {
     if (!this.channels.has(channel)) {
-      this.channels.set(channel, [])
+      this.channels.set(channel, []);
     }
-    this.channels.get(channel)!.push(eventDescriptor)
+    this.channels.get(channel)!.push(eventDescriptor);
 
     // Process the event immediately
-    await this.processEvent(eventDescriptor)
+    await this.processEvent(eventDescriptor);
   }
 
   /**
@@ -49,14 +55,14 @@ export class InMemoryEventBus implements IEventBus {
    */
   private async processEvent(eventDescriptor: EventDescriptor): Promise<void> {
     const matchedHandlers: IEventHandler<IEvent>[] = this.eventHandlers.filter(
-      (handler) => handler.event === eventDescriptor.eventName,
-    )
+      handler => handler.event === eventDescriptor.eventName,
+    );
 
     await Promise.all(
       matchedHandlers.map((handler: IEventHandler<IEvent>) => {
-        return handler.handle(rehydrateEventFromDescriptor(eventDescriptor))
+        return handler.handle(rehydrateEventFromDescriptor(eventDescriptor));
       }),
-    )
+    );
   }
 
   /**
@@ -67,7 +73,7 @@ export class InMemoryEventBus implements IEventBus {
    * @returns An array of EventDescriptors published to the specified channel.
    */
   getEventsForChannel(channel: string): EventDescriptor[] {
-    return this.channels.get(channel) || []
+    return this.channels.get(channel) || [];
   }
 
   /**
@@ -75,6 +81,6 @@ export class InMemoryEventBus implements IEventBus {
    * This method is useful for resetting the state between tests.
    */
   clearAllEvents(): void {
-    this.channels.clear()
+    this.channels.clear();
   }
 }

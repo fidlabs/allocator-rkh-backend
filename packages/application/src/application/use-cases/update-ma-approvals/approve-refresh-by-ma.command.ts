@@ -2,8 +2,8 @@ import { Command, ICommandHandler, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 
 import { TYPES } from '@src/types';
-import { IIssueDetailsRepository } from '@src/infrastructure/respositories/issue-details.repository';
-import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
+import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
+import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 import { LOG_MESSAGES } from '@src/constants';
 import { Approval } from '@src/infrastructure/clients/lotus';
 import { DataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';

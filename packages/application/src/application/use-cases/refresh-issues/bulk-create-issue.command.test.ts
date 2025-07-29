@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Container } from 'inversify';
 import { TYPES } from '@src/types';
 import { Logger } from '@filecoin-plus/core';
-import { IIssueDetailsRepository } from '@src/infrastructure/respositories/issue-details.repository';
+import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { BulkCreateIssueCommand, BulkCreateIssueCommandHandler } from './bulk-create-issue.command';
 import { DatabaseRefreshFactory } from '@mocks/factories';
 

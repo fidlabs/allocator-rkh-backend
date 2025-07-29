@@ -1,8 +1,8 @@
 import { Command, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
-import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
+import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 import { TYPES } from '@src/types';
-import { IIssueDetailsRepository } from '@src/infrastructure/respositories/issue-details.repository';
+import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { LOG_MESSAGES } from '@src/constants';
 
 const LOG = LOG_MESSAGES.BULK_CREATE_ISSUE_COMMAND;

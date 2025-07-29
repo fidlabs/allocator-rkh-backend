@@ -1,16 +1,16 @@
-import { Logger } from '@filecoin-plus/core'
-import Airtable, { Records } from 'airtable'
-import { inject, injectable } from 'inversify'
-import { Collection } from 'mongodb'
+import { Logger } from '@filecoin-plus/core';
+import Airtable, { Records } from 'airtable';
+import { inject, injectable } from 'inversify';
+import { Collection } from 'mongodb';
 
-import { TYPES } from '@src/types'
+import { TYPES } from '@src/types';
 
 /**
  * Represents an Airtable record.
  */
 export interface AirtableRecord {
-  id: string
-  fields: Record<string, unknown>
+  id: string;
+  fields: Record<string, unknown>;
 }
 
 /**
@@ -21,16 +21,16 @@ export interface IAirtableClient {
    * Retrieves records from the Airtable.
    * @returns A promise that resolves to an array of AirtableRecords.
    */
-  getTableRecords(): Promise<AirtableRecord[]>
+  getTableRecords(): Promise<AirtableRecord[]>;
 }
 
 /**
  * Configuration options for AirtableClient.
  */
 export interface AirtableClientConfig {
-  apiKey: string
-  baseId: string
-  tableName: string
+  apiKey: string;
+  baseId: string;
+  tableName: string;
 }
 
 /**
@@ -38,8 +38,8 @@ export interface AirtableClientConfig {
  */
 @injectable()
 export class AirtableClient implements IAirtableClient {
-  private readonly base: Airtable.Base
-  private readonly recordsCollection: Collection
+  private readonly base: Airtable.Base;
+  private readonly recordsCollection: Collection;
 
   /**
    * Constructs a new AirtableClient instance.
@@ -51,7 +51,7 @@ export class AirtableClient implements IAirtableClient {
     @inject(TYPES.AirtableClientConfig)
     private readonly config: AirtableClientConfig,
   ) {
-    this.base = new Airtable({ apiKey: config.apiKey }).base(config.baseId)
+    this.base = new Airtable({ apiKey: config.apiKey }).base(config.baseId);
   }
 
   /**
@@ -60,17 +60,17 @@ export class AirtableClient implements IAirtableClient {
    * @throws Error if there's an issue fetching records from Airtable.
    */
   async getTableRecords(): Promise<AirtableRecord[]> {
-    const table = this.base(this.config.tableName)
+    const table = this.base(this.config.tableName);
 
     try {
-      const records = await this.fetchRecordsFromAirtable(table)
+      const records = await this.fetchRecordsFromAirtable(table);
       if (records.length === 0) {
-        return []
+        return [];
       }
-      return this.mapAirtableRecords(records)
+      return this.mapAirtableRecords(records);
     } catch (error) {
-      this.logger.error('Error fetching records from Airtable:', error)
-      throw new Error('Failed to fetch records from Airtable')
+      this.logger.error('Error fetching records from Airtable:', error);
+      throw new Error('Failed to fetch records from Airtable');
     }
   }
 
@@ -80,10 +80,10 @@ export class AirtableClient implements IAirtableClient {
    * @returns An array of fetched Airtable records.
    */
   private async fetchRecordsFromAirtable(table: Airtable.Table<any>): Promise<Records<any>> {
-    this.logger.info('Fetching records from Airtable')
-    const records = await table.select().all()
-    this.logger.info(`Fetched ${records.length} records from Airtable`)
-    return records
+    this.logger.info('Fetching records from Airtable');
+    const records = await table.select().all();
+    this.logger.info(`Fetched ${records.length} records from Airtable`);
+    return records;
   }
 
   /**
@@ -92,9 +92,9 @@ export class AirtableClient implements IAirtableClient {
    * @returns An array of mapped AirtableRecord objects.
    */
   private mapAirtableRecords(records: Records<any>): AirtableRecord[] {
-    return records.map((record) => ({
+    return records.map(record => ({
       id: record.id,
       fields: record._rawJson.fields,
-    }))
+    }));
   }
 }

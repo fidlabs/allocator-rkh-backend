@@ -1,8 +1,8 @@
-import { IQuery, IQueryHandler } from '@filecoin-plus/core'
-import { inject, injectable } from 'inversify'
+import { IQuery, IQueryHandler } from '@filecoin-plus/core';
+import { inject, injectable } from 'inversify';
 
-import { TYPES } from '@src/types'
-import { IIssueDetailsRepository } from '@src/infrastructure/respositories/issue-details.repository'
+import { TYPES } from '@src/types';
+import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 
 export class GetRefreshesQuery implements IQuery {
   constructor(
@@ -14,11 +14,13 @@ export class GetRefreshesQuery implements IQuery {
 
 @injectable()
 export class GetRefreshesQueryHandler implements IQueryHandler<GetRefreshesQuery, any> {
-  queryToHandle = GetRefreshesQuery.name
+  queryToHandle = GetRefreshesQuery.name;
 
-  constructor(@inject(TYPES.IssueDetailsRepository) private readonly _repository: IIssueDetailsRepository) {}
+  constructor(
+    @inject(TYPES.IssueDetailsRepository) private readonly _repository: IIssueDetailsRepository,
+  ) {}
 
   async execute(query: GetRefreshesQuery) {
-    return this._repository.getPaginated(query.page, query.limit, query.search)
+    return this._repository.getPaginated(query.page, query.limit, query.search);
   }
 }

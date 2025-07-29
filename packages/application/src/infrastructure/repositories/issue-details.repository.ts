@@ -2,7 +2,7 @@ import { IRepository } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 import { BulkWriteResult, Db, Filter, WithId } from 'mongodb';
 import { TYPES } from '@src/types';
-import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
+import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 
 type PaginatedResults<T> = {
   results: T[];

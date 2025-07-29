@@ -43,7 +43,7 @@ describe('FetchAllocatorCommand', () => {
       `Allocators/${jsonNumber}.json`,
     );
   });
-  
+
   it('should handle github 404 error when fetching allocator file fails', async () => {
     const jsonNumber = 'rec123';
     const error = {

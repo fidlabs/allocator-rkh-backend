@@ -8,7 +8,7 @@ import { IRepository } from './interfaces/IRepository';
 export class EventSourcedRepository<T extends AggregateRoot> implements IRepository<T> {
   constructor(
     @unmanaged() private readonly eventStore: IEventStore,
-    @unmanaged() private readonly Type: { new (): T }
+    @unmanaged() private readonly Type: { new (): T },
   ) {}
 
   async save(aggregateRoot: T, expectedVersion: number) {

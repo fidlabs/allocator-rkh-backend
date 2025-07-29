@@ -1,18 +1,24 @@
-import { ICommandHandler } from '@filecoin-plus/core'
-import { inject, injectable } from 'inversify'
+import { ICommandHandler } from '@filecoin-plus/core';
+import { inject, injectable } from 'inversify';
 
-import { ApplicationStatus, IDatacapAllocatorRepository } from '@src/domain/application/application'
-import { TYPES } from '@src/types'
+import {
+  ApplicationStatus,
+  IDatacapAllocatorRepository,
+} from '@src/domain/application/application';
+import { TYPES } from '@src/types';
 
-import { PhaseResult, PhaseStatus, SubmitPhaseResultCommand } from '../../commands/common'
-import { GovernanceReviewApprovedData, GovernanceReviewRejectedData } from '@src/domain/types'
+import { PhaseResult, PhaseStatus, SubmitPhaseResultCommand } from '../../commands/common';
+import { GovernanceReviewApprovedData, GovernanceReviewRejectedData } from '@src/domain/types';
 
 export class SubmitGovernanceReviewResultCommand extends SubmitPhaseResultCommand<
   GovernanceReviewApprovedData,
   GovernanceReviewRejectedData
 > {
-  constructor(allocatorId: string, result: PhaseResult<GovernanceReviewApprovedData, GovernanceReviewRejectedData>) {
-    super(allocatorId, ApplicationStatus.GOVERNANCE_REVIEW_PHASE, result)
+  constructor(
+    allocatorId: string,
+    result: PhaseResult<GovernanceReviewApprovedData, GovernanceReviewRejectedData>,
+  ) {
+    super(allocatorId, ApplicationStatus.GOVERNANCE_REVIEW_PHASE, result);
   }
 }
 
@@ -20,7 +26,7 @@ export class SubmitGovernanceReviewResultCommand extends SubmitPhaseResultComman
 export class SubmitGovernanceReviewResultCommandHandler
   implements ICommandHandler<SubmitGovernanceReviewResultCommand>
 {
-  commandToHandle: string = SubmitGovernanceReviewResultCommand.name
+  commandToHandle: string = SubmitGovernanceReviewResultCommand.name;
 
   constructor(
     @inject(TYPES.DatacapAllocatorRepository)
@@ -28,22 +34,22 @@ export class SubmitGovernanceReviewResultCommandHandler
   ) {}
 
   async handle(command: SubmitGovernanceReviewResultCommand): Promise<void> {
-    const allocator = await this._repository.getById(command.allocatorId)
+    const allocator = await this._repository.getById(command.allocatorId);
     if (!allocator) {
-      throw new Error(`Allocator with id ${command.allocatorId} not found`)
+      throw new Error(`Allocator with id ${command.allocatorId} not found`);
     }
 
     switch (command.result.status) {
       case PhaseStatus.Approved:
-        allocator.approveGovernanceReview(command.result.data)
-        break
+        allocator.approveGovernanceReview(command.result.data);
+        break;
       case PhaseStatus.Rejected:
-        allocator.rejectGovernanceReview(command.result.data)
-        break
+        allocator.rejectGovernanceReview(command.result.data);
+        break;
       default:
-        throw new Error('Invalid governance review result')
+        throw new Error('Invalid governance review result');
     }
 
-    this._repository.save(allocator, -1)
+    this._repository.save(allocator, -1);
   }
 }

@@ -7,7 +7,7 @@ import {
   ApproveRefreshByMaCommand,
   ApproveRefreshByMaCommandHandler,
 } from './approve-refresh-by-ma.command';
-import { IIssueDetailsRepository } from '@src/infrastructure/respositories/issue-details.repository';
+import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { DatabaseRefreshFactory } from '@mocks/factories';
 import { faker } from '@faker-js/faker';
 import { Approval } from '@src/infrastructure/clients/lotus';

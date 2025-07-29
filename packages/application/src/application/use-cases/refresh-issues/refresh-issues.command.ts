@@ -5,7 +5,7 @@ import { FetchIssuesCommand } from '@src/application/use-cases/refresh-issues/fe
 import config from '@src/config';
 import { LOG_MESSAGES } from '@src/constants';
 import { BulkCreateIssueCommand } from '@src/application/use-cases/refresh-issues/bulk-create-issue.command';
-import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
+import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 import { BulkWriteResult } from 'mongodb';
 
 const LOG = LOG_MESSAGES.REFRESH_ISSUES_COMMAND;

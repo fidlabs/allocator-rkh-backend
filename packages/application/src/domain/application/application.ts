@@ -1,4 +1,10 @@
-import { AggregateRoot, ApplicationError, IEventStore, IRepository, zuluToEpoch } from '@filecoin-plus/core';
+import {
+  AggregateRoot,
+  ApplicationError,
+  IEventStore,
+  IRepository,
+  zuluToEpoch,
+} from '@filecoin-plus/core';
 import { StatusCodes } from 'http-status-codes';
 
 import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
@@ -29,11 +35,9 @@ import {
   RKHApprovalsUpdated,
 } from './application.events';
 
-export interface IDatacapAllocatorRepository extends IRepository<DatacapAllocator> {
-}
+export interface IDatacapAllocatorRepository extends IRepository<DatacapAllocator> {}
 
-export interface IDatacapAllocatorEventStore extends IEventStore<DatacapAllocator> {
-}
+export interface IDatacapAllocatorEventStore extends IEventStore<DatacapAllocator> {}
 
 export enum ApplicationStatus {
   KYC_PHASE = 'KYC_PHASE',
@@ -52,31 +56,31 @@ export enum ApplicationAllocator {
 }
 
 export type ApplicationPullRequest = {
-  prNumber: number
-  prUrl: string
-  commentId: number
-  timestamp: Date
-}
+  prNumber: number;
+  prUrl: string;
+  commentId: number;
+  timestamp: Date;
+};
 
 export type ApplicationApplicantData = {
-  name: string
-  location: string
-  githubHandle: string
-  slackHandle: string
-  address: string
-  orgName: string
-  orgAddress: string
-}
+  name: string;
+  location: string;
+  githubHandle: string;
+  slackHandle: string;
+  address: string;
+  orgName: string;
+  orgAddress: string;
+};
 
 export type ApplicationInstruction = {
-  method: string
-  datacap_amount: number
-  startTimestamp?: number
-  endTimestamp?: number
-  allocatedTimestamp?: number
-  status?: string
-  isMDMAAllocator?: boolean
-}
+  method: string;
+  datacap_amount: number;
+  startTimestamp?: number;
+  endTimestamp?: number;
+  allocatedTimestamp?: number;
+  status?: string;
+  isMDMAAllocator?: boolean;
+};
 
 export enum ApplicationInstructionStatus {
   GRANTED = 'GRANTED',
@@ -85,13 +89,12 @@ export enum ApplicationInstructionStatus {
 }
 
 export type ApplicationGrantCycle = {
-  id: number
-  status: ApplicationInstructionStatus
-  pullRequest: ApplicationPullRequest
-  instruction: ApplicationInstruction
-}
-export type StatusEvent = { stage: string; timestamp: number }
-
+  id: number;
+  status: ApplicationInstructionStatus;
+  pullRequest: ApplicationPullRequest;
+  instruction: ApplicationInstruction;
+};
+export type StatusEvent = { stage: string; timestamp: number };
 
 export class DatacapAllocator extends AggregateRoot {
   public applicationNumber: number;
@@ -164,22 +167,22 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   static create(params: {
-    applicationId: string
-    applicationNumber: number
-    applicantName: string
-    applicantAddress: string
-    applicantOrgName: string
-    applicantOrgAddresses: string
-    allocationTrancheSchedule: string
-    allocationAudit: string
-    allocationDistributionRequired: string
-    allocationRequiredStorageProviders: string
-    bookkeepingRepo: string
-    allocationRequiredReplicas: string
-    datacapAllocationLimits: string
-    applicantGithubHandle: string
-    otherGithubHandles: string[]
-    onChainAddressForDataCapAllocation: string
+    applicationId: string;
+    applicationNumber: number;
+    applicantName: string;
+    applicantAddress: string;
+    applicantOrgName: string;
+    applicantOrgAddresses: string;
+    allocationTrancheSchedule: string;
+    allocationAudit: string;
+    allocationDistributionRequired: string;
+    allocationRequiredStorageProviders: string;
+    bookkeepingRepo: string;
+    allocationRequiredReplicas: string;
+    datacapAllocationLimits: string;
+    applicantGithubHandle: string;
+    otherGithubHandles: string[];
+    onChainAddressForDataCapAllocation: string;
   }): DatacapAllocator {
     const allocator = new DatacapAllocator(params.applicationId);
     allocator.applyChange(
@@ -220,7 +223,13 @@ export class DatacapAllocator extends AggregateRoot {
     this.ensureValidApplicationStatus([ApplicationStatus.KYC_PHASE]);
 
     this.applyChange(
-      new AllocatorMultisigUpdated(this.guid, allocatorActorId, multisigAddress, multisigThreshold, multisigSigners),
+      new AllocatorMultisigUpdated(
+        this.guid,
+        allocatorActorId,
+        multisigAddress,
+        multisigThreshold,
+        multisigSigners,
+      ),
     );
   }
 
@@ -291,17 +300,22 @@ export class DatacapAllocator extends AggregateRoot {
           the application should advance to MDMA approval
     */
     const approvedMethod =
-      details?.allocatorType === 'Manual' ? ApplicationAllocator.META_ALLOCATOR : ApplicationAllocator.RKH_ALLOCATOR;
+      details?.allocatorType === 'Manual'
+        ? ApplicationAllocator.META_ALLOCATOR
+        : ApplicationAllocator.RKH_ALLOCATOR;
     const lastInstructionIndex = this.applicationInstructions.length - 1;
     this.applicationInstructions[lastInstructionIndex].method = approvedMethod;
     this.applicationInstructions[lastInstructionIndex].datacap_amount = details?.finalDataCap;
-    this.applicationInstructions[lastInstructionIndex].status = ApplicationInstructionStatus.PENDING;
+    this.applicationInstructions[lastInstructionIndex].status =
+      ApplicationInstructionStatus.PENDING;
     this.applicationInstructions[lastInstructionIndex].isMDMAAllocator = details?.isMDMAAllocator;
     this.applicationInstructions[lastInstructionIndex].endTimestamp = Math.floor(Date.now() / 1000);
 
     this.applyChange(new GovernanceReviewApproved(this.guid, this.applicationInstructions));
 
-    this.isMetaAllocator = this.applicationInstructions[lastInstructionIndex].method === ApplicationAllocator.META_ALLOCATOR;
+    this.isMetaAllocator =
+      this.applicationInstructions[lastInstructionIndex].method ===
+      ApplicationAllocator.META_ALLOCATOR;
     this.isMDMA = details?.isMDMAAllocator;
 
     const action = () => {
@@ -310,7 +324,8 @@ export class DatacapAllocator extends AggregateRoot {
         this.pathway = 'MDMA';
         this.ma_address = this.mdma_address;
         this.applicationStatus = ApplicationStatus.DC_ALLOCATED;
-        this.applicationInstructions[lastInstructionIndex].status = ApplicationInstructionStatus.GRANTED;
+        this.applicationInstructions[lastInstructionIndex].status =
+          ApplicationInstructionStatus.GRANTED;
         console.log('apply gov review MDMA', this);
         return new MetaAllocatorApprovalCompleted(this.guid, 0, '', this.applicationInstructions);
       }
@@ -324,7 +339,8 @@ export class DatacapAllocator extends AggregateRoot {
         this.pathway = 'RKH';
         this.ma_address = this.rkh_address;
         this.applicationStatus = ApplicationStatus.DC_ALLOCATED;
-        this.applicationInstructions[lastInstructionIndex].status = ApplicationInstructionStatus.GRANTED;
+        this.applicationInstructions[lastInstructionIndex].status =
+          ApplicationInstructionStatus.GRANTED;
         console.log('apply gov review RKH', this);
         return new RKHApprovalCompleted(this.guid, this.applicationInstructions);
       }
@@ -348,7 +364,9 @@ export class DatacapAllocator extends AggregateRoot {
     this.ensureValidApplicationStatus([ApplicationStatus.RKH_APPROVAL_PHASE]);
 
     if (approvals.length !== this.rkhApprovals.length) {
-      this.applyChange(new RKHApprovalsUpdated(this.guid, messageId, approvals, this.rkhApprovalThreshold));
+      this.applyChange(
+        new RKHApprovalsUpdated(this.guid, messageId, approvals, this.rkhApprovalThreshold),
+      );
     }
   }
 
@@ -361,7 +379,7 @@ export class DatacapAllocator extends AggregateRoot {
      * the UI. But this in-memory object is not very well maintained.
      * Specifically for the application instructions the in-memory object is not updated with the
      * latest status as the application progresses, so when we check it here it's still the default.
-     * 
+     *
      * HOWEVER, I believe it's not actually necessary to check this here, because the on-chain
      * messages and the PR are all correct already, so I'm disabling this check for now.
      * If all holds up then we can decide whether to simply remove this code or go ahead with
@@ -374,7 +392,14 @@ export class DatacapAllocator extends AggregateRoot {
     //])
     //const lastInstructionIndex = this.applicationInstructions.length - 1
     //this.applicationInstructions[lastInstructionIndex].status = ApplicationInstructionStatus.GRANTED
-    this.applyChange(new MetaAllocatorApprovalCompleted(this.guid, blockNumber, txHash, this.applicationInstructions));
+    this.applyChange(
+      new MetaAllocatorApprovalCompleted(
+        this.guid,
+        blockNumber,
+        txHash,
+        this.applicationInstructions,
+      ),
+    );
   }
 
   completeRKHApproval() {
@@ -387,7 +412,7 @@ export class DatacapAllocator extends AggregateRoot {
      * the UI. But this in-memory object is not very well maintained.
      * Specifically for the application instructions the in-memory object is not updated with the
      * latest status as the application progresses, so when we check it here it's still the default.
-     * 
+     *
      * HOWEVER, I believe it's not actually necessary to check this here, because the on-chain
      * messages and the PR are all correct already, so I'm disabling this check for now.
      * If all holds up then we can decide whether to simply remove this code or go ahead with
@@ -399,7 +424,8 @@ export class DatacapAllocator extends AggregateRoot {
     //  ApplicationAllocator.RKH_ALLOCATOR,
     //])
     const lastInstructionIndex = this.applicationInstructions.length - 1;
-    this.applicationInstructions[lastInstructionIndex].status = ApplicationInstructionStatus.GRANTED;
+    this.applicationInstructions[lastInstructionIndex].status =
+      ApplicationInstructionStatus.GRANTED;
     this.applyChange(new RKHApprovalCompleted(this.guid, this.applicationInstructions));
   }
 
@@ -407,8 +433,7 @@ export class DatacapAllocator extends AggregateRoot {
     console.log('updateDatacapAllocation');
     try {
       this.completeRKHApproval();
-    } catch (error) {
-    }
+    } catch (error) {}
     // TODO: this.applyChange(new DatacapAllocationUpdated(this.guid, datacap));
   }
 
@@ -465,12 +490,18 @@ export class DatacapAllocator extends AggregateRoot {
 
     this.applicantOrgName = event.file.organization || this.applicantOrgName;
 
-    if (this.applicationStatus === ApplicationStatus.META_APPROVAL_PHASE || (this.isMetaAllocator && this.isMDMA)) {
+    if (
+      this.applicationStatus === ApplicationStatus.META_APPROVAL_PHASE ||
+      (this.isMetaAllocator && this.isMDMA)
+    ) {
       this.allocationTooling = ['smart_contract_allocator'];
       this.pathway = 'MDMA';
       this.ma_address = this.mdma_address;
     }
-    if (this.applicationStatus === ApplicationStatus.RKH_APPROVAL_PHASE || (!this.isMetaAllocator && this.isMDMA)) {
+    if (
+      this.applicationStatus === ApplicationStatus.RKH_APPROVAL_PHASE ||
+      (!this.isMetaAllocator && this.isMDMA)
+    ) {
       this.allocationTooling = [];
       this.pathway = 'RKH';
       this.ma_address = this.rkh_address;
@@ -487,8 +518,10 @@ export class DatacapAllocator extends AggregateRoot {
       event.file.application.distribution && event.file.application.distribution.length > 0
         ? event.file.application.distribution[0]
         : this.allocationDistributionRequired;
-    this.allocationTrancheSchedule = event.file.application.tranche_schedule || this.allocationTrancheSchedule;
-    this.allocationRequiredReplicas = event.file.application.required_replicas || this.allocationRequiredReplicas;
+    this.allocationTrancheSchedule =
+      event.file.application.tranche_schedule || this.allocationTrancheSchedule;
+    this.allocationRequiredReplicas =
+      event.file.application.required_replicas || this.allocationRequiredReplicas;
     this.allocationRequiredStorageProviders =
       event.file.application.required_sps || this.allocationRequiredStorageProviders;
     this.allocationMaxDcClient = event.file.application.max_DC_client || this.allocationMaxDcClient;
@@ -498,12 +531,18 @@ export class DatacapAllocator extends AggregateRoot {
         : this.applicantGithubHandle;
     this.onChainAddressForDataCapAllocation =
       event.file.application.client_contract_address || this.onChainAddressForDataCapAllocation;
-    this.allocationBookkeepingRepo = event.file.application.allocation_bookkeeping || this.allocationBookkeepingRepo;
-    this.allocatorMultisigAddress = event.file.pathway_addresses?.msig || this.allocatorMultisigAddress;
-    this.allocatorMultisigSigners = event.file.pathway_addresses?.signers || this.allocatorMultisigSigners;
+    this.allocationBookkeepingRepo =
+      event.file.application.allocation_bookkeeping || this.allocationBookkeepingRepo;
+    this.allocatorMultisigAddress =
+      event.file.pathway_addresses?.msig || this.allocatorMultisigAddress;
+    this.allocatorMultisigSigners =
+      event.file.pathway_addresses?.signers || this.allocatorMultisigSigners;
 
-    this.applicationInstructions = event.file.audits.map((ao) => ({
-      method: event.file.metapathway_type === 'MDMA' ? ApplicationAllocator.META_ALLOCATOR : ApplicationAllocator.RKH_ALLOCATOR,
+    this.applicationInstructions = event.file.audits.map(ao => ({
+      method:
+        event.file.metapathway_type === 'MDMA'
+          ? ApplicationAllocator.META_ALLOCATOR
+          : ApplicationAllocator.RKH_ALLOCATOR,
       startTimestamp: zuluToEpoch(ao.started),
       endTimestamp: zuluToEpoch(ao.ended),
       allocatedTimestamp: zuluToEpoch(ao.dc_allocated),
@@ -611,7 +650,11 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyRKHApprovalCompleted(event: RKHApprovalCompleted) {
-    this.ensureValidApplicationStatus([ApplicationStatus.GOVERNANCE_REVIEW_PHASE, ApplicationStatus.RKH_APPROVAL_PHASE, ApplicationStatus.DC_ALLOCATED]);
+    this.ensureValidApplicationStatus([
+      ApplicationStatus.GOVERNANCE_REVIEW_PHASE,
+      ApplicationStatus.RKH_APPROVAL_PHASE,
+      ApplicationStatus.DC_ALLOCATED,
+    ]);
     this.status['DC Allocated'] ??= event.timestamp.getTime();
     this.applicationStatus = ApplicationStatus.DC_ALLOCATED;
     this.allocationTooling = [];
@@ -620,7 +663,8 @@ export class DatacapAllocator extends AggregateRoot {
     const index = this.applicationInstructions.length - 1;
     this.applicationInstructions[index].allocatedTimestamp = event.timestamp.getTime();
     this.applicationInstructions[index].status = ApplicationInstructionStatus.GRANTED;
-    this.applicationInstructions[index].datacap_amount = event.applicationInstructions[index].datacap_amount;
+    this.applicationInstructions[index].datacap_amount =
+      event.applicationInstructions[index].datacap_amount;
   }
 
   applyMetaAllocatorApprovalStarted(event: MetaAllocatorApprovalStarted) {
@@ -632,7 +676,11 @@ export class DatacapAllocator extends AggregateRoot {
 
   applyMetaAllocatorApprovalCompleted(event: MetaAllocatorApprovalCompleted) {
     console.log('applyMetaAllocatorApprovalCompleted: ', this.guid, this.applicationPullRequest);
-    this.ensureValidApplicationStatus([ApplicationStatus.GOVERNANCE_REVIEW_PHASE, ApplicationStatus.META_APPROVAL_PHASE, ApplicationStatus.DC_ALLOCATED]);
+    this.ensureValidApplicationStatus([
+      ApplicationStatus.GOVERNANCE_REVIEW_PHASE,
+      ApplicationStatus.META_APPROVAL_PHASE,
+      ApplicationStatus.DC_ALLOCATED,
+    ]);
     this.status['DC Allocated'] ??= event.timestamp.getTime();
     this.applicationStatus = ApplicationStatus.DC_ALLOCATED;
 
@@ -642,7 +690,8 @@ export class DatacapAllocator extends AggregateRoot {
     const index = this.applicationInstructions.length - 1;
     this.applicationInstructions[index].allocatedTimestamp = event.timestamp.getTime();
     this.applicationInstructions[index].status = ApplicationInstructionStatus.GRANTED;
-    this.applicationInstructions[index].datacap_amount = event.applicationInstructions[index].datacap_amount;
+    this.applicationInstructions[index].datacap_amount =
+      event.applicationInstructions[index].datacap_amount;
   }
 
   applyDatacapAllocationUpdated(event: DatacapAllocationUpdated) {
@@ -672,7 +721,9 @@ export class DatacapAllocator extends AggregateRoot {
     errorMessage: string = 'Invalid operation for the current phase',
   ): void {
     if (!expectedStatuses.includes(this.applicationStatus)) {
-      console.error(`Invalid application status: ${this.applicationStatus}. Expected one of: ${expectedStatuses.join(', ')}`);
+      console.error(
+        `Invalid application status: ${this.applicationStatus}. Expected one of: ${expectedStatuses.join(', ')}`,
+      );
       throw new ApplicationError(StatusCodes.BAD_REQUEST, errorCode, errorMessage);
     }
   }
@@ -693,7 +744,11 @@ export class DatacapAllocator extends AggregateRoot {
       instructionMethod = lastInstruction.method;
       instructionAmount = lastInstruction.datacap_amount;
     } catch (error) {
-      throw new ApplicationError(StatusCodes.BAD_REQUEST, errorCode, 'Latest instruction data is invalid');
+      throw new ApplicationError(
+        StatusCodes.BAD_REQUEST,
+        errorCode,
+        'Latest instruction data is invalid',
+      );
     }
 
     if (!expectedInstructionMethods.includes(instructionMethod as ApplicationAllocator)) {
