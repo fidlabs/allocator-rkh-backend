@@ -5,9 +5,10 @@ import { IIssueMapper, IssueMapper } from './issue-mapper';
 import { GithubIssueFactory } from '@mocks/factories';
 import { TYPES } from '@src/types';
 import {
-  ILLEGAL_CHARACTERS_REGEX,
   ISSUE_TITLE_REGEX,
-  JSON_NUMBER_REGEX,
+  NEW_TEMPLATE_JSON_SECTION_REGEX,
+  OLD_TEMPLATE_JSON_SECTION_REGEX,
+  JSON_HASH_REGEX,
 } from '@src/infrastructure/mappers/constants';
 
 describe('IssueMapper', () => {
@@ -24,7 +25,7 @@ describe('IssueMapper', () => {
     const { issue } = GithubIssueFactory.createOpened();
 
     const result = mapper.fromDomainToIssue(issue);
-    const jsonNumberFromBody = issue?.body?.match(JSON_NUMBER_REGEX)?.[1];
+    const jsonNumberFromBody = mapper.extractJsonIdentifier(issue.body ?? '');
 
     expect(result).toEqual({
       githubIssueId: issue.id,
@@ -58,49 +59,115 @@ describe('IssueMapper', () => {
       name: 'Unknown',
     });
   });
+
+  describe('extractJsonNumber', () => {
+    it.each`
+      body                                                                           | expected
+      ${"### What is your JSON hash (starts with 'rec')\nrecwS2sB0UNfqfAVx\n###"}    | ${'recwS2sB0UNfqfAVx'}
+      ${"### What is your JSON hash (starts with 'rec') ? \nrecwS2sB0UNfqfAVx\n###"} | ${'recwS2sB0UNfqfAVx'}
+      ${"### What is your JSON hash (starts with 'rec') ? \n12313123\n###"}          | ${'12313123'}
+      ${'###    What   is   your   JSON   hash  \nrecwS2sB0UNfqfAVx\n###'}           | ${'recwS2sB0UNfqfAVx'}
+      ${'###    What   is   your   JSON   hash  \n123321123\n###'}                   | ${'123321123'}
+      ${'### What is your JSON hash\n12345\n###'}                                    | ${'12345'}
+      ${'2. **Paste your JSON number:** 1069'}                                       | ${'1069'}
+      ${'2. **Paste your JSON number:** recwS2sB0UNfqfAVx'}                          | ${'recwS2sB0UNfqfAVx'}
+      ${'2.    **Paste   your    JSON    number  :  **   recwS2sB0UNfqfAVx'}         | ${'recwS2sB0UNfqfAVx'}
+      ${'2.    **Paste   your    JSON    number  :  **   313123'}                    | ${'313123'}
+      ${'2.    **Paste   your    JSON    number  :  **   313123'}                    | ${'313123'}
+      ${'2. **Paste your JSON number:** 1069\n'}                                     | ${'1069'}
+      ${'### What is your JSON hash\nnotrecabc\n###'}                                | ${'recabc'}
+      ${'### What is your JSON hash\nrec\n###'}                                      | ${''}
+      ${'### What is your JSON hash\n\n###'}                                         | ${''}
+      ${'no relevant block here'}                                                    | ${''}
+    `('should extract correct json number/hash from body', ({ body, expected }) => {
+      expect(mapper.extractJsonIdentifier(body)).toBe(expected);
+    });
+  });
 });
 
 describe('IssueMapper regex test', () => {
-  it.each`
-    given                                                                        | expected
-    ${"### What is your JSON hash (starts with 'rec')\n\nrec123abc"}             | ${'rec123abc'}
-    ${"What is your JSON hash (starts with 'rec')\n\nrec456def"}                 | ${'rec456def'}
-    ${"Some other text What is your JSON hash (starts with 'rec')\n\nrecABC123"} | ${'recABC123'}
-    ${'json: 12345'}                                                             | ${undefined}
-    ${"What is your JSON hash (starts with 'rec')\n\n123abc"}                    | ${'123abc'}
-    ${"What is your JSON hash (starts with 'rec')\n\n123321321"}                 | ${'123321321'}
-    ${"What is your JSON hash (starts with 'rec')\n\nnotrecabc"}                 | ${'notrecabc'}
-    ${"What is your JSON hash (starts with 'rec')\n\nrec"}                       | ${'rec'}
-  `('should extract jsonNumber from "$given"', ({ given, expected }) => {
-    const match = given.match(JSON_NUMBER_REGEX);
+  describe('JSON_HASH_REGEX', () => {
+    it.each`
+      given                                                                        | expected
+      ${"### What is your JSON hash (starts with 'rec')\n\nrec123abc"}             | ${'rec123abc'}
+      ${"What is your JSON hash (starts with 'rec')\n\nrec456def"}                 | ${'rec456def'}
+      ${"Some other text What is your JSON hash (starts with 'rec')\n\nrecABC123"} | ${'recABC123'}
+      ${'json: 12345'}                                                             | ${undefined}
+      ${"What is your JSON hash (starts with 'rec')\n\n123abc"}                    | ${undefined}
+      ${"What is your JSON hash (starts with 'rec')\n\n123321321"}                 | ${undefined}
+      ${"What is your JSON hash (starts with 'rec')\n\nnotrecabc"}                 | ${'recabc'}
+      ${"What is your JSON hash (starts with 'rec')\n\nrec"}                       | ${undefined}
+    `('should extract jsonNumber from "$given"', ({ given, expected }) => {
+      const match = given.match(JSON_HASH_REGEX);
 
-    expect(match?.[1]).toBe(expected);
+      expect(match?.[0]).toBe(expected);
+    });
   });
 
-  it.each`
-    given              | expected
-    ${'abc123def'}     | ${'abc123def'}
-    ${'rec@#$123'}     | ${'rec123'}
-    ${'rec-123_abc'}   | ${'rec-123_abc'}
-    ${'rec!@#$%^&*()'} | ${'rec'}
-    ${'!@1#$%^2&*()3'} | ${'123'}
-  `('should clean illegal chars: "$given" -> "$expected"', ({ given, expected }) => {
-    const result = given.replace(ILLEGAL_CHARACTERS_REGEX, '');
+  describe('ISSUE_TITLE_REGEX', () => {
+    it.each`
+      given                  | expected
+      ${'Datacap refresh'}   | ${undefined}
+      ${'[Datacap refresh]'} | ${undefined}
+      ${'DataCap refresh'}   | ${undefined}
+      ${'[DataCap refresh]'} | ${undefined}
+      ${'DataCap Refresh'}   | ${undefined}
+      ${'[DataCap Refresh]'} | ${'[DataCap Refresh]'}
+    `('should extract correct text: "$given" -> "$expected"', ({ given, expected }) => {
+      const result = given.match(ISSUE_TITLE_REGEX);
 
-    expect(result).toBe(expected);
+      expect(result?.[0]).toBe(expected);
+    });
   });
 
-  it.each`
-    given                  | expected
-    ${'Datacap refresh'}   | ${undefined}
-    ${'[Datacap refresh]'} | ${undefined}
-    ${'DataCap refresh'}   | ${undefined}
-    ${'[DataCap refresh]'} | ${undefined}
-    ${'DataCap Refresh'}   | ${undefined}
-    ${'[DataCap Refresh]'} | ${'[DataCap Refresh]'}
-  `('should extract correct text: "$given" -> "$expected"', ({ given, expected }) => {
-    const result = given.match(ISSUE_TITLE_REGEX);
+  describe('JSON_HASH_REGEX', () => {
+    it.each`
+      input                  | expected
+      ${'rec123abc'}         | ${'rec123abc'}
+      ${'recwS2sB0UNfqfAVx'} | ${'recwS2sB0UNfqfAVx'}
+      ${'rec_foo'}           | ${null}
+      ${'rec'}               | ${null}
+      ${'notrecabc'}         | ${'recabc'}
+      ${'something else'}    | ${null}
+      ${'rec123 abc rec456'} | ${'rec123'}
+    `('should extract first rec hash or null', ({ input, expected }) => {
+      const match = input.match(JSON_HASH_REGEX)?.[0] ?? null;
+      expect(match).toBe(expected);
+    });
+  });
 
-    expect(result?.[0]).toBe(expected);
+  describe('OLD_TEMPLATE_JSON_SECTION_REGEX', () => {
+    it.each`
+      input                                                                         | matching
+      ${'2. **Paste your JSON number:** 1069'}                                      | ${true}
+      ${'1. **Paste your JSON number:** 42'}                                        | ${true}
+      ${'10. **Paste your JSON number:** 12345'}                                    | ${true}
+      ${'2. **Paste your JSON number:** '}                                          | ${true}
+      ${'Paste your JSON number: 1069'}                                             | ${false}
+      ${'2. **Paste your JSON number:** 1069\n3. **Paste your JSON number:** 2048'} | ${true}
+      ${'no relevant block here'}                                                   | ${false}
+    `('should detect if old template section is present $input', ({ input, matching }) => {
+      const match = input.match(OLD_TEMPLATE_JSON_SECTION_REGEX)?.[0] ?? null;
+      expect(!!match).toBe(matching);
+    });
+  });
+
+  describe('NEW_TEMPLATE_JSON_SECTION_REGEX', () => {
+    it.each`
+      input                                                                             | matching
+      ${'### What is your JSON hash\nrec1\n###'}                                        | ${true}
+      ${'# What is your JSON hash\nrec2\n#'}                                            | ${true}
+      ${'###What is your JSON hash\nrec3\n###'}                                         | ${true}
+      ${'### What is your JSON hash\nrecwS2sB0UNfqfAVx\n###'}                           | ${true}
+      ${'### What is your JSON hash\nnotrec\n###'}                                      | ${true}
+      ${'### What is your JSON hash\nrec_foo\n###'}                                     | ${true}
+      ${'### What is your JSON hash\nsomething else\n###'}                              | ${true}
+      ${'### What is your JSON hash\nrec123\n###\n# What is your JSON hash\nrec456\n#'} | ${true}
+      ${'### Something else\nrec5\n###'}                                                | ${false}
+      ${'no relevant block here'}                                                       | ${false}
+    `('should detect if new template section is present', ({ input, matching }) => {
+      const match = input.match(NEW_TEMPLATE_JSON_SECTION_REGEX)?.[0] ?? null;
+      expect(!!match).toBe(matching);
+    });
   });
 });
