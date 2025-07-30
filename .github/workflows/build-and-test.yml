@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup project files
+        uses: ./.github/setup/action.yml
+        with:
+          node-version: 20
+
+      - name: Check Prettier formatting
+        run: npm run fmt:check
+
+      - name: Run tests
+        run: test:unit

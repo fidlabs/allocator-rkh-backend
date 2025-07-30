@@ -13,7 +13,8 @@
     "application": "npx -w @filecoin-plus/application",
     "core": "npx -w @filecoin-plus/core",
     "fmt:check": "prettier --check 'packages/**/*.{js,ts,json}'",
-    "fmt:all": "prettier --write 'packages/**/*.{js,ts,json}'"
+    "fmt:all": "prettier --write 'packages/**/*.{js,ts,json}'",
+    "test:unit": "cd packages/application && npm run test:unit"
   },
   "devDependencies": {
     "prettier": "^3.3.3"
