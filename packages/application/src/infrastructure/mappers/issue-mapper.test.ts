@@ -25,7 +25,7 @@ describe('IssueMapper', () => {
     const { issue } = GithubIssueFactory.createOpened();
 
     const result = mapper.fromDomainToIssue(issue);
-    const jsonNumberFromBody = mapper.extractJsonNumber(issue.body ?? '');
+    const jsonNumberFromBody = mapper.extractJsonIdentifier(issue.body ?? '');
 
     expect(result).toEqual({
       githubIssueId: issue.id,
@@ -80,7 +80,7 @@ describe('IssueMapper', () => {
       ${'### What is your JSON hash\n\n###'}                                         | ${''}
       ${'no relevant block here'}                                                    | ${''}
     `('should extract correct json number/hash from body', ({ body, expected }) => {
-      expect(mapper.extractJsonNumber(body)).toBe(expected);
+      expect(mapper.extractJsonIdentifier(body)).toBe(expected);
     });
   });
 });
