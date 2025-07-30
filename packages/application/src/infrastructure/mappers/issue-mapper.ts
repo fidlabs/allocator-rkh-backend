@@ -1,7 +1,13 @@
 import { IssueDetails } from '@src/infrastructure/respositories/issue-details';
 import { RepoIssue } from '@src/infrastructure/clients/github';
 import { injectable } from 'inversify';
-import { ILLEGAL_CHARACTERS_REGEX, JSON_NUMBER_REGEX } from './constants';
+import {
+  JSON_HASH_REGEX,
+  NEW_TEMPLATE_JSON_NUMBER_REGEX,
+  NEW_TEMPLATE_JSON_SECTION_REGEX,
+  OLD_TEMPLATE_JSON_NUMBER_REGEX,
+  OLD_TEMPLATE_JSON_SECTION_REGEX,
+} from './constants';
 import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
 
 export interface IIssueMapper {
@@ -10,6 +16,8 @@ export interface IIssueMapper {
   fromDomainListToIssueList(githubIssues: RepoIssue[]): IssueDetails[];
 
   extendWithAllocatorData(issue: IssueDetails, allocator: ApplicationPullRequestFile): IssueDetails;
+
+  extractJsonNumber(body: string): string;
 }
 
 @injectable()
@@ -54,13 +62,40 @@ export class IssueMapper implements IIssueMapper {
     };
   }
 
-  private extractJsonNumber(body: string): string {
-    const contentMatch = body.match(JSON_NUMBER_REGEX)?.[1];
+  extractJsonNumber(body: string): string {
+    const newTemplateSection = body.match(NEW_TEMPLATE_JSON_SECTION_REGEX)?.[0];
 
-    if (!contentMatch) return '';
+    if (newTemplateSection) return this.extractJsonNumberFromNewTemplate(newTemplateSection);
 
-    const content = contentMatch.trim();
-    return content.replace(ILLEGAL_CHARACTERS_REGEX, '').trim();
+    const oldTemplateSection = body.match(OLD_TEMPLATE_JSON_SECTION_REGEX)?.[0];
+
+    if (oldTemplateSection) return this.extractJsonNumberFromOldTemplate(oldTemplateSection);
+
+    return '';
+  }
+
+  private extractJsonNumberFromNewTemplate(body: string): string {
+    const hash = body.match(JSON_HASH_REGEX)?.[0] ?? null;
+
+    if (hash) return hash;
+
+    const numericValue = body.match(NEW_TEMPLATE_JSON_NUMBER_REGEX)?.[1] ?? null;
+
+    if (numericValue) return numericValue;
+
+    return '';
+  }
+
+  private extractJsonNumberFromOldTemplate(body: string): string {
+    const hash = body.match(JSON_HASH_REGEX)?.[0] ?? null;
+
+    if (hash) return hash;
+
+    const numericValue = body.match(OLD_TEMPLATE_JSON_NUMBER_REGEX)?.[1] ?? null;
+
+    if (numericValue) return numericValue;
+
+    return '';
   }
 
   private normalizeLabel = <T extends Partial<Record<'name', string>> | string>(
