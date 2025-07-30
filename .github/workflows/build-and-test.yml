@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup project files
-        uses: ./.github/setup/action.yml
+        uses: ./.github/actions/setup
         with:
           node-version: 20
 
