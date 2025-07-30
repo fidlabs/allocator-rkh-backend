@@ -27,4 +27,4 @@ jobs:
         run: npm run fmt:check
 
       - name: Run tests
-        run: test:unit
+        run: npm run test:unit
