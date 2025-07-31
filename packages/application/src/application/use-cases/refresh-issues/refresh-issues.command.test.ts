@@ -8,7 +8,7 @@ import { DatabaseRefreshFactory } from '@mocks/factories';
 import { FetchIssuesCommand } from '@src/application/use-cases/refresh-issues/fetch-issues.command';
 import { BulkCreateIssueCommand } from '@src/application/use-cases/refresh-issues/bulk-create-issue.command';
 
-describe.only('RefreshIssuesCommand', () => {
+describe('RefreshIssuesCommand', () => {
   let container: Container;
   let handler: RefreshIssuesCommandHandler;
   const loggerMock = { info: vi.fn(), error: vi.fn() };
