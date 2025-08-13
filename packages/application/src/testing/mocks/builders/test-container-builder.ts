@@ -27,6 +27,15 @@ import { BulkCreateIssueCommandHandler } from '@src/application/use-cases/refres
 import { UpsertIssueCommandCommandHandler } from '@src/application/use-cases/refresh-issues/upsert-issue.command';
 import { GetRefreshesQueryHandler } from '@src/application/queries/get-refreshes/get-refreshes.query';
 import { FetchAllocatorCommandHandler } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
+import {
+  IMetaAllocatorRepository,
+  MetaAllocatorRepository,
+} from '@src/infrastructure/repositories/meta-allocator.repository';
+import { DataCapMapper, IDataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
+import {
+  MetaAllocatorService,
+  IMetaAllocatorService,
+} from '@src/application/services/meta-allocator.service';
 
 export class TestContainerBuilder {
   private container: Container;
@@ -73,13 +82,28 @@ export class TestContainerBuilder {
     return this;
   }
 
+  withMappers() {
+    this.container.bind<IIssueMapper>(TYPES.IssueMapper).to(IssueMapper).inSingletonScope();
+    this.container.bind<IDataCapMapper>(TYPES.DataCapMapper).to(DataCapMapper).inSingletonScope();
+    return this;
+  }
+
   withRepositories() {
     this.container
       .bind<IIssueDetailsRepository>(TYPES.IssueDetailsRepository)
       .to(IssueDetailsRepository)
       .inSingletonScope();
 
-    this.container.bind<IIssueMapper>(TYPES.IssueMapper).to(IssueMapper).inSingletonScope();
+    this.container
+      .bind<IMetaAllocatorRepository>(TYPES.MetaAllocatorRepository)
+      .to(MetaAllocatorRepository)
+      .inSingletonScope();
+
+    return this;
+  }
+
+  withServices() {
+    this.container.bind<IMetaAllocatorService>(TYPES.MetaAllocatorService).to(MetaAllocatorService);
     return this;
   }
 

@@ -45,6 +45,8 @@ describe('Refresh from Issue E2E', () => {
       .withCommandBus()
       .withQueryBus()
       .withGithubClient(githubMock as unknown as IGithubClient)
+      .withMappers()
+      .withServices()
       .withRepositories()
       .withCommandHandlers()
       .withQueryHandlers()

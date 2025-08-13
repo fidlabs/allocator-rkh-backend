@@ -75,6 +75,7 @@ import { FetchAllocatorCommandHandler } from '@src/application/use-cases/fetch-a
 import { SignRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/sign-refresh-by-rkh.command';
 import { ApproveRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/approve-refresh-by-rkh.command';
 import { ApproveRefreshByMaCommandHandler } from '@src/application/use-cases/update-ma-approvals/approve-refresh-by-ma.command';
+import { MaService } from './application/services/meta-allocator.service';
 
 export const initialize = async (): Promise<Container> => {
   const container = new Container();
@@ -88,6 +89,7 @@ export const initialize = async (): Promise<Container> => {
   container.bind<PullRequestService>(TYPES.PullRequestService).to(PullRequestService);
   container.bind<RoleService>(TYPES.RoleService).to(RoleService);
   container.bind<MessageService>(TYPES.MessageService).to(MessageService);
+  container.bind<MaService>(TYPES.MaService).to(MaService);
 
   container.bind<IEventHandler<ApplicationCreated>>(TYPES.Event).to(ApplicationCreatedEventHandler);
   container.bind<IEventHandler<ApplicationEdited>>(TYPES.Event).to(ApplicationEditedEventHandler);

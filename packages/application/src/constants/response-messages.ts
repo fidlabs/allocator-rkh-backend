@@ -16,4 +16,7 @@ export const RESPONSE_MESSAGES = {
     JSON_HASH_IS_NOT_FOUND_OR_INCORRECT:
       'The JSON number or hash does not exist in the issue template, or it has been added incorrectly.',
   },
+  MA_CONTROLLER: {
+    MA_ADDRESSES_RETRIEVED: 'MetaAllocator addresses retrieved successfully',
+  },
 };

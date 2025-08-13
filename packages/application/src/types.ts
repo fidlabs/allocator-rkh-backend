@@ -28,4 +28,6 @@ export const TYPES = {
   RpcProvider: Symbol('RpcProvider'),
   RpcProviderConfig: Symbol('RpcProviderConfig'),
   DataCapMapper: Symbol('DataCapMapper'),
+  MetaAllocatorService: Symbol('MetaAllocatorService'),
+  MetaAllocatorRepository: Symbol('MetaAllocatorRepository'),
 };
