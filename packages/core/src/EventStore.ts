@@ -12,7 +12,7 @@ import { createEventDescriptor, rehydrateEventFromDescriptor } from './utilities
 export abstract class EventStore implements IEventStore {
   constructor(
     @unmanaged() private readonly eventCollection: Collection,
-    @unmanaged() private readonly _eventBus: IEventBus
+    @unmanaged() private readonly _eventBus: IEventBus,
   ) {}
 
   async saveEvents(aggregateGuid: string, events: IEvent[], expectedVersion: number) {
@@ -43,7 +43,10 @@ export abstract class EventStore implements IEventStore {
   }
 
   async getEventsForAggregate(aggregateGuid: string): Promise<IEvent[]> {
-    const events = await this.eventCollection.find({ aggregateGuid }).sort({ version: 1 }).toArray();
+    const events = await this.eventCollection
+      .find({ aggregateGuid })
+      .sort({ version: 1 })
+      .toArray();
     if (!events.length) {
       throw new NotFoundException('Aggregate with the requested Guid does not exist');
     }
@@ -53,7 +56,9 @@ export abstract class EventStore implements IEventStore {
   }
 
   private async getLastEventDescriptor(aggregateGuid: string) {
-    const [latestEvent] = await this.eventCollection.find({ aggregateGuid }, { sort: { _id: -1 } }).toArray();
+    const [latestEvent] = await this.eventCollection
+      .find({ aggregateGuid }, { sort: { _id: -1 } })
+      .toArray();
     return latestEvent;
   }
 }

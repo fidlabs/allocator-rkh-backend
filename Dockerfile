@@ -16,6 +16,9 @@ RUN npm ci
 RUN npm -w @filecoin-plus/application install
 
 # Build the specific package using the argument
+RUN npm -w @filecoin-plus/core run build
+
+# Build the specific package using the argument
 RUN npm -w @filecoin-plus/application run build 
 
 # Expose the port the app runs on

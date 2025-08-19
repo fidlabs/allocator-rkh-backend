@@ -9,7 +9,8 @@
     "baseUrl": "src",
     "outDir": "dist",
     "paths": {
-      "@src/*": ["*"]
+      "@src/*": ["*"],
+      "@mocks/*": ["./testing/mocks/*"]
     },
     "types": ["reflect-metadata"],
     "noImplicitAny": false
@@ -18,7 +19,11 @@
     "resolveFullPaths": true,
     "verbose": false
   },
-  "include": ["src"],
+  "include": ["src", "src/testing/mocks"],
   "exclude": ["node_modules"],
-  "references": [{ "path": "../core" }],
+  "references": [
+    {
+      "path": "../core"
+    }
+  ]
 }

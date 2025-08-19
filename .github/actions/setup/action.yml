@@ -1,0 +1,22 @@
+name: Setup project files
+description: Prepare project files for CI/CD
+
+inputs:
+  node-version:
+    description: Node.js version to use
+    required: true
+    default: '20'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: ./package-lock.json
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci

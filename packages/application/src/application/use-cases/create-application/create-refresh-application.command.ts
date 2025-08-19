@@ -1,30 +1,31 @@
-import { Command, ICommandHandler, Logger } from '@filecoin-plus/core'
-import { inject, injectable } from 'inversify'
-import { TYPES } from '@src/types'
-import { PullRequestService } from '@src/application/services/pull-request.service'
-import { ApplicationStatus, DatacapAllocator, IDatacapAllocatorRepository } from '@src/domain/application/application'
-import { GovernanceReviewStarted } from '@src/domain/application/application.events'
-
+import { Command, ICommandHandler, Logger } from '@filecoin-plus/core';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '@src/types';
+import { PullRequestService } from '@src/application/services/pull-request.service';
+import {
+  ApplicationStatus,
+  DatacapAllocator,
+  IDatacapAllocatorRepository,
+} from '@src/domain/application/application';
+import { GovernanceReviewStarted } from '@src/domain/application/application.events';
 
 type Result<T> = {
-  success: boolean
-  data?: T
-  error?: Error
-}
-
+  success: boolean;
+  data?: T;
+  error?: Error;
+};
 
 export class CreateRefreshApplicationCommand extends Command {
-    constructor(
-        public readonly applicationId: string,
-    ) {
-        super()
-    }
+  constructor(public readonly applicationId: string) {
+    super();
+  }
 }
 
-
 @injectable()
-export class CreateRefreshApplicationCommandHandler implements ICommandHandler<CreateRefreshApplicationCommand> {
-  commandToHandle: string = CreateRefreshApplicationCommand.name
+export class CreateRefreshApplicationCommandHandler
+  implements ICommandHandler<CreateRefreshApplicationCommand>
+{
+  commandToHandle: string = CreateRefreshApplicationCommand.name;
 
   constructor(
     @inject(TYPES.Logger)
@@ -35,7 +36,7 @@ export class CreateRefreshApplicationCommandHandler implements ICommandHandler<C
     private readonly pullRequestService: PullRequestService,
   ) {}
 
-  async handle(command: CreateRefreshApplicationCommand): Promise<Result<{ guid: string }>> {   
+  async handle(command: CreateRefreshApplicationCommand): Promise<Result<{ guid: string }>> {
     /*
     Explanation:
 
@@ -52,44 +53,48 @@ export class CreateRefreshApplicationCommandHandler implements ICommandHandler<C
       - repository.save() called to commit allocator changes.
     */
 
-    this.logger.info('Handling CreateRefreshApplicationCommand...')
-    let allocator: DatacapAllocator
+    this.logger.info('Handling CreateRefreshApplicationCommand...');
+    let allocator: DatacapAllocator;
     try {
-        allocator = await this.repository.getById(command.applicationId)
+      allocator = await this.repository.getById(command.applicationId);
     } catch (error) {
-      this.logger.error(`Error finding allocator with applicationId ${command.applicationId}`)  
+      this.logger.error(`Error finding allocator with applicationId ${command.applicationId}`);
       return {
-            success: false,
-            error: new Error('Application not found'),
-        }
+        success: false,
+        error: new Error('Application not found'),
+      };
     }
     try {
-      this.logger.info("Creating refresh application pull request...")      
+      this.logger.info('Creating refresh application pull request...');
       // TODO: Emit RefreshSubmssionStarted event => logs to database
       // allocator.applyGovernanceReviewStarted(new GovernanceReviewStarted(allocator.guid))
 
       // NOTE: A 'refresh' flag was added to allocator. If 'true' it enables createPullRequest
       // and updatePullRequest to set the correct title.
-      allocator.refresh = true // Set refresh flag
-      
-      const pullRequest = await this.pullRequestService.createPullRequest(allocator)
-      allocator.setApplicationPullRequest(pullRequest.number, pullRequest.url, pullRequest.commentId, allocator.refresh)
-      allocator.requestDatacapRefresh()
-      
-      await this.repository.save(allocator, -1)
-      allocator.refresh = false  // Reset refresh flag
+      allocator.refresh = true; // Set refresh flag
+
+      const pullRequest = await this.pullRequestService.createPullRequest(allocator);
+      allocator.setApplicationPullRequest(
+        pullRequest.number,
+        pullRequest.url,
+        pullRequest.commentId,
+        allocator.refresh,
+      );
+      allocator.requestDatacapRefresh();
+
+      await this.repository.save(allocator, -1);
+      allocator.refresh = false; // Reset refresh flag
 
       return {
         success: true,
         data: { guid: command.guid },
-      }
+      };
     } catch (error: any) {
-      this.logger.error(error.message)
+      this.logger.error(error.message);
       return {
         success: false,
         error: error instanceof Error ? error : new Error(String(error)),
-      }
+      };
     }
   }
-
 }

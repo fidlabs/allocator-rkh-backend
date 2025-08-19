@@ -11,13 +11,16 @@
   ],
   "scripts": {
     "application": "npx -w @filecoin-plus/application",
-    "core": "npx -w @filecoin-plus/core"
+    "core": "npx -w @filecoin-plus/core",
+    "format:check": "prettier --check 'packages/**/*.{js,ts,json}'",
+    "format:fix": "prettier --write 'packages/**/*.{js,ts,json}'",
+    "test:unit": "cd packages/application && npm run test:unit run"
   },
   "devDependencies": {
     "prettier": "^3.3.3"
   },
   "dependencies": {
     "@octokit/auth-app": "^7.1.1",
-    "ethers": "^5.7.2"
+    "ethers": "^5.8.0"
   }
 }

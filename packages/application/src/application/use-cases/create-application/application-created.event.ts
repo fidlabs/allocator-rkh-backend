@@ -1,17 +1,18 @@
-import { IEventHandler } from '@filecoin-plus/core'
-import { inject, injectable } from 'inversify'
+import { IEventHandler } from '@filecoin-plus/core';
+import { inject, injectable } from 'inversify';
 
-import { ApplicationCreated } from '@src/domain/application/application.events'
-import { TYPES } from '@src/types'
-import { IApplicationDetailsRepository } from '@src/infrastructure/respositories/application-details.repository'
-import { ApplicationStatus } from '@src/domain/application/application'
+import { ApplicationCreated } from '@src/domain/application/application.events';
+import { TYPES } from '@src/types';
+import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
+import { ApplicationStatus } from '@src/domain/application/application';
 
 @injectable()
 export class ApplicationCreatedEventHandler implements IEventHandler<ApplicationCreated> {
-  public event = ApplicationCreated.name
+  public event = ApplicationCreated.name;
 
   constructor(
-    @inject(TYPES.ApplicationDetailsRepository) private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.ApplicationDetailsRepository)
+    private readonly _repository: IApplicationDetailsRepository,
   ) {}
 
   async handle(event: ApplicationCreated) {
@@ -25,7 +26,7 @@ export class ApplicationCreatedEventHandler implements IEventHandler<Application
       allocationTrancheSchedule: event.allocationTrancheSchedule,
       datacap: 5,
       status: ApplicationStatus.KYC_PHASE,
-    }
-    await this._repository.save(applicationDetails, 0)
+    };
+    await this._repository.save(applicationDetails, 0);
   }
 }
