@@ -3,7 +3,8 @@ import cors, { CorsOptions } from 'cors';
 const whitelist = [
   'http://localhost:3000',
   'https://localhost:3000',
-  'https://allocator-rkh-backend-utcn6.ondigitalocean.app',
+  'https://allocator-rkh-backend-utcn6.ondigitalocean.app', //Prod
+  'https://allocator-rkh-testenv-8dphx.ondigitalocean.app', //QA
   'https://apply.allocator.tech',
 ];
 
