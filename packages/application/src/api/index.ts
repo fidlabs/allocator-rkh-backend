@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv';
 import 'reflect-metadata';
 import '@src/api/http/controllers/index.js';
 import '@src/api/http/controllers/admin.controller';
+import '@src/api/http/controllers/rpc-proxy.controller';
 
 import { Application, json, urlencoded } from 'express';
 
