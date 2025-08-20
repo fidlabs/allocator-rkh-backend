@@ -42,15 +42,15 @@ async function main() {
     app.post('/api/v1/rpc', async (req, res) => {
       try {
         const { method, params, id = 1, jsonrpc = '2.0' } = req.body;
-        
+
         if (!method) {
           res.status(400).json({
             jsonrpc,
             id,
             error: {
               code: -32600,
-              message: 'Invalid Request: method is required'
-            }
+              message: 'Invalid Request: method is required',
+            },
           });
           return;
         }
@@ -76,8 +76,8 @@ async function main() {
             jsonrpc,
             id,
             method,
-            params: params || []
-          })
+            params: params || [],
+          }),
         });
 
         if (!lotusResponse.ok) {
@@ -85,7 +85,7 @@ async function main() {
             status: lotusResponse.status,
             statusText: lotusResponse.statusText,
             method,
-            params
+            params,
           });
 
           res.status(lotusResponse.status).json({
@@ -93,27 +93,26 @@ async function main() {
             id,
             error: {
               code: -32603,
-              message: `Internal error: ${lotusResponse.statusText}`
-            }
+              message: `Internal error: ${lotusResponse.statusText}`,
+            },
           });
           return;
         }
 
         const lotusData = await lotusResponse.json();
-        
+
         // Forward the response back to the client
         res.json(lotusData);
-
       } catch (error) {
         logger.error('RPC proxy error', { error });
-        
+
         res.status(500).json({
           jsonrpc: '2.0',
           id: req.body?.id || 1,
           error: {
             code: -32603,
-            message: 'Internal error: RPC proxy failed'
-          }
+            message: 'Internal error: RPC proxy failed',
+          },
         });
       }
     });
