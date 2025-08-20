@@ -26,6 +26,8 @@ describe('GET /api/v1/refreshes', () => {
       .withEventBus()
       .withCommandBus()
       .withQueryBus()
+      .withMappers()
+      .withServices()
       .withGithubClient()
       .withRepositories()
       .withCommandHandlers()

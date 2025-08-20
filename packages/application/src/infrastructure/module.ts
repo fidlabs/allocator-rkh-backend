@@ -33,6 +33,10 @@ import {
   RpcProviderConfig,
 } from '@src/infrastructure/clients/rpc-provider';
 import { DataCapMapper, IDataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
+import {
+  IMetaAllocatorRepository,
+  MetaAllocatorRepository,
+} from './repositories/meta-allocator.repository';
 
 export const infrastructureModule = new AsyncContainerModule(async (bind: interfaces.Bind) => {
   // MongoDB setup
@@ -93,6 +97,9 @@ export const infrastructureModule = new AsyncContainerModule(async (bind: interf
     .inSingletonScope();
   bind<IIssueDetailsRepository>(TYPES.IssueDetailsRepository)
     .to(IssueDetailsRepository)
+    .inSingletonScope();
+  bind<IMetaAllocatorRepository>(TYPES.MetaAllocatorRepository)
+    .to(MetaAllocatorRepository)
     .inSingletonScope();
   bind<ICommandBus>(TYPES.CommandBus).toConstantValue(new CommandBus());
   bind<IQueryBus>(TYPES.QueryBus).toConstantValue(new QueryBus());

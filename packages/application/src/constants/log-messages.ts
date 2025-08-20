@@ -67,4 +67,8 @@ export const LOG_MESSAGES = {
     REFRESH_APPROVED: '[ApproveRefreshByMaCommand]: Refresh approved successfully',
     FAILED_TO_APPROVE_REFRESH: '[ApproveRefreshByMaCommand]: Failed to approve refresh',
   },
+
+  MA_CONTROLLER: {
+    FETCHING_MA_ADDRESSES: '[MaController]: Fetching MetaAllocator addresses',
+  },
 };

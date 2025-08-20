@@ -7,7 +7,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['./vitest.setup.ts'],
-    include: ['src/e2e/**/*.e2e.{js,ts}'],
+    include: ['src/e2e/**/*.e2e.test.{js,ts}'],
     exclude: ['node_modules', 'dist', '.git'],
     testTimeout: 30000,
     hookTimeout: 30000,
