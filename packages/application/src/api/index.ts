@@ -37,11 +37,56 @@ async function main() {
     app.use(corsMiddleware);
     app.use(urlencoded({ extended: true }));
     app.use(json());
+    
+    // Add raw body parsing for RPC endpoint
+    app.use('/api/v1/rpc', (req, res, next) => {
+      const contentType = req.headers['content-type'] || '';
+      
+      if (contentType.includes('text/plain')) {
+        // For text/plain, we need to get the raw body
+        let rawData = '';
+        req.setEncoding('utf8');
+        
+        req.on('data', (chunk) => {
+          rawData += chunk;
+        });
+        
+        req.on('end', () => {
+          try {
+            console.log('Raw text/plain body:', rawData);
+            req.body = JSON.parse(rawData);
+            next();
+          } catch (error) {
+            console.error('Failed to parse text/plain as JSON:', error);
+            res.status(400).json({
+              jsonrpc: '2.0',
+              id: 1,
+              error: {
+                code: -32700,
+                message: 'Parse error: Invalid JSON in text/plain body',
+              },
+            });
+          }
+        });
+      } else {
+        // For application/json, use the default parsed body
+        next();
+      }
+    });
 
     // Add simple RPC proxy route that doesn't require Inversify
     app.post('/api/v1/rpc', async (req, res) => {
       try {
+        console.log('RPC Proxy Request Headers:', req.headers);
+        console.log('RPC Proxy Request Body:', req.body);
+        console.log('RPC Proxy Request Body Type:', typeof req.body);
+
         const { method, params, id = 1, jsonrpc = '2.0' } = req.body;
+
+        console.log('Parsed method:', method);
+        console.log('Parsed params:', params);
+        console.log('Parsed id:', id);
+        console.log('Parsed jsonrpc:', jsonrpc);
 
         if (!method) {
           res.status(400).json({
