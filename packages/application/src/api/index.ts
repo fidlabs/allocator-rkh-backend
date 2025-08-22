@@ -37,20 +37,20 @@ async function main() {
     app.use(corsMiddleware);
     app.use(urlencoded({ extended: true }));
     app.use(json());
-    
+
     // Add raw body parsing for RPC endpoint
     app.use('/api/v1/rpc', (req, res, next) => {
       const contentType = req.headers['content-type'] || '';
-      
+
       if (contentType.includes('text/plain')) {
         // For text/plain, we need to get the raw body
         let rawData = '';
         req.setEncoding('utf8');
-        
-        req.on('data', (chunk) => {
+
+        req.on('data', chunk => {
           rawData += chunk;
         });
-        
+
         req.on('end', () => {
           try {
             console.log('Raw text/plain body:', rawData);
