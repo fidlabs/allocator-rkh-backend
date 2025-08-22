@@ -102,7 +102,7 @@ async function main() {
 
         // Get the target RPC URL from environment or config
         const targetRpcUrl = process.env.LOTUS_RPC_URL || 'https://api.node.glif.io/rpc/v1';
-        const rpcToken = process.env.LOTUS_RPC_TOKEN;
+        const rpcToken = process.env.LOTUS_AUTH_TOKEN;
 
         // Prepare headers for the Lotus RPC call
         const headers: Record<string, string> = {
