@@ -54,7 +54,14 @@ async function main() {
         req.on('end', () => {
           try {
             console.log('Raw text/plain body:', rawData);
-            req.body = JSON.parse(rawData);
+            const parsedBody = JSON.parse(rawData);
+            console.log(
+              'Parsed body type:',
+              typeof parsedBody,
+              'Is array:',
+              Array.isArray(parsedBody),
+            );
+            req.body = parsedBody;
             next();
           } catch (error) {
             console.error('Failed to parse text/plain as JSON:', error);
@@ -81,73 +88,164 @@ async function main() {
         console.log('RPC Proxy Request Body:', req.body);
         console.log('RPC Proxy Request Body Type:', typeof req.body);
 
-        const { method, params, id = 1, jsonrpc = '2.0' } = req.body;
+        // Check if this is a batch request (array) or single request (object)
+        if (Array.isArray(req.body)) {
+          console.log('Processing batch request with', req.body.length, 'calls');
 
-        console.log('Parsed method:', method);
-        console.log('Parsed params:', params);
-        console.log('Parsed id:', id);
-        console.log('Parsed jsonrpc:', jsonrpc);
+          // Handle batch request
+          const batchResults: any[] = [];
 
-        if (!method) {
-          res.status(400).json({
-            jsonrpc,
-            id,
-            error: {
-              code: -32600,
-              message: 'Invalid Request: method is required',
-            },
+          for (let i = 0; i < req.body.length; i++) {
+            const request = req.body[i];
+            console.log(`Processing batch request ${i + 1}/${req.body.length}:`, request);
+
+            try {
+              const { method, params, id, jsonrpc = '2.0' } = request;
+
+              if (!method) {
+                batchResults.push({
+                  jsonrpc: '2.0',
+                  id,
+                  error: {
+                    code: -32600,
+                    message: 'Invalid Request: method is required',
+                  },
+                });
+                continue;
+              }
+
+              // Get the target RPC URL from environment or config
+              const targetRpcUrl = process.env.LOTUS_RPC_URL || 'https://api.node.glif.io/rpc/v1';
+              const rpcToken = process.env.LOTUS_AUTH_TOKEN;
+
+              // Prepare headers for the Lotus RPC call
+              const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+              };
+
+              if (rpcToken) {
+                headers['Authorization'] = `Bearer ${rpcToken}`;
+              }
+
+              // Forward the RPC request to the Lotus node
+              const lotusResponse = await fetch(targetRpcUrl, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                  jsonrpc,
+                  id,
+                  method,
+                  params: params || [],
+                }),
+              });
+
+              if (!lotusResponse.ok) {
+                logger.error('Lotus RPC request failed in batch', {
+                  status: lotusResponse.status,
+                  statusText: lotusResponse.statusText,
+                  method,
+                  params,
+                  batchIndex: i,
+                });
+
+                batchResults.push({
+                  jsonrpc: '2.0',
+                  id,
+                  error: {
+                    code: -32603,
+                    message: `Internal error: ${lotusResponse.statusText}`,
+                  },
+                });
+              } else {
+                const lotusData = await lotusResponse.json();
+                batchResults.push(lotusData);
+              }
+            } catch (error) {
+              logger.error('Error processing batch request', { error, batchIndex: i });
+              batchResults.push({
+                jsonrpc: '2.0',
+                id: request.id,
+                error: {
+                  code: -32603,
+                  message: 'Internal error: Failed to process batch request',
+                },
+              });
+            }
+          }
+
+          // Return batch results
+          console.log('Batch processing complete, returning', batchResults.length, 'results');
+          res.json(batchResults);
+        } else {
+          // Handle single request (existing logic)
+          const { method, params, id = 1, jsonrpc = '2.0' } = req.body;
+
+          console.log('Parsed method:', method);
+          console.log('Parsed params:', params);
+          console.log('Parsed id:', id);
+          console.log('Parsed jsonrpc:', jsonrpc);
+
+          if (!method) {
+            res.status(400).json({
+              jsonrpc,
+              id,
+              error: {
+                code: -32600,
+                message: 'Invalid Request: method is required',
+              },
+            });
+            return;
+          }
+
+          // Get the target RPC URL from environment or config
+          const targetRpcUrl = process.env.LOTUS_RPC_URL || 'https://api.node.glif.io/rpc/v1';
+          const rpcToken = process.env.LOTUS_AUTH_TOKEN;
+
+          // Prepare headers for the Lotus RPC call
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+          };
+
+          if (rpcToken) {
+            headers['Authorization'] = `Bearer ${rpcToken}`;
+          }
+
+          // Forward the RPC request to the Lotus node
+          const lotusResponse = await fetch(targetRpcUrl, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              jsonrpc,
+              id,
+              method,
+              params: params || [],
+            }),
           });
-          return;
+
+          if (!lotusResponse.ok) {
+            logger.error('Lotus RPC request failed', {
+              status: lotusResponse.status,
+              statusText: lotusResponse.statusText,
+              method,
+              params,
+            });
+
+            res.status(lotusResponse.status).json({
+              jsonrpc,
+              id,
+              error: {
+                code: -32603,
+                message: `Internal error: ${lotusResponse.statusText}`,
+              },
+            });
+            return;
+          }
+
+          const lotusData = await lotusResponse.json();
+
+          // Forward the response back to the client
+          res.json(lotusData);
         }
-
-        // Get the target RPC URL from environment or config
-        const targetRpcUrl = process.env.LOTUS_RPC_URL || 'https://api.node.glif.io/rpc/v1';
-        const rpcToken = process.env.LOTUS_AUTH_TOKEN;
-
-        // Prepare headers for the Lotus RPC call
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
-
-        if (rpcToken) {
-          headers['Authorization'] = `Bearer ${rpcToken}`;
-        }
-
-        // Forward the RPC request to the Lotus node
-        const lotusResponse = await fetch(targetRpcUrl, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            jsonrpc,
-            id,
-            method,
-            params: params || [],
-          }),
-        });
-
-        if (!lotusResponse.ok) {
-          logger.error('Lotus RPC request failed', {
-            status: lotusResponse.status,
-            statusText: lotusResponse.statusText,
-            method,
-            params,
-          });
-
-          res.status(lotusResponse.status).json({
-            jsonrpc,
-            id,
-            error: {
-              code: -32603,
-              message: `Internal error: ${lotusResponse.statusText}`,
-            },
-          });
-          return;
-        }
-
-        const lotusData = await lotusResponse.json();
-
-        // Forward the response back to the client
-        res.json(lotusData);
       } catch (error) {
         logger.error('RPC proxy error', { error });
 
