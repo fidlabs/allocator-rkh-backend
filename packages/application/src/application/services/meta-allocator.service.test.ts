@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MetaAllocatorService } from './meta-allocator.service';
 import { Container } from 'inversify';
-import { IMetaAllocatorRepository } from '@src/infrastructure/repositories/meta-allocator.repository';
+import {
+  IMetaAllocatorRepository,
+  MetaAllocatorName,
+} from '@src/infrastructure/repositories/meta-allocator.repository';
 import { TYPES } from '@src/types';
 
 describe('MetaAllocatorService', () => {
@@ -21,6 +24,7 @@ describe('MetaAllocatorService', () => {
 
   const metaAllocatorRepositoryMock = {
     getAll: vi.fn(),
+    getByName: vi.fn(),
   };
 
   beforeEach(() => {
@@ -34,6 +38,7 @@ describe('MetaAllocatorService', () => {
     service = container.get<MetaAllocatorService>(TYPES.MetaAllocatorService);
 
     metaAllocatorRepositoryMock.getAll.mockReturnValue(fixtureMetaAllocators);
+    metaAllocatorRepositoryMock.getByName.mockReturnValue(fixtureMetaAllocators[0]);
   });
 
   it('getAll should return list from repository', () => {
@@ -41,5 +46,12 @@ describe('MetaAllocatorService', () => {
 
     expect(result).toBe(fixtureMetaAllocators);
     expect(metaAllocatorRepositoryMock.getAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('getByName should return meta allocator by name', () => {
+    const result = service.getByName(MetaAllocatorName.MDMA);
+
+    expect(result).toBe(fixtureMetaAllocators[0]);
+    expect(metaAllocatorRepositoryMock.getByName).toHaveBeenCalledTimes(1);
   });
 });

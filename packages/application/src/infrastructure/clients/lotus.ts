@@ -4,6 +4,7 @@ import { inject, injectable } from 'inversify';
 import { nanoid } from 'nanoid';
 
 import { Cid, TYPES } from '@src/types';
+import { LotusClientConfig } from '../interfaces';
 
 export type PendingTx = {
   id: number;
@@ -49,11 +50,6 @@ export interface ILotusClient {
   getActor(address: string, headCids: Cid[]): Promise<any>;
 
   getChainObj(address: Cid): Promise<Buffer>;
-}
-
-export interface LotusClientConfig {
-  rpcUrl: string;
-  authToken: string;
 }
 
 @injectable()

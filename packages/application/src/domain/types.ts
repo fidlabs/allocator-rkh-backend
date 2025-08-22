@@ -1,3 +1,5 @@
+import { Pathway } from '@src/application/services/allocation-path-resolver';
+
 type KYCResultData = {
   // IDs
   id: string;
@@ -26,11 +28,30 @@ type KYCResultData = {
 export type KYCApprovedData = KYCResultData;
 export type KYCRejectedData = KYCApprovedData;
 
-export type AllocatorType = 'Manual' | 'Automated' | 'Market Based' | 'MetaAllocator';
+export enum AuditType {
+  Enterprise = 'Enterprise',
+  MarketBased = 'Market Based',
+  Automated = 'Automated',
+  OnRamp = 'On Ramp',
+}
+
+export enum AllocatorType {
+  MDMA = 'MDMA',
+  ODMA = 'ODMA',
+  RKH = 'RKH',
+  AMA = 'AMA',
+}
+
+export type AllocationPath = {
+  pathway: Pathway;
+  address: string;
+  auditType: AuditType;
+  isMetaAllocator: boolean;
+};
 
 export type GovernanceReviewApprovedData = {
   finalDataCap: number;
-  allocatorType: AllocatorType;
+  allocationType: AllocatorType;
   reviewerAddress: string;
   isMDMAAllocator?: boolean;
 };

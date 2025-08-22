@@ -16,7 +16,7 @@ import { createMongodbConnection } from './db/mongodb';
 import { QueryBus } from './query-bus';
 import { GithubClient, GithubClientConfig, IGithubClient } from './clients/github';
 import { AirtableClient, AirtableClientConfig, IAirtableClient } from './clients/airtable';
-import { ILotusClient, LotusClient, LotusClientConfig } from './clients/lotus';
+import { ILotusClient, LotusClient } from './clients/lotus';
 import { InMemoryEventBus } from './event-bus/in-memory-event-bus';
 import {
   ApplicationDetailsRepository,
@@ -27,16 +27,13 @@ import {
   IssueDetailsRepository,
 } from '@src/infrastructure/repositories/issue-details.repository';
 import { IIssueMapper, IssueMapper } from '@src/infrastructure/mappers/issue-mapper';
-import {
-  IRpcProvider,
-  RpcProvider,
-  RpcProviderConfig,
-} from '@src/infrastructure/clients/rpc-provider';
+import { IRpcProvider, RpcProvider } from '@src/infrastructure/clients/rpc-provider';
 import { DataCapMapper, IDataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
 import {
   IMetaAllocatorRepository,
   MetaAllocatorRepository,
 } from './repositories/meta-allocator.repository';
+import { LotusClientConfig, RkhConfig, RpcProviderConfig } from './interfaces';
 
 export const infrastructureModule = new AsyncContainerModule(async (bind: interfaces.Bind) => {
   // MongoDB setup
@@ -84,6 +81,12 @@ export const infrastructureModule = new AsyncContainerModule(async (bind: interf
   };
   bind<LotusClientConfig>(TYPES.LotusClientConfig).toConstantValue(lotusClientConfig);
   bind<ILotusClient>(TYPES.LotusClient).to(LotusClient);
+
+  const rkhConfig: RkhConfig = {
+    rkhAddress: config.RKH_ADDRESS,
+    rkhThreshold: config.RKH_THRESHOLD,
+  };
+  bind<RkhConfig>(TYPES.RkhConfig).toConstantValue(rkhConfig);
 
   // Bindings
   bind<IDatacapAllocatorEventStore>(TYPES.DatacapAllocatorEventStore)

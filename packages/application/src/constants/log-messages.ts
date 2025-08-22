@@ -71,4 +71,9 @@ export const LOG_MESSAGES = {
   MA_CONTROLLER: {
     FETCHING_MA_ADDRESSES: '[MaController]: Fetching MetaAllocator addresses',
   },
+
+  ALLOCATION_PATH_RESOLVER: {
+    RESOLVING_ALLOCATION_PATHWAY:
+      '[AllocationPathResolver]: Resolving allocation pathway for allocator type: ',
+  },
 };
