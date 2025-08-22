@@ -9,6 +9,8 @@ import { StatusCodes } from 'http-status-codes';
 
 import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
 import {
+  AllocationPath,
+  AllocatorType,
   GovernanceReviewApprovedData,
   GovernanceReviewRejectedData,
   KYCApprovedData,
@@ -79,7 +81,11 @@ export type ApplicationInstruction = {
   endTimestamp?: number;
   allocatedTimestamp?: number;
   status?: string;
+  /**
+   * This should be named 'updateJsonOnlyWithoutOnchainAllocation'
+   */
   isMDMAAllocator?: boolean;
+  isMetaAllocator?: boolean;
 };
 
 export enum ApplicationInstructionStatus {
@@ -285,7 +291,7 @@ export class DatacapAllocator extends AggregateRoot {
     this.applyChange(new KYCRejected(this.guid, data));
   }
 
-  approveGovernanceReview(details: GovernanceReviewApprovedData) {
+  approveGovernanceReview(details: GovernanceReviewApprovedData, allocationPath: AllocationPath) {
     console.log('approveGovernanceReview');
     this.ensureValidApplicationStatus([ApplicationStatus.GOVERNANCE_REVIEW_PHASE]);
 
@@ -299,30 +305,28 @@ export class DatacapAllocator extends AggregateRoot {
           the tooling field should get "smart_contract_allocator" entry
           the application should advance to MDMA approval
     */
-    const approvedMethod =
-      details?.allocatorType === 'Manual'
-        ? ApplicationAllocator.META_ALLOCATOR
-        : ApplicationAllocator.RKH_ALLOCATOR;
+
     const lastInstructionIndex = this.applicationInstructions.length - 1;
-    this.applicationInstructions[lastInstructionIndex].method = approvedMethod;
+    this.applicationInstructions[lastInstructionIndex].method = allocationPath?.pathway;
     this.applicationInstructions[lastInstructionIndex].datacap_amount = details?.finalDataCap;
     this.applicationInstructions[lastInstructionIndex].status =
       ApplicationInstructionStatus.PENDING;
     this.applicationInstructions[lastInstructionIndex].isMDMAAllocator = details?.isMDMAAllocator;
+    this.applicationInstructions[lastInstructionIndex].isMetaAllocator =
+      allocationPath?.isMetaAllocator;
     this.applicationInstructions[lastInstructionIndex].endTimestamp = Math.floor(Date.now() / 1000);
 
     this.applyChange(new GovernanceReviewApproved(this.guid, this.applicationInstructions));
 
-    this.isMetaAllocator =
-      this.applicationInstructions[lastInstructionIndex].method ===
-      ApplicationAllocator.META_ALLOCATOR;
-    this.isMDMA = details?.isMDMAAllocator;
+    const updateJsonOnlyWithoutOnchainAllocation =
+      this.applicationInstructions[lastInstructionIndex].isMDMAAllocator;
+    this.isMetaAllocator = this.applicationInstructions[lastInstructionIndex].isMetaAllocator;
+    this.ma_address = allocationPath?.address;
+    this.pathway = allocationPath?.pathway;
 
     const action = () => {
-      if (this.isMetaAllocator && this.isMDMA) {
+      if (this.isMetaAllocator && updateJsonOnlyWithoutOnchainAllocation) {
         this.allocationTooling = ['smart_contract_allocator'];
-        this.pathway = 'MDMA';
-        this.ma_address = this.mdma_address;
         this.applicationStatus = ApplicationStatus.DC_ALLOCATED;
         this.applicationInstructions[lastInstructionIndex].status =
           ApplicationInstructionStatus.GRANTED;
@@ -330,14 +334,12 @@ export class DatacapAllocator extends AggregateRoot {
         return new MetaAllocatorApprovalCompleted(this.guid, 0, '', this.applicationInstructions);
       }
 
-      if (this.isMetaAllocator && !this.isMDMA) {
+      if (this.isMetaAllocator && !updateJsonOnlyWithoutOnchainAllocation) {
         return new MetaAllocatorApprovalStarted(this.guid);
       }
 
-      if (!this.isMetaAllocator && this.isMDMA) {
+      if (!this.isMetaAllocator && updateJsonOnlyWithoutOnchainAllocation) {
         this.allocationTooling = [];
-        this.pathway = 'RKH';
-        this.ma_address = this.rkh_address;
         this.applicationStatus = ApplicationStatus.DC_ALLOCATED;
         this.applicationInstructions[lastInstructionIndex].status =
           ApplicationInstructionStatus.GRANTED;
@@ -480,7 +482,6 @@ export class DatacapAllocator extends AggregateRoot {
         },
       ];
     }
-    console.log(`Application Created Ended`, this);
   }
 
   applyApplicationEdited(event: ApplicationEdited) {
@@ -495,16 +496,16 @@ export class DatacapAllocator extends AggregateRoot {
       (this.isMetaAllocator && this.isMDMA)
     ) {
       this.allocationTooling = ['smart_contract_allocator'];
-      this.pathway = 'MDMA';
-      this.ma_address = this.mdma_address;
+      this.pathway = event.file.metapathway_type || 'MDMA';
+      this.ma_address = event.file.ma_address || this.mdma_address;
     }
     if (
       this.applicationStatus === ApplicationStatus.RKH_APPROVAL_PHASE ||
       (!this.isMetaAllocator && this.isMDMA)
     ) {
       this.allocationTooling = [];
-      this.pathway = 'RKH';
-      this.ma_address = this.rkh_address;
+      this.pathway = event.file.metapathway_type || 'RKH';
+      this.ma_address = event.file.ma_address || this.rkh_address;
     }
 
     this.applicantOrgAddresses = event.file.associated_org_addresses || this.applicantOrgAddresses;
@@ -549,7 +550,6 @@ export class DatacapAllocator extends AggregateRoot {
       status: ao.outcome || 'PENDING',
       datacap_amount: ao.datacap_amount || 0,
     }));
-    console.log(`Application Edited Ended`, this);
   }
 
   applyAllocatorMultisigUpdated(event: AllocatorMultisigUpdated) {
@@ -667,14 +667,20 @@ export class DatacapAllocator extends AggregateRoot {
       event.applicationInstructions[index].datacap_amount;
   }
 
-  applyMetaAllocatorApprovalStarted(event: MetaAllocatorApprovalStarted) {
+  applyMetaAllocatorApprovalStarted(
+    event: MetaAllocatorApprovalStarted,
+    allocationPath: AllocationPath,
+  ) {
     this.applicationStatus = ApplicationStatus.META_APPROVAL_PHASE;
     this.allocationTooling = ['smart_contract_allocator'];
-    this.pathway = 'MDMA';
-    this.ma_address = this.mdma_address;
+    this.pathway = allocationPath?.pathway || 'MDMA';
+    this.ma_address = allocationPath?.address || this.mdma_address;
   }
 
-  applyMetaAllocatorApprovalCompleted(event: MetaAllocatorApprovalCompleted) {
+  applyMetaAllocatorApprovalCompleted(
+    event: MetaAllocatorApprovalCompleted,
+    allocationPath: AllocationPath,
+  ) {
     console.log('applyMetaAllocatorApprovalCompleted: ', this.guid, this.applicationPullRequest);
     this.ensureValidApplicationStatus([
       ApplicationStatus.GOVERNANCE_REVIEW_PHASE,
@@ -685,8 +691,8 @@ export class DatacapAllocator extends AggregateRoot {
     this.applicationStatus = ApplicationStatus.DC_ALLOCATED;
 
     this.allocationTooling = ['smart_contract_allocator'];
-    this.pathway = 'MDMA';
-    this.ma_address = this.mdma_address;
+    this.pathway = allocationPath?.pathway || 'MDMA';
+    this.ma_address = allocationPath?.address || this.mdma_address;
     const index = this.applicationInstructions.length - 1;
     this.applicationInstructions[index].allocatedTimestamp = event.timestamp.getTime();
     this.applicationInstructions[index].status = ApplicationInstructionStatus.GRANTED;

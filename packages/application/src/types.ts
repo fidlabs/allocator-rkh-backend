@@ -30,4 +30,6 @@ export const TYPES = {
   DataCapMapper: Symbol('DataCapMapper'),
   MetaAllocatorService: Symbol('MetaAllocatorService'),
   MetaAllocatorRepository: Symbol('MetaAllocatorRepository'),
+  RkhConfig: Symbol('RkhConfig'),
+  AllocationPathResolver: Symbol('AllocationPathResolver'),
 };
