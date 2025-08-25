@@ -13,11 +13,16 @@ export interface IMetaAllocatorRepository {
   getAll(): readonly MetaAllocator[];
 }
 
+export enum MetaAllocatorName {
+  MDMA = 'MDMA',
+  ODMA = 'ODMA',
+}
+
 @injectable()
 export class MetaAllocatorRepository implements IMetaAllocatorRepository {
-  private readonly metaAllocators: MetaAllocator[] = [
-    {
-      name: 'MDMA',
+  private readonly metaAllocators: Record<MetaAllocatorName, MetaAllocator> = {
+    [MetaAllocatorName.MDMA]: {
+      name: MetaAllocatorName.MDMA,
       ethAddress: '0xB6F5d279AEad97dFA45209F3E53969c2EF43C21d',
       filAddress: 'f410fw325e6novwl57jcsbhz6koljylxuhqq5jnp5ftq',
       ethSafeAddress: '0x2e25A2f6bC2C0b7669DFB25180Ed57e07dAabe9e',
@@ -28,8 +33,8 @@ export class MetaAllocatorRepository implements IMetaAllocatorRepository {
         '0xDABAe878B6D1045a9417Eaf2cc4280Dbc510f3f6',
       ],
     },
-    {
-      name: 'ODMA',
+    [MetaAllocatorName.ODMA]: {
+      name: MetaAllocatorName.ODMA,
       ethAddress: '0xE896C15F5120A07C2481e0fcf3d008E1C9E76C1f',
       filAddress: 'f410f5clmcx2recqhyjeb4d6phuai4he6o3a77guvfny',
       ethSafeAddress: '0xfeaCBca666CA237F01F0B192fB9F43D61F32F41a',
@@ -50,9 +55,13 @@ export class MetaAllocatorRepository implements IMetaAllocatorRepository {
     //     '0xDABAe878B6D1045a9417Eaf2cc4280Dbc510f3f6',
     //   ],
     // },
-  ];
+  };
 
   getAll(): readonly MetaAllocator[] {
-    return this.metaAllocators;
+    return Object.values(this.metaAllocators);
+  }
+
+  getByName(name: MetaAllocatorName): MetaAllocator {
+    return this.metaAllocators[name];
   }
 }

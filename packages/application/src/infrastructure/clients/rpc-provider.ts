@@ -2,6 +2,7 @@ import { inject, injectable } from 'inversify';
 import { TYPES } from '@src/types';
 import { ethers } from 'ethers';
 import { JsonRpcProvider } from '@ethersproject/providers';
+import { RpcProviderConfig } from '../interfaces';
 
 export interface IRpcProvider {
   getBlockNumber(): Promise<number>;
@@ -9,16 +10,6 @@ export interface IRpcProvider {
   getLogs(filter: ethers.providers.Filter): Promise<ethers.providers.Log[]>;
 
   send<T>(method: string, params?: Array<unknown>): Promise<T>;
-}
-
-export interface RpcProviderConfig {
-  evmRpcUrl: string;
-  useTestNet: boolean;
-  testNetConfig?: {
-    url: string;
-    chainId: number;
-    networkName: string;
-  };
 }
 
 @injectable()
