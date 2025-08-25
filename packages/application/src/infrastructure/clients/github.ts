@@ -4,6 +4,7 @@ import { components } from '@octokit/openapi-types';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '@src/types';
 import { createAppAuth } from '@octokit/auth-app';
+import { Logger } from '@filecoin-plus/core';
 
 const ThrottledOctokit = Octokit.plugin(throttling);
 
@@ -131,6 +132,8 @@ export class GithubClient implements IGithubClient {
   constructor(
     @inject(TYPES.GithubClientConfig)
     config: GithubClientConfig,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {
     const throttleConfig = {
       onRateLimit: (retryAfter, options, octokit, retryCount) => {
@@ -231,7 +234,7 @@ export class GithubClient implements IGithubClient {
     // Do not update PRs that are already closed
     const pr = await this.getPullRequest(owner, repo, pullNumber);
     if (pr.state === 'closed') {
-      console.log(`Pull request ${pullNumber} is already closed. Skipping update.`);
+      this._logger.debug(`Pull request ${pullNumber} is already closed. Skipping update.`);
       return null;
     }
 
@@ -261,7 +264,7 @@ export class GithubClient implements IGithubClient {
     if (body) updateParams.body = body;
 
     if (!title || !body) {
-      console.log(
+      this._logger.info(
         `>>> Updating PR ${pullNumber} with empty elements! Body is ${body}, Title is ${title}, Files length is ${files?.length} <<<`,
       );
     }
@@ -285,7 +288,7 @@ export class GithubClient implements IGithubClient {
     pullNumber: number,
     body: string,
   ): Promise<PullRequestReview> {
-    console.log(`>>> Creating Review! <<< ${owner}, ${repo}, ${pullNumber}, ${body}`);
+    this._logger.info(`>>> Creating Review! <<< ${owner}, ${repo}, ${pullNumber}, ${body}`);
     const { data } = await this.octokit.pulls.createReview({
       owner,
       repo,
@@ -304,12 +307,14 @@ export class GithubClient implements IGithubClient {
     commentId: number,
     body: string,
   ): Promise<PullRequestReview | null> {
-    console.log(`>>> Updating Review! <<< ${owner}, ${repo}, ${pullNumber}, ${commentId}, ${body}`);
+    this._logger.info(
+      `>>> Updating Review! <<< ${owner}, ${repo}, ${pullNumber}, ${commentId}, ${body}`,
+    );
 
     // Do not update PRs that are already closed
     const pr = await this.getPullRequest(owner, repo, pullNumber);
     if (pr.state === 'closed') {
-      console.log(`Pull request ${pullNumber} is already closed. Skipping comment update.`);
+      this._logger.info(`Pull request ${pullNumber} is already closed. Skipping comment update.`);
       return null;
     }
 
@@ -376,7 +381,7 @@ export class GithubClient implements IGithubClient {
 
       return data;
     } catch (error: any) {
-      console.error(`Error fetching PR details: ${error.message}`);
+      this._logger.error(`Error fetching PR details: ${error.message}`);
       throw error;
     }
   }
@@ -399,7 +404,7 @@ export class GithubClient implements IGithubClient {
         throw new Error('File content not found');
       }
     } catch (error: any) {
-      console.error(`Error fetching file content: ${error.message}`);
+      this._logger.error(`Error fetching file content: ${error.message}`);
       throw error;
     }
   }
@@ -413,7 +418,7 @@ export class GithubClient implements IGithubClient {
       });
       return data;
     } catch (error: any) {
-      console.error(`Error fetching issues: ${error.message}`);
+      this._logger.error(`Error fetching issues: ${error.message}`);
       throw error;
     }
   }

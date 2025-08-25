@@ -67,30 +67,31 @@ export class CreateApplicationCommandHandler implements ICommandHandler<CreateAp
   }
 
   async handle(command: CreateApplicationCommand): Promise<Result<{ guid: string }>> {
-    console.log('command', command);
+    this.logger.info('CreateApplicationCommandHandler');
+    this.logger.debug(command);
     let existing: DatacapAllocator | null = null;
     try {
       // Check if the application already exists in the database: this may be a restart
       // of the application, so we need to ensure that we don't create a duplicate entry.
-      this.logger.debug(`Getting repository entry for ${command.applicationId}...`);
+      this.logger.info(`Getting repository entry for ${command.applicationId}...`);
       const existing = await this.repository.getById(command.applicationId);
-      this.logger.debug(
+      this.logger.info(
         `Getting repository entry for ${command.applicationId} succeeded. Aborting...`,
       );
-      console.log(existing);
+      this.logger.debug(existing);
       return {
         success: false,
         error: new Error('Application already exists'),
       };
     } catch (error) {
-      this.logger.debug(`Getting repository entry for ${command.applicationId} catch`);
-      this.logger.debug(error);
+      this.logger.error(`Getting repository entry for ${command.applicationId} catch`);
+      this.logger.error(error);
     }
 
-    this.logger.debug(`Normalizing ${command.otherGithubHandles}...`);
+    this.logger.info(`Normalizing ${command.otherGithubHandles}...`);
     const otherHandlesArray = this.normalizeGithubHandles(command.otherGithubHandles);
 
-    this.logger.debug('Creating...');
+    this.logger.info('Creating...');
     try {
       // Create a new datacap allocator
       const allocator: DatacapAllocator = DatacapAllocator.create({
@@ -111,22 +112,22 @@ export class CreateApplicationCommandHandler implements ICommandHandler<CreateAp
         otherGithubHandles: otherHandlesArray,
         onChainAddressForDataCapAllocation: command.onChainAddressForDataCapAllocation,
       });
-      this.logger.debug('Created...');
-      console.log('allocator', allocator);
+      this.logger.info('Created...');
+      this.logger.debug(allocator);
 
       if (command.onChainAddressForDataCapAllocation) {
-        this.logger.debug(
+        this.logger.info(
           `Getting multisig info for ${command.onChainAddressForDataCapAllocation}...`,
         );
         const actorId = await this.lotusClient.getActorId(
           command.onChainAddressForDataCapAllocation,
         );
-        this.logger.debug(`Got multisig actor ID ${actorId}`);
+        this.logger.info(`Got multisig actor ID ${actorId}`);
         const msigData = await getMultisigInfo(command.onChainAddressForDataCapAllocation);
-        this.logger.debug(`Got multisig data}`);
+        this.logger.info(`Got multisig data}`);
         const signers = msigData.multisig?.signers ?? [];
         const threshold = msigData.multisig?.approvalThreshold ?? 0;
-        this.logger.debug(`Setting multisig data`);
+        this.logger.info(`Setting multisig data`);
         allocator.setAllocatorMultisig(
           actorId,
           command.onChainAddressForDataCapAllocation,
@@ -139,15 +140,18 @@ export class CreateApplicationCommandHandler implements ICommandHandler<CreateAp
       try {
         const pullRequest = await this.pullRequestService.createPullRequest(allocator);
         this.logger.info('Pull request created successfully!');
-        console.log('pullRequest', pullRequest);
+        this.logger.debug(pullRequest);
         allocator.setApplicationPullRequest(
           pullRequest.number,
           pullRequest.url,
           pullRequest.commentId,
         );
       } catch (error) {
-        console.log('Creating pull request creation error', error);
-        console.log('Creating pull request creation error details', (error as any)?.data?.errors);
+        this.logger.error('Creating pull request creation error', error);
+        this.logger.error(
+          'Creating pull request creation error details',
+          (error as any)?.data?.errors,
+        );
         this.logger.error(
           'Unable to create application pull request. The application already exists.',
         );

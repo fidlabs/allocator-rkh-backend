@@ -97,8 +97,9 @@ export class LotusClient implements ILotusClient {
     );
 
     const pendingTxs = await this.request('Filecoin.MsigGetPending', [id, null]);
-    this.logger.debug(`Found ${pendingTxs.length} pending transactions for multisig ${id}`);
-    console.log('pendingTxs', pendingTxs);
+    this.logger.info(`Found ${pendingTxs.length} pending transactions for multisig ${id}`);
+    this.logger.debug('pendingTxs');
+    this.logger.debug(pendingTxs);
 
     // NOTE: to get the approved transactions we should be able to use Filecoin.StateListMessages
     // method and filter it but our Lotus node provider doesn't support it, so use Filfox instead.
@@ -109,10 +110,11 @@ export class LotusClient implements ILotusClient {
     const filfoxResult = await axios.get(
       `https://filfox.info/api/v1/address/${id}/messages?pageSize=50&page=0`,
     );
-    this.logger.debug(
+    this.logger.info(
       `Found ${filfoxResult?.data?.messages?.length} recent transactions for multisig ${id}`,
     );
-    console.log('recentTxs', filfoxResult?.data?.messages);
+    this.logger.debug('recentTxs');
+    this.logger.debug(filfoxResult?.data?.messages);
 
     let recentApprovedTxs = [] as any[];
 
@@ -120,7 +122,7 @@ export class LotusClient implements ILotusClient {
     if (filfoxResult?.data?.messages) {
       for (const tx of filfoxResult.data.messages) {
         if (tx.to === id && tx.method === 'Approve') {
-          this.logger.debug(`Found approved transaction: ${JSON.stringify(tx)}`);
+          this.logger.info(`Found approved transaction: ${JSON.stringify(tx)}`);
           recentApprovedTxs.push(tx);
         }
       }

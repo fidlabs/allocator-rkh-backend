@@ -337,7 +337,7 @@ export async function submitRefreshMetaAllocatorCommand(
     lastInstructionMethod = lastInstruction.method;
     lastInstructionAmount = lastInstruction.datacap_amount;
   } catch (error) {
-    logger.debug('Invalid applicationInstructions.');
+    logger.error('Invalid applicationInstructions.');
     return;
   }
   // Ensure instruction method is META_ALLOCATOR
@@ -348,7 +348,7 @@ export async function submitRefreshMetaAllocatorCommand(
   try {
     const currentDatacap = datacapInfo.latestDatacap;
     const initialDatacap = lastInstructionAmount;
-    logger.debug(`Current Datacap: ${currentDatacap}, Initial Datacap: ${initialDatacap}`);
+    logger.info(`Current Datacap: ${currentDatacap}, Initial Datacap: ${initialDatacap}`);
     const pct = (Number(currentDatacap) / Number(initialDatacap)) * 100;
     if (pct <= minThresholdPct) {
       const applicationId = applicationDetails.id;
@@ -393,7 +393,7 @@ export async function subscribeRefreshMetaAllocator(container: Container) {
       );
 
       for (let [allocatorAddress, allocatorData] of datacapMap) {
-        console.log(`Checking allocator: ${allocatorAddress}`);
+        logger.info(`Checking allocator: ${allocatorAddress}`);
         await submitRefreshMetaAllocatorCommand(
           allocatorAddress,
           allocatorData.datacapInfo,
