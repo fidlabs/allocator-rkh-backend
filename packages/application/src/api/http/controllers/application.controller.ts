@@ -1,4 +1,4 @@
-import { IQueryBus } from '@filecoin-plus/core';
+import { IQueryBus, Logger } from '@filecoin-plus/core';
 import { Request, Response } from 'express';
 import { query, validationResult } from 'express-validator';
 import { inject } from 'inversify';
@@ -32,6 +32,7 @@ export class ApplicationController {
     @inject(TYPES.QueryBus) private readonly _queryBus: IQueryBus,
     @inject(TYPES.RoleService) private readonly _roleService: RoleService,
     @inject(TYPES.CommandBus) private readonly _commandBus: ICommandBus,
+    @inject(TYPES.Logger) private readonly _logger: Logger,
   ) {}
 
   @httpGet(
@@ -75,7 +76,7 @@ export class ApplicationController {
     @request() req: Request,
     @response() res: Response,
   ) {
-    console.log(`Approve KYC by secret for application ${id}`);
+    this._logger.info(`Approve KYC by secret for application ${id}`);
     const address = req.query.address as string;
 
     const role = this._roleService.getRole(address);
@@ -110,14 +111,14 @@ export class ApplicationController {
     @request() req: Request,
     @response() res: Response,
   ) {
-    console.log(`Approve KYC by signature for application ${id}`);
-    console.log(req.body);
+    this._logger.info(`Approve KYC by signature for application ${id}`);
+    this._logger.debug(req.body);
     // RBAC first
     // Check address is on the list of Gov Team addresses
     const address = req.body.reviewerAddress;
     const role = this._roleService.getRole(address);
     if (role !== 'GOVERNANCE_TEAM') {
-      console.log(`Not a governance team member: ${role}`);
+      this._logger.info(`Not a governance team member: ${role}`);
       return res.status(403).json(badPermissions());
     }
 
@@ -165,7 +166,7 @@ export class ApplicationController {
     @request() req: Request,
     @response() res: Response,
   ) {
-    console.log(`RevokeKYC KYC for application ${id}`);
+    this._logger.info(`RevokeKYC KYC for application ${id}`);
     const address = req.query.address as string;
 
     const role = this._roleService.getRole(address);
@@ -192,14 +193,14 @@ export class ApplicationController {
     @request() req: Request,
     @response() res: Response,
   ) {
-    console.log(`Approve KYC by signature for application ${id}`);
-    console.log(req.body);
+    this._logger.info(`Approve KYC by signature for application ${id}`);
+    this._logger.debug(req.body);
     // RBAC first
     // Check address is on the list of Gov Team addresses
     const address = req.body.reviewerAddress;
     const role = this._roleService.getRole(address);
     if (role !== 'GOVERNANCE_TEAM') {
-      console.log(`Not a governance team member: ${role}`);
+      this._logger.info(`Not a governance team member: ${role}`);
       return res.status(403).json(badPermissions());
     }
 
@@ -243,7 +244,7 @@ export class ApplicationController {
     @request() req: Request,
     @response() res: Response,
   ) {
-    console.log(`Approve Governance Review by secret for application ${id}`);
+    this._logger.info(`Approve Governance Review by secret for application ${id}`);
     const address = req.query.address as string;
 
     const role = this._roleService.getRole(address);
@@ -283,15 +284,15 @@ export class ApplicationController {
     @request() req: Request,
     @response() res: Response,
   ) {
-    console.log(`Approve Governance Review by signature for application ${id}`);
-    console.log(req.body);
+    this._logger.info(`Approve Governance Review by signature for application ${id}`);
+    this._logger.debug(req.body);
 
     // RBAC first
     // Check address is on the list of Gov Team addresses
     const address = req.body.details?.reviewerAddress;
     const role = this._roleService.getRole(address);
     if (role !== 'GOVERNANCE_TEAM') {
-      console.log(`Not a governance team member: ${role}`);
+      this._logger.info(`Not a governance team member: ${role}`);
       return res.status(403).json(badPermissions());
     }
 

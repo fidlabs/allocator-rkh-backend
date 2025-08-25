@@ -1,4 +1,4 @@
-import { ICommandHandler } from '@filecoin-plus/core';
+import { ICommandHandler, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 
 import {
@@ -22,11 +22,13 @@ export class RevokeKYCCommandHandler implements ICommandHandler<RevokeKycCommand
   constructor(
     @inject(TYPES.DatacapAllocatorRepository)
     private readonly _repository: IDatacapAllocatorRepository,
-  ) {
-    console.log('commandToHandle', this.commandToHandle);
-  }
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
+  ) {}
 
   async handle(command: RevokeKycCommand): Promise<void> {
+    this._logger.info('RevokeKYCCommandHandler started');
+    this._logger.debug(command);
     const allocator = await this._repository.getById(command.allocatorId);
     if (!allocator) {
       throw new Error(`Allocator with id ${command.allocatorId} not found`);

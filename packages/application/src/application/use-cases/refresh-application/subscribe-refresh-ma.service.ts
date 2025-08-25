@@ -51,7 +51,7 @@ export async function subscribeMetaAllocatorAllowances(container: Container) {
           a.applicationInstructions[a.applicationInstructions.length - 1].method ===
             'META_ALLOCATOR',
       );
-      console.log('Found', allocators.length, 'allocators');
+      logger.info(`Found ${allocators.length} allocators`);
 
       for (const allocator of allocators) {
         const currentDatacap = await fetchCurrentDatacap(allocator.address);

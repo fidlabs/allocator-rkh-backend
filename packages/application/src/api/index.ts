@@ -53,14 +53,14 @@ async function main() {
 
         req.on('end', () => {
           try {
-            console.log('Raw text/plain body:', rawData);
+            logger.debug('Raw text/plain body:');
+            logger.debug(rawData);
             const parsedBody = JSON.parse(rawData);
-            console.log(
-              'Parsed body type:',
-              typeof parsedBody,
-              'Is array:',
-              Array.isArray(parsedBody),
-            );
+            logger.debug('Parsed body type:');
+            logger.debug(typeof parsedBody);
+            logger.debug('Is array:');
+            logger.debug(Array.isArray(parsedBody));
+
             req.body = parsedBody;
             next();
           } catch (error) {
@@ -84,20 +84,27 @@ async function main() {
     // Add simple RPC proxy route that doesn't require Inversify
     app.post('/api/v1/rpc', async (req, res) => {
       try {
-        console.log('RPC Proxy Request Headers:', req.headers);
-        console.log('RPC Proxy Request Body:', req.body);
-        console.log('RPC Proxy Request Body Type:', typeof req.body);
+        logger.info('RPC Proxy Request');
+        logger.debug('RPC Proxy Request Headers:');
+        logger.debug(req.headers);
+        logger.debug('RPC Proxy Request Body:');
+        logger.debug(req.body);
+        logger.debug('RPC Proxy Request Body Type:');
+        logger.debug(typeof req.body);
 
         // Check if this is a batch request (array) or single request (object)
         if (Array.isArray(req.body)) {
-          console.log('Processing batch request with', req.body.length, 'calls');
+          logger.debug('Processing batch request with');
+          logger.debug(req.body.length);
+          logger.debug('calls');
 
           // Handle batch request
           const batchResults: any[] = [];
 
           for (let i = 0; i < req.body.length; i++) {
             const request = req.body[i];
-            console.log(`Processing batch request ${i + 1}/${req.body.length}:`, request);
+            logger.debug(`Processing batch request ${i + 1}/${req.body.length}:`);
+            logger.debug(request);
 
             try {
               const { method, params, id, jsonrpc = '2.0' } = request;
@@ -174,16 +181,18 @@ async function main() {
           }
 
           // Return batch results
-          console.log('Batch processing complete, returning', batchResults.length, 'results');
+          logger.debug('Batch processing complete, returning');
+          logger.debug(batchResults.length);
+          logger.debug('results');
           res.json(batchResults);
         } else {
           // Handle single request (existing logic)
           const { method, params, id = 1, jsonrpc = '2.0' } = req.body;
 
-          console.log('Parsed method:', method);
-          console.log('Parsed params:', params);
-          console.log('Parsed id:', id);
-          console.log('Parsed jsonrpc:', jsonrpc);
+          logger.debug('Parsed method:');
+          logger.debug(params);
+          logger.debug('Parsed id:');
+          logger.debug(jsonrpc);
 
           if (!method) {
             res.status(400).json({

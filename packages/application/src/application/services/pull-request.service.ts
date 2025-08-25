@@ -90,10 +90,10 @@ export class PullRequestService {
   async updatePullRequest(application: DatacapAllocator): Promise<void> {
     if (!application.applicationPullRequest?.prNumber) return;
 
-    this._logger.debug(
+    this._logger.info(
       `Updating pull request message: ${application.applicationPullRequest?.prNumber}`,
     );
-    console.log('Updating pull request message:', application);
+    this._logger.debug(application);
     let title: string;
     if (application.refresh) {
       title = `Refresh allocator: ${application.applicantName}`;
@@ -115,10 +115,10 @@ export class PullRequestService {
       ],
     );
 
-    this._logger.debug(
+    this._logger.info(
       `Updating pull request comment: ${application.applicationPullRequest.commentId}`,
     );
-    console.log(application.applicationInstructions);
+    this._logger.debug(application.applicationInstructions);
     await this._githubClient.updatePullRequestComment(
       config.GITHUB_OWNER,
       config.GITHUB_REPO,
