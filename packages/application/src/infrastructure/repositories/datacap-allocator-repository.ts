@@ -1,4 +1,4 @@
-import { EventSourcedRepository } from '@filecoin-plus/core';
+import { EventSourcedRepository, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 
 import { TYPES } from '@src/types';
@@ -19,16 +19,19 @@ export class DatacapAllocatorRepository
     @inject(TYPES.PullRequestService) private readonly pullRequestService: PullRequestService,
     @inject(TYPES.DatacapAllocatorEventStore)
     private readonly eventstore: IDatacapAllocatorEventStore,
+    @inject(TYPES.Logger) private readonly logger: Logger,
   ) {
     super(eventstore, DatacapAllocator);
   }
 
   async save(aggregateRoot: DatacapAllocator, expectedVersion: number) {
+    this.logger.info('DatacapAllocatorRepository save started');
     if (aggregateRoot.getUncommittedEvents().length > 0) {
       try {
         this.pullRequestService.updatePullRequest(aggregateRoot);
       } catch (error) {
-        console.log('error updating pull request', error);
+        this.logger.error('error updating pull request');
+        this.logger.error(error);
       }
     }
     return super.save(aggregateRoot, expectedVersion);

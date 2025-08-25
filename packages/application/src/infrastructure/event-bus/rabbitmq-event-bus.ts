@@ -3,6 +3,7 @@ import {
   IEvent,
   IEventBus,
   IEventHandler,
+  Logger,
   rehydrateEventFromDescriptor,
 } from '@filecoin-plus/core';
 import { TYPES } from '@src/types';
@@ -34,6 +35,7 @@ export class RabbitMQEventBus implements IEventBus {
     @multiInject(TYPES.Event)
     private readonly eventHandlers: IEventHandler<IEvent>[],
     @inject(TYPES.RabbitMQConfig) private readonly config: RabbitMQConfig,
+    @inject(TYPES.Logger) private readonly logger: Logger,
   ) {}
 
   /**
@@ -50,7 +52,7 @@ export class RabbitMQEventBus implements IEventBus {
         durable: true,
       });
     } catch (error) {
-      console.error('Failed to initialize RabbitMQ connection:', error);
+      this.logger.error('Failed to initialize RabbitMQ connection:', error);
       throw error;
     }
   }
@@ -93,7 +95,8 @@ export class RabbitMQEventBus implements IEventBus {
           await this.processMessage(msg);
           this.channel!.ack(msg);
         } catch (error) {
-          console.error('Error processing message:', error);
+          this.logger.error('Error processing message:');
+          this.logger.error(error);
           // Implement your error handling strategy here (e.g., dead-letter queue)
           this.channel!.nack(msg, false, false);
         }
@@ -119,7 +122,8 @@ export class RabbitMQEventBus implements IEventBus {
    */
   private async processMessage(msg: amqp.ConsumeMessage): Promise<void> {
     const eventDescriptor = JSON.parse(msg.content.toString());
-    console.log('Processing message:', eventDescriptor);
+    this.logger.debug('Processing message:');
+    this.logger.debug(eventDescriptor);
     const matchedHandlers: IEventHandler<IEvent>[] = this.eventHandlers.filter(
       handler => handler.event === eventDescriptor.eventName,
     );
