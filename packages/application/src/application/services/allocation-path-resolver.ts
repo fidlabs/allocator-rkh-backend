@@ -9,7 +9,8 @@ import { LOG_MESSAGES } from '@src/constants/log-messages';
 
 export enum Pathway {
   MDMA = MetaAllocatorName.MDMA,
-  ODMA = MetaAllocatorName.ODMA,
+  ORMA = MetaAllocatorName.ORMA,
+  AMA = MetaAllocatorName.AMA,
   RKH = 'RKH',
 }
 
@@ -22,10 +23,6 @@ export type ResolveOutput = {
 
 const logMessages = LOG_MESSAGES.ALLOCATION_PATH_RESOLVER;
 
-/**
- * AMA is a special case for now, it will be handled by the RKH allocator
- * update it when we have a dedicated AMA allocator.
- */
 @injectable()
 export class AllocationPathResolver {
   constructor(
@@ -45,11 +42,11 @@ export class AllocationPathResolver {
           address: this.metaAllocatorService.getByName(MetaAllocatorName.MDMA).filAddress,
           auditType: AuditType.Enterprise,
         };
-      case AllocatorType.ODMA:
+      case AllocatorType.ORMA:
         return {
           isMetaAllocator: true,
-          pathway: Pathway.ODMA,
-          address: this.metaAllocatorService.getByName(MetaAllocatorName.ODMA).filAddress,
+          pathway: Pathway.ORMA,
+          address: this.metaAllocatorService.getByName(MetaAllocatorName.ORMA).filAddress,
           auditType: AuditType.OnRamp,
         };
       case AllocatorType.RKH:
@@ -61,9 +58,9 @@ export class AllocationPathResolver {
         };
       case AllocatorType.AMA:
         return {
-          isMetaAllocator: false,
-          pathway: Pathway.RKH,
-          address: this.rkhConfig.rkhAddress,
+          isMetaAllocator: true,
+          pathway: Pathway.AMA,
+          address: this.metaAllocatorService.getByName(MetaAllocatorName.AMA).filAddress,
           auditType: AuditType.Automated,
         };
       default:

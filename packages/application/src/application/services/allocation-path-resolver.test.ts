@@ -50,12 +50,12 @@ describe('AllocationPathResolver', () => {
     });
   });
 
-  it('should resolve ODMA allocation path', () => {
-    const result = service.resolve(AllocatorType.ODMA);
+  it('should resolve ORMA allocation path', () => {
+    const result = service.resolve(AllocatorType.ORMA);
 
     expect(result).toStrictEqual({
-      address: 'f for ODMA',
-      pathway: 'ODMA',
+      address: 'f for ORMA',
+      pathway: 'ORMA',
       auditType: 'On Ramp',
       isMetaAllocator: true,
     });
@@ -76,10 +76,10 @@ describe('AllocationPathResolver', () => {
     const result = service.resolve(AllocatorType.AMA);
 
     expect(result).toStrictEqual({
-      address: rkhConfigMock.rkhAddress,
-      pathway: 'RKH',
+      address: 'f for AMA',
+      pathway: 'AMA',
       auditType: 'Automated',
-      isMetaAllocator: false,
+      isMetaAllocator: true,
     });
   });
 });
