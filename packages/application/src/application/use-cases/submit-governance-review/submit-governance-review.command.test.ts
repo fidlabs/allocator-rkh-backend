@@ -63,7 +63,7 @@ describe('SubmitGovernanceReviewResultCommandHandler', () => {
         finalDataCap: 10,
         reviewerAddress: '0xabc',
         isMDMAAllocator: false,
-        allocationType: AllocatorType.MDMA,
+        allocatorType: AllocatorType.MDMA,
       } as GovernanceReviewApprovedData,
     });
 
@@ -75,7 +75,7 @@ describe('SubmitGovernanceReviewResultCommandHandler', () => {
         finalDataCap: 10,
         reviewerAddress: '0xabc',
         isMDMAAllocator: false,
-        allocationType: AllocatorType.MDMA,
+        allocatorType: AllocatorType.MDMA,
       }),
       fixtureResolvedPath,
     );
@@ -113,7 +113,7 @@ describe('SubmitGovernanceReviewResultCommandHandler', () => {
         finalDataCap: 5,
         reviewerAddress: '0x123',
         isMDMAAllocator: false,
-        allocationType: AllocatorType.RKH,
+        allocatorType: AllocatorType.RKH,
       } as GovernanceReviewApprovedData,
     });
 

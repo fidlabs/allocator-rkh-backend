@@ -51,7 +51,7 @@ export type AllocationPath = {
 
 export type GovernanceReviewApprovedData = {
   finalDataCap: number;
-  allocationType: AllocatorType;
+  allocatorType: AllocatorType;
   reviewerAddress: string;
   isMDMAAllocator?: boolean;
 };
