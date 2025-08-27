@@ -37,7 +37,7 @@ export enum AuditType {
 
 export enum AllocatorType {
   MDMA = 'MDMA',
-  ODMA = 'ODMA',
+  ORMA = 'ORMA',
   RKH = 'RKH',
   AMA = 'AMA',
 }
