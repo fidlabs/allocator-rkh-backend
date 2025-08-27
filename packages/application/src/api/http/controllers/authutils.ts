@@ -38,6 +38,8 @@ export async function verifyLedgerPoP(
   const expectedPreImageCBOR = cbor.encode(challenge);
   const expectedPreImageBase64 = Buffer.from(expectedPreImageCBOR).toString('base64');
   if (expectedPreImageBase64 !== fakeMessage.Params) {
+    console.log('expectedPreImageBase64', expectedPreImageBase64);
+    console.log('fakeMessage.Params', fakeMessage.Params);
     throw new Error("pre-images don't match");
   }
 

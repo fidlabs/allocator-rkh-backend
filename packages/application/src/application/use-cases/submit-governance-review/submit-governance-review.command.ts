@@ -46,7 +46,7 @@ export class SubmitGovernanceReviewResultCommandHandler
       case PhaseStatus.Approved:
         allocator.approveGovernanceReview(
           command.result.data,
-          this.allocationPathResolver.resolve(command.result.data.allocationType),
+          this.allocationPathResolver.resolve(command.result.data.allocatorType),
         );
         break;
       case PhaseStatus.Rejected:

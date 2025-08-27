@@ -296,7 +296,7 @@ export class ApplicationController {
     }
 
     // Work out what signed message we expect
-    const expectedPreImage = `Governance Review ${id} ${req.body.result}`;
+    const expectedPreImage = `Governance ${req.body.result} ${id} ${req.body.details.finalDataCap} ${req.body.details.allocatorType}`;
 
     // Now check it was authorized on the Ledger
     let verified = false;
@@ -322,7 +322,7 @@ export class ApplicationController {
     // Phew! We made it through all the checks
     const result = await this._commandBus.send(
       new SubmitGovernanceReviewResultCommand(id, {
-        status: req.body?.result === 'approved' ? PhaseStatus.Approved : PhaseStatus.Rejected,
+        status: req.body?.result == 'approve' ? PhaseStatus.Approved : PhaseStatus.Rejected,
         data: req.body?.details,
       }),
     );
