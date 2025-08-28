@@ -36,6 +36,7 @@ import {
   RKHApprovalStarted,
   RKHApprovalsUpdated,
 } from './application.events';
+import { MetaAllocatorName } from '@src/infrastructure/repositories/meta-allocator.repository';
 
 export interface IDatacapAllocatorRepository extends IRepository<DatacapAllocator> {}
 
@@ -540,10 +541,11 @@ export class DatacapAllocator extends AggregateRoot {
       event.file.pathway_addresses?.signers || this.allocatorMultisigSigners;
 
     this.applicationInstructions = event.file.audits.map(ao => ({
-      method:
-        event.file.metapathway_type === 'MDMA'
-          ? ApplicationAllocator.META_ALLOCATOR
-          : ApplicationAllocator.RKH_ALLOCATOR,
+      method: Object.values(MetaAllocatorName).includes(
+        event.file.metapathway_type as MetaAllocatorName,
+      )
+        ? ApplicationAllocator.META_ALLOCATOR
+        : ApplicationAllocator.RKH_ALLOCATOR,
       startTimestamp: zuluToEpoch(ao.started),
       endTimestamp: zuluToEpoch(ao.ended),
       allocatedTimestamp: zuluToEpoch(ao.dc_allocated),

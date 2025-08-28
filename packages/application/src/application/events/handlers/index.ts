@@ -30,6 +30,7 @@ import {
   ApplicationInstructionStatus,
 } from '@src/domain/application/application';
 import { ApplicationDetails } from '@src/infrastructure/repositories/application-details.types';
+import { MetaAllocatorName } from '@src/infrastructure/repositories/meta-allocator.repository';
 
 @injectable()
 export class ApplicationEditedEventHandler implements IEventHandler<ApplicationEdited> {
@@ -43,10 +44,11 @@ export class ApplicationEditedEventHandler implements IEventHandler<ApplicationE
   async handle(event: ApplicationEdited): Promise<void> {
     // Convert human readable Zulu time to epoch for internal handling
     const lifeCycle = event.file.audits.map(ao => ({
-      method:
-        event.file.metapathway_type === 'MDMA'
-          ? ApplicationAllocator.META_ALLOCATOR
-          : ApplicationAllocator.RKH_ALLOCATOR,
+      method: Object.values(MetaAllocatorName).includes(
+        event.file.metapathway_type as MetaAllocatorName,
+      )
+        ? ApplicationAllocator.META_ALLOCATOR
+        : ApplicationAllocator.RKH_ALLOCATOR,
       startTimestamp: zuluToEpoch(ao.started),
       endTimestamp: zuluToEpoch(ao.ended),
       allocatedTimestamp: zuluToEpoch(ao.dc_allocated),
