@@ -669,8 +669,8 @@ export class DatacapAllocator extends AggregateRoot {
   applyMetaAllocatorApprovalCompleted(
     event: MetaAllocatorApprovalCompleted,
     allocationPath: AllocationPath,
-    ) {
-      if (debugMode)
+  ) {
+    if (debugMode)
       console.log('applyMetaAllocatorApprovalCompleted: ', this.guid, this.applicationPullRequest);
 
     this.ensureValidApplicationStatus([
