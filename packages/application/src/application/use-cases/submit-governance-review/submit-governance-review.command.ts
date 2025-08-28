@@ -9,6 +9,7 @@ import { TYPES } from '@src/types';
 
 import { PhaseResult, PhaseStatus, SubmitPhaseResultCommand } from '../../commands/common';
 import { GovernanceReviewApprovedData, GovernanceReviewRejectedData } from '@src/domain/types';
+import { AllocationPathResolver } from '@src/application/services/allocation-path-resolver';
 
 export class SubmitGovernanceReviewResultCommand extends SubmitPhaseResultCommand<
   GovernanceReviewApprovedData,
@@ -31,6 +32,8 @@ export class SubmitGovernanceReviewResultCommandHandler
   constructor(
     @inject(TYPES.DatacapAllocatorRepository)
     private readonly _repository: IDatacapAllocatorRepository,
+    @inject(TYPES.AllocationPathResolver)
+    private readonly allocationPathResolver: AllocationPathResolver,
   ) {}
 
   async handle(command: SubmitGovernanceReviewResultCommand): Promise<void> {
@@ -41,7 +44,10 @@ export class SubmitGovernanceReviewResultCommandHandler
 
     switch (command.result.status) {
       case PhaseStatus.Approved:
-        allocator.approveGovernanceReview(command.result.data);
+        allocator.approveGovernanceReview(
+          command.result.data,
+          this.allocationPathResolver.resolve(command.result.data.allocatorType),
+        );
         break;
       case PhaseStatus.Rejected:
         allocator.rejectGovernanceReview(command.result.data);

@@ -21,7 +21,7 @@ describe('FetchIssuesCommand', () => {
   const fixureAllocatorData = {
     pathway_addresses: { msig: fixtureMsigAddress },
     ma_address: 'f4',
-    metapathway_type: 'msig',
+    metapathway_type: 'AMA',
     allocator_id: '1',
   };
 

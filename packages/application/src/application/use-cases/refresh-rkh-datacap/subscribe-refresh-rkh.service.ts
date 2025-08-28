@@ -8,8 +8,9 @@ import config from '@src/config';
 import { CreateRefreshApplicationCommand } from '../create-application/create-refresh-application.command';
 import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import { ApplicationDetails } from '@src/infrastructure/repositories/application-details.types';
-import { ApplicationAllocator, ApplicationInstruction } from '@src/domain/application/application';
+import { ApplicationInstruction } from '@src/domain/application/application';
 import cbor from 'cbor';
+import { AllocatorType } from '@src/domain/types';
 
 const schema = {
   type: 'hamt',
@@ -81,7 +82,7 @@ export async function submitRefreshRKHAllocatorCommand(
     return;
   }
   // Ensure instruction method is RKH_ALLOCATOR
-  if (lastInstructionMethod !== ApplicationAllocator.RKH_ALLOCATOR) {
+  if (lastInstructionMethod !== AllocatorType.RKH) {
     logger.debug('Invalid applicationInstruction method');
     return;
   }

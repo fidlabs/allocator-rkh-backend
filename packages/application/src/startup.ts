@@ -77,6 +77,7 @@ import { SignRefreshByRKHCommandHandler } from '@src/application/use-cases/updat
 import { ApproveRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/approve-refresh-by-rkh.command';
 import { ApproveRefreshByMaCommandHandler } from '@src/application/use-cases/update-ma-approvals/approve-refresh-by-ma.command';
 import { MetaAllocatorService } from './application/services/meta-allocator.service';
+import { AllocationPathResolver } from './application/services/allocation-path-resolver';
 
 export const initialize = async (): Promise<Container> => {
   const container = new Container();
@@ -91,6 +92,7 @@ export const initialize = async (): Promise<Container> => {
   container.bind<RoleService>(TYPES.RoleService).to(RoleService);
   container.bind<MessageService>(TYPES.MessageService).to(MessageService);
   container.bind<MetaAllocatorService>(TYPES.MetaAllocatorService).to(MetaAllocatorService);
+  container.bind<AllocationPathResolver>(TYPES.AllocationPathResolver).to(AllocationPathResolver);
 
   container.bind<IEventHandler<ApplicationCreated>>(TYPES.Event).to(ApplicationCreatedEventHandler);
   container.bind<IEventHandler<ApplicationEdited>>(TYPES.Event).to(ApplicationEditedEventHandler);

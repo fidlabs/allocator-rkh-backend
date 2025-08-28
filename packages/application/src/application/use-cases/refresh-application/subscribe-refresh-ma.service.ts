@@ -48,8 +48,7 @@ export async function subscribeMetaAllocatorAllowances(container: Container) {
       const allocators = approvedAllocators.results.filter(
         a =>
           a.applicationInstructions &&
-          a.applicationInstructions[a.applicationInstructions.length - 1].method ===
-            'META_ALLOCATOR',
+          a.applicationInstructions[a.applicationInstructions.length - 1].method !== 'RKH',
       );
       logger.info(`Found ${allocators.length} allocators`);
 
