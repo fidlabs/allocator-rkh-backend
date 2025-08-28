@@ -541,7 +541,7 @@ export class DatacapAllocator extends AggregateRoot {
       event.file.pathway_addresses?.signers || this.allocatorMultisigSigners;
 
     this.applicationInstructions = event.file.audits.map(ao => ({
-      method: [...Object.values(MetaAllocatorName)].includes(
+      method: Object.values(MetaAllocatorName).includes(
         event.file.metapathway_type as MetaAllocatorName,
       )
         ? ApplicationAllocator.META_ALLOCATOR
