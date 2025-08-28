@@ -44,7 +44,7 @@ export class ApplicationEditedEventHandler implements IEventHandler<ApplicationE
   async handle(event: ApplicationEdited): Promise<void> {
     // Convert human readable Zulu time to epoch for internal handling
     const lifeCycle = event.file.audits.map(ao => ({
-      method: event.file.metapathway_type as MetaAllocatorName || '',
+      method: (event.file.metapathway_type as MetaAllocatorName) || '',
       startTimestamp: zuluToEpoch(ao.started),
       endTimestamp: zuluToEpoch(ao.ended),
       allocatedTimestamp: zuluToEpoch(ao.dc_allocated),

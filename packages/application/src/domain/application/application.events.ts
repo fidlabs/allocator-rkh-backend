@@ -201,13 +201,13 @@ export class RKHApprovalStarted extends Event {
 export class MetaAllocatorApprovalStarted extends Event {
   eventName = MetaAllocatorApprovalStarted.name;
   aggregateName = 'allocator';
- 
+
   public readonly timestamp: Date;
   public readonly pathway: AllocationPath | undefined = undefined;
 
   constructor(allocatorId: string, pathway: AllocationPath) {
     super(allocatorId);
-    this.pathway = pathway
+    this.pathway = pathway;
     this.timestamp = new Date();
   }
 }

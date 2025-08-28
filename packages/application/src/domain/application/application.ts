@@ -464,7 +464,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyApplicationEdited(event: ApplicationEdited) {
-    console.log(`Application Edited Started`, event)
+    console.log(`Application Edited Started`, event);
     this.applicantAddress = event.file.address || this.applicantAddress;
     this.applicantName = event.file.name || this.applicantName;
 
@@ -519,7 +519,7 @@ export class DatacapAllocator extends AggregateRoot {
       event.file.pathway_addresses?.signers || this.allocatorMultisigSigners;
 
     this.applicationInstructions = event.file.audits.map(ao => ({
-      method: event.file.metapathway_type as AllocatorType || '',
+      method: (event.file.metapathway_type as AllocatorType) || '',
       startTimestamp: zuluToEpoch(ao.started),
       endTimestamp: zuluToEpoch(ao.ended),
       allocatedTimestamp: zuluToEpoch(ao.dc_allocated),

@@ -58,7 +58,12 @@ export class EditApplicationCommandHandler implements ICommandHandler<EditApplic
     //  return prevApplicationInstructions
     //}
     // Ensure each method and amount is valid
-    const validMethods = [AllocatorType.MDMA, AllocatorType.AMA, AllocatorType.ORMA, AllocatorType.RKH];
+    const validMethods = [
+      AllocatorType.MDMA,
+      AllocatorType.AMA,
+      AllocatorType.ORMA,
+      AllocatorType.RKH,
+    ];
     for (let currApplicationInstruction of currApplicationInstructions) {
       let currInstructionMethod: string;
       let currInstructionAmount: number;
