@@ -40,12 +40,12 @@ async function main() {
   // TODO this test has rotted, no longer reflects updates to structures
   const applicationInstructions = [
     {
-      method: 'RKH_ALLOCATOR',
+      method: 'RKH',
       datacap_amount: 10,
       timestamp: 0,
     },
     {
-      method: 'META_ALLOCATOR',
+      method: 'MDMA',
       datacap_amount: 20,
       timestamp: 1,
     },

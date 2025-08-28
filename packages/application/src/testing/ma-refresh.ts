@@ -9,6 +9,7 @@ import { ICommandBus, Logger } from '@filecoin-plus/core';
 import { Container } from 'inversify';
 import { ILotusClient } from '@src/infrastructure/clients/lotus';
 import { TYPES } from '@src/types';
+import { AllocatorType } from '@src/domain/types';
 import { initialize } from '@src/startup';
 import {
   fetchAllowanceChangedEvents,
@@ -20,7 +21,6 @@ import {
 } from '@src/application/use-cases/refresh-ma-datacap/subscribe-refresh-ma.service';
 import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import {
-  ApplicationAllocator,
   ApplicationStatus,
   DatacapAllocator,
   IDatacapAllocatorRepository,
@@ -449,7 +449,7 @@ async function testSubmitRefreshMetaAllocatorCommand(container: Container) {
     applicationInstructions: [
       {
         datacap_amount: initialDatacap,
-        method: ApplicationAllocator.META_ALLOCATOR,
+        method: AllocatorType.MDMA,
       },
     ],
   });

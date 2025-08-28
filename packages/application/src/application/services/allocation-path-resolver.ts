@@ -7,6 +7,7 @@ import { Logger } from '@filecoin-plus/core/src/utilities/Logger';
 import { RkhConfig } from '@src/infrastructure/interfaces';
 import { LOG_MESSAGES } from '@src/constants/log-messages';
 
+// TODO Refactor to pull value from the AllocatorType enum
 export enum Pathway {
   MDMA = MetaAllocatorName.MDMA,
   ORMA = MetaAllocatorName.ORMA,

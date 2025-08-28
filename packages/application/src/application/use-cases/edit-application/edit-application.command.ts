@@ -1,7 +1,6 @@
 import { Command, ICommandHandler, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 
-import { ApplicationAllocator } from '@src/domain/application/application';
 import {
   ApplicationInstruction,
   IDatacapAllocatorRepository,
@@ -9,6 +8,7 @@ import {
 import { TYPES } from '@src/types';
 import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
 import { epochToZulu, zuluToEpoch } from '@filecoin-plus/core';
+import { AllocatorType } from '@src/domain/types';
 
 export class EditApplicationCommand extends Command {
   public readonly applicationId: string;
@@ -58,7 +58,7 @@ export class EditApplicationCommandHandler implements ICommandHandler<EditApplic
     //  return prevApplicationInstructions
     //}
     // Ensure each method and amount is valid
-    const validMethods = [ApplicationAllocator.META_ALLOCATOR, ApplicationAllocator.RKH_ALLOCATOR];
+    const validMethods = [AllocatorType.MDMA, AllocatorType.AMA, AllocatorType.ORMA, AllocatorType.RKH];
     for (let currApplicationInstruction of currApplicationInstructions) {
       let currInstructionMethod: string;
       let currInstructionAmount: number;
@@ -68,7 +68,7 @@ export class EditApplicationCommandHandler implements ICommandHandler<EditApplic
       } catch (error) {
         return prevApplicationInstructions;
       }
-      if (!validMethods.includes(currInstructionMethod as ApplicationAllocator)) {
+      if (!validMethods.includes(currInstructionMethod as AllocatorType)) {
         return prevApplicationInstructions;
       }
       // Note negative not allowed, cannot use this path for subtraction/balance setting
@@ -94,10 +94,7 @@ export class EditApplicationCommandHandler implements ICommandHandler<EditApplic
 
     // FIXME ? the original code ALWAYS forced it to META_ALLOCATOR but I think that was wrong (?)
     const currApplicationInstructions = command.file.audits.map(ao => ({
-      method:
-        command.file.metapathway_type === 'MDMA'
-          ? ApplicationAllocator.META_ALLOCATOR
-          : ApplicationAllocator.RKH_ALLOCATOR,
+      method: command.file.metapathway_type || '',
       startTimestamp: zuluToEpoch(ao.started),
       endTimestamp: zuluToEpoch(ao.ended),
       allocatedTimestamp: zuluToEpoch(ao.dc_allocated),

@@ -22,11 +22,11 @@ import {
   DatacapRefreshRequested,
   KYCRevoked,
 } from '@src/domain/application/application.events';
+
 import { TYPES } from '@src/types';
 import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import {
   ApplicationStatus,
-  ApplicationAllocator,
   ApplicationInstructionStatus,
 } from '@src/domain/application/application';
 import { ApplicationDetails } from '@src/infrastructure/repositories/application-details.types';
@@ -44,11 +44,7 @@ export class ApplicationEditedEventHandler implements IEventHandler<ApplicationE
   async handle(event: ApplicationEdited): Promise<void> {
     // Convert human readable Zulu time to epoch for internal handling
     const lifeCycle = event.file.audits.map(ao => ({
-      method: Object.values(MetaAllocatorName).includes(
-        event.file.metapathway_type as MetaAllocatorName,
-      )
-        ? ApplicationAllocator.META_ALLOCATOR
-        : ApplicationAllocator.RKH_ALLOCATOR,
+      method: event.file.metapathway_type as MetaAllocatorName || '',
       startTimestamp: zuluToEpoch(ao.started),
       endTimestamp: zuluToEpoch(ao.ended),
       allocatedTimestamp: zuluToEpoch(ao.dc_allocated),
@@ -233,9 +229,9 @@ export class GovernanceReviewApprovedEventHandler
     const lastInstructionAmount = lastInstruction.datacap_amount;
 
     const status =
-      lastInstructionMethod === ApplicationAllocator.META_ALLOCATOR
-        ? ApplicationStatus.META_APPROVAL_PHASE
-        : ApplicationStatus.RKH_APPROVAL_PHASE;
+      lastInstructionMethod === 'RKH'
+        ? ApplicationStatus.RKH_APPROVAL_PHASE
+        : ApplicationStatus.META_APPROVAL_PHASE;
 
     await this._db.collection('applicationDetails').updateOne(
       { id: event.aggregateId },

@@ -6,7 +6,8 @@ import config from '@src/config';
 import { ethers } from 'ethers';
 import { MongoClient } from 'mongodb';
 import { CreateRefreshApplicationCommand } from '../create-application/create-refresh-application.command';
-import { ApplicationAllocator, ApplicationInstruction } from '@src/domain/application/application';
+import { ApplicationInstruction } from '@src/domain/application/application';
+import { AllocatorType } from '@src/domain/types';
 
 const ALLOWANCE_CHANGED_EVENT_ABI = [
   {
@@ -340,8 +341,8 @@ export async function submitRefreshMetaAllocatorCommand(
     logger.debug('Invalid applicationInstructions.');
     return;
   }
-  // Ensure instruction method is META_ALLOCATOR
-  if (lastInstructionMethod !== ApplicationAllocator.META_ALLOCATOR) {
+  // Ensure instruction method is some kind of META_ALLOCATOR
+  if (lastInstructionMethod !== AllocatorType.RKH) {
     logger.debug(`Invalid applicationInstruction method for allocator: ${allocatorAddress}`);
     return;
   }

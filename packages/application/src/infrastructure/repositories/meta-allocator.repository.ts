@@ -13,6 +13,7 @@ export interface IMetaAllocatorRepository {
   getAll(): readonly MetaAllocator[];
 }
 
+// TODO - rework this and relate to AllocatorType and Pathway enums
 export enum MetaAllocatorName {
   MDMA = 'MDMA',
   ORMA = 'ORMA',

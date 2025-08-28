@@ -28,7 +28,7 @@ describe('Refresh from Issue E2E', () => {
   const fixtureAllocatorJsonMock = {
     pathway_addresses: { msig: 'f2abcdef1234567890' },
     ma_address: 'f4',
-    metapathway_type: 'msig',
+    metapathway_type: 'AMA',
     allocator_id: '1',
   };
 

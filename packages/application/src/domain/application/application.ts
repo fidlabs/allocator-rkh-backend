@@ -37,6 +37,7 @@ import {
   RKHApprovalsUpdated,
 } from './application.events';
 import { MetaAllocatorName } from '@src/infrastructure/repositories/meta-allocator.repository';
+import { Pathway } from '@src/application/services/allocation-path-resolver';
 
 export interface IDatacapAllocatorRepository extends IRepository<DatacapAllocator> {}
 
@@ -51,11 +52,6 @@ export enum ApplicationStatus {
   REJECTED = 'REJECTED',
   IN_REFRESH = 'IN_REFRESSH',
   DC_ALLOCATED = 'DC_ALLOCATED',
-}
-
-export enum ApplicationAllocator {
-  META_ALLOCATOR = 'META_ALLOCATOR',
-  RKH_ALLOCATOR = 'RKH_ALLOCATOR',
 }
 
 export type ApplicationPullRequest = {
@@ -296,17 +292,6 @@ export class DatacapAllocator extends AggregateRoot {
     console.log('approveGovernanceReview');
     this.ensureValidApplicationStatus([ApplicationStatus.GOVERNANCE_REVIEW_PHASE]);
 
-    /*
-      The choice of type means that:
-        in Automated and Market Based and Metaallocator cases:
-          the application should advance to RKH approval
-        in Manual:
-          pathway field updated to MDMA
-          the address changed to MDMA address from env variable
-          the tooling field should get "smart_contract_allocator" entry
-          the application should advance to MDMA approval
-    */
-
     const lastInstructionIndex = this.applicationInstructions.length - 1;
     this.applicationInstructions[lastInstructionIndex].method = allocationPath?.pathway;
     this.applicationInstructions[lastInstructionIndex].datacap_amount = details?.finalDataCap;
@@ -331,12 +316,13 @@ export class DatacapAllocator extends AggregateRoot {
         this.applicationStatus = ApplicationStatus.DC_ALLOCATED;
         this.applicationInstructions[lastInstructionIndex].status =
           ApplicationInstructionStatus.GRANTED;
-        console.log('apply gov review MDMA', this);
+        console.log('apply gov review only JSON', this);
         return new MetaAllocatorApprovalCompleted(this.guid, 0, '', this.applicationInstructions);
       }
 
       if (this.isMetaAllocator && !updateJsonOnlyWithoutOnchainAllocation) {
-        return new MetaAllocatorApprovalStarted(this.guid);
+        console.log('apply gov review with allocation', this);
+        return new MetaAllocatorApprovalStarted(this.guid, allocationPath);
       }
 
       if (!this.isMetaAllocator && updateJsonOnlyWithoutOnchainAllocation) {
@@ -389,10 +375,6 @@ export class DatacapAllocator extends AggregateRoot {
      * the refactoring to maintain the object properly.
      */
 
-    //this.ensureValidApplicationInstructions([
-    //  ApplicationAllocator.META_ALLOCATOR,
-    //  ApplicationAllocator.RKH_ALLOCATOR,
-    //])
     //const lastInstructionIndex = this.applicationInstructions.length - 1
     //this.applicationInstructions[lastInstructionIndex].status = ApplicationInstructionStatus.GRANTED
     this.applyChange(
@@ -422,10 +404,6 @@ export class DatacapAllocator extends AggregateRoot {
      * the refactoring to maintain the object properly.
      */
 
-    //this.ensureValidApplicationInstructions([
-    //  ApplicationAllocator.META_ALLOCATOR,
-    //  ApplicationAllocator.RKH_ALLOCATOR,
-    //])
     const lastInstructionIndex = this.applicationInstructions.length - 1;
     this.applicationInstructions[lastInstructionIndex].status =
       ApplicationInstructionStatus.GRANTED;
@@ -486,7 +464,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyApplicationEdited(event: ApplicationEdited) {
-    //console.log(`Application Edited Started`, event)
+    console.log(`Application Edited Started`, event)
     this.applicantAddress = event.file.address || this.applicantAddress;
     this.applicantName = event.file.name || this.applicantName;
 
@@ -541,11 +519,7 @@ export class DatacapAllocator extends AggregateRoot {
       event.file.pathway_addresses?.signers || this.allocatorMultisigSigners;
 
     this.applicationInstructions = event.file.audits.map(ao => ({
-      method: Object.values(MetaAllocatorName).includes(
-        event.file.metapathway_type as MetaAllocatorName,
-      )
-        ? ApplicationAllocator.META_ALLOCATOR
-        : ApplicationAllocator.RKH_ALLOCATOR,
+      method: event.file.metapathway_type as AllocatorType || '',
       startTimestamp: zuluToEpoch(ao.started),
       endTimestamp: zuluToEpoch(ao.ended),
       allocatedTimestamp: zuluToEpoch(ao.dc_allocated),
@@ -669,14 +643,16 @@ export class DatacapAllocator extends AggregateRoot {
       event.applicationInstructions[index].datacap_amount;
   }
 
+  //JAGTAG the issue is here
   applyMetaAllocatorApprovalStarted(
     event: MetaAllocatorApprovalStarted,
     allocationPath: AllocationPath,
   ) {
+    console.log('applyMetaAllocatorApprovalStarted');
     this.applicationStatus = ApplicationStatus.META_APPROVAL_PHASE;
     this.allocationTooling = ['smart_contract_allocator'];
-    this.pathway = allocationPath?.pathway || 'MDMA';
-    this.ma_address = allocationPath?.address || this.mdma_address;
+    this.pathway = event?.pathway?.pathway || 'MDMA';
+    this.ma_address = event?.pathway?.address || this.mdma_address;
   }
 
   applyMetaAllocatorApprovalCompleted(
@@ -691,7 +667,7 @@ export class DatacapAllocator extends AggregateRoot {
     ]);
     this.status['DC Allocated'] ??= event.timestamp.getTime();
     this.applicationStatus = ApplicationStatus.DC_ALLOCATED;
-
+    console.log('JAG WTH applyMetaAllocatorApprovalCompleted');
     this.allocationTooling = ['smart_contract_allocator'];
     this.pathway = allocationPath?.pathway || 'MDMA';
     this.ma_address = allocationPath?.address || this.mdma_address;
@@ -737,7 +713,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   private ensureValidApplicationInstructions(
-    expectedInstructionMethods: ApplicationAllocator[],
+    expectedInstructionMethods: AllocatorType[],
     errorCode: string = '5308',
     errorMessage: string = 'Invalid application instructions for the current phase',
   ): void {
@@ -759,7 +735,7 @@ export class DatacapAllocator extends AggregateRoot {
       );
     }
 
-    if (!expectedInstructionMethods.includes(instructionMethod as ApplicationAllocator)) {
+    if (!expectedInstructionMethods.includes(instructionMethod as AllocatorType)) {
       throw new ApplicationError(StatusCodes.BAD_REQUEST, errorCode, errorMessage);
     }
   }

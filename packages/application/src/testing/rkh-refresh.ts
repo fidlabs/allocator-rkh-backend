@@ -14,11 +14,11 @@ import {
 } from '@src/application/use-cases/refresh-rkh-datacap/subscribe-refresh-rkh.service';
 import { createApplicationTest } from './create-app';
 import {
-  ApplicationAllocator,
   ApplicationStatus,
   DatacapAllocator,
   IDatacapAllocatorRepository,
 } from '@src/domain/application/application';
+import { AllocatorType } from '@src/domain/types';
 import { initialize } from '@src/startup';
 import { MongoClient } from 'mongodb';
 import config from '@src/config';
@@ -77,7 +77,7 @@ async function testSubmitRefreshRKHAllocatorCommand(
     applicationInstructions: [
       {
         datacap_amount: initialDatacap,
-        method: ApplicationAllocator.RKH_ALLOCATOR,
+        method: AllocatorType.RKH,
       },
     ],
   });

@@ -40,6 +40,7 @@ export enum AllocatorType {
   ORMA = 'ORMA',
   RKH = 'RKH',
   AMA = 'AMA',
+  NONE = '',
 }
 
 export type AllocationPath = {

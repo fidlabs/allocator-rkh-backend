@@ -1,5 +1,5 @@
 import { Event } from '@filecoin-plus/core';
-import { KYCApprovedData, KYCRejectedData } from '@src/domain/types';
+import { AllocationPath, AllocatorType, KYCApprovedData, KYCRejectedData } from '@src/domain/types';
 import { ApplicationInstruction, ApplicationStatus } from './application';
 import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
 
@@ -201,11 +201,13 @@ export class RKHApprovalStarted extends Event {
 export class MetaAllocatorApprovalStarted extends Event {
   eventName = MetaAllocatorApprovalStarted.name;
   aggregateName = 'allocator';
-
+ 
   public readonly timestamp: Date;
+  public readonly pathway: AllocationPath | undefined = undefined;
 
-  constructor(allocatorId: string) {
+  constructor(allocatorId: string, pathway: AllocationPath) {
     super(allocatorId);
+    this.pathway = pathway
     this.timestamp = new Date();
   }
 }
