@@ -20,6 +20,10 @@ import {
   IIssueDetailsRepository,
   IssueDetailsRepository,
 } from '@src/infrastructure/repositories/issue-details.repository';
+import {
+  ApplicationDetailsRepository,
+  IApplicationDetailsRepository,
+} from '@src/infrastructure/repositories/application-details.repository';
 import { IIssueMapper, IssueMapper } from '@src/infrastructure/mappers/issue-mapper';
 import { RefreshIssuesCommandHandler } from '@src/application/use-cases/refresh-issues/refresh-issues.command';
 import { FetchIssuesCommandHandler } from '@src/application/use-cases/refresh-issues/fetch-issues.command';
@@ -92,6 +96,11 @@ export class TestContainerBuilder {
     this.container
       .bind<IIssueDetailsRepository>(TYPES.IssueDetailsRepository)
       .to(IssueDetailsRepository)
+      .inSingletonScope();
+
+    this.container
+      .bind<IApplicationDetailsRepository>(TYPES.ApplicationDetailsRepository)
+      .to(ApplicationDetailsRepository)
       .inSingletonScope();
 
     this.container

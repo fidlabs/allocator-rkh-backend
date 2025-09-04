@@ -33,6 +33,11 @@ export interface IApplicationDetailsRepository extends IRepository<ApplicationDe
   getByAddress(address: string): Promise<ApplicationDetails | null>;
 
   getByProposalId(proposalId: number): Promise<ApplicationDetails | null>;
+
+  getPendingBy<K extends keyof ApplicationDetails>(
+    key: K,
+    value: ApplicationDetails[K],
+  ): Promise<ApplicationDetails | null>;
 }
 
 @injectable()
@@ -125,6 +130,16 @@ class ApplicationDetailsRepository implements IRepository<ApplicationDetails> {
 
   async getByActorId(actorId: string): Promise<ApplicationDetails | null> {
     return this._db.collection<ApplicationDetails>('applicationDetails').findOne({ actorId });
+  }
+
+  async getPendingBy<K extends keyof ApplicationDetails>(
+    key: K,
+    value: ApplicationDetails[K],
+  ): Promise<ApplicationDetails | null> {
+    return this._db.collection<ApplicationDetails>('applicationDetails').findOne({
+      [key]: value,
+      status: { $nin: [ApplicationStatus.DC_ALLOCATED, ApplicationStatus.REJECTED] },
+    });
   }
 
   async getByAddress(address: string): Promise<ApplicationDetails | null> {

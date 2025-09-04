@@ -53,7 +53,7 @@ export async function subscribeDatacapAllocations(container: Container) {
         }
 
         const actorId = await lotusClient.getActorId(it[0]);
-        const allocator = await applicationDetailsRepository.getByActorId(actorId);
+        const allocator = await applicationDetailsRepository.getPendingBy('actorId', actorId);
         if (!allocator) {
           logger.warn(`Allocator not found for actor id ${actorId}`);
           continue;

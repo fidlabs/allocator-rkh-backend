@@ -332,7 +332,7 @@ export async function handleMetaAllocatorApplicationApproval({
   actorId: string;
   applicationDetailsRepository: IApplicationDetailsRepository;
 }) {
-  const applicationDetails = await applicationDetailsRepository.getByActorId(actorId);
+  const applicationDetails = await applicationDetailsRepository.getPendingBy('actorId', actorId);
   if (!applicationDetails) throw new Error(`Application details not found for actorId ${actorId}`);
 
   return new UpdateMetaAllocatorApprovalsCommand(
