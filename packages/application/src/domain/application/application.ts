@@ -287,7 +287,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   approveGovernanceReview(details: GovernanceReviewApprovedData, allocationPath: AllocationPath) {
-    if (debugMode) console.log('approveGovernanceReview');
+    console.log('approveGovernanceReview');
     this.ensureValidApplicationStatus([ApplicationStatus.GOVERNANCE_REVIEW_PHASE]);
 
     const lastInstructionIndex = this.applicationInstructions.length - 1;
@@ -657,8 +657,7 @@ export class DatacapAllocator extends AggregateRoot {
     event: MetaAllocatorApprovalCompleted,
     allocationPath: AllocationPath,
   ) {
-    if (debugMode)
-      console.log('applyMetaAllocatorApprovalCompleted: ', this.guid, this.applicationPullRequest);
+    console.log('applyMetaAllocatorApprovalCompleted: ', this.guid, this.applicationPullRequest);
     this.ensureValidApplicationStatus([
       ApplicationStatus.GOVERNANCE_REVIEW_PHASE,
       ApplicationStatus.META_APPROVAL_PHASE,

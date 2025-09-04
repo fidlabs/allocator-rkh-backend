@@ -11,6 +11,10 @@ import { SaveIssueCommand } from './save-issue.command';
 import { SaveIssueWithNewAuditCommand } from './save-issue-with-new-audit.command';
 import { TYPES } from '@src/types';
 import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
+import { LOG_MESSAGES, RESPONSE_MESSAGES } from '@src/constants';
+
+const LOG = LOG_MESSAGES.UPSERT_ISSUE_STRATEGY_RESOLVER;
+const RES = RESPONSE_MESSAGES.UPSERT_ISSUE_STRATEGY_RESOLVER;
 
 export enum UpsertStrategyKey {
   SAVE_WITH_NEW_AUDIT = 'save-with-new-audit',
@@ -51,10 +55,10 @@ export class UpsertIssueStrategyResolver {
   ) {}
 
   public async resolveAndExecute(mappedIsuueFromGithub: IssueDetails): Promise<Command> {
-    this.logger.info('Resolving upsert strategy');
+    this.logger.info(LOG.RESOLVING_UPSERT_ISSUE_STRATEGY);
     const strategyKey = await this.getStrategyKey(mappedIsuueFromGithub);
 
-    this.logger.info('Strategy selected: ' + strategyKey);
+    this.logger.info(LOG.STRATEGY_SELECTED + strategyKey);
 
     const strategy = this.getStrategyByKey(strategyKey);
     return strategy.execute(mappedIsuueFromGithub);
@@ -84,15 +88,13 @@ export class UpsertIssueStrategyResolver {
 
     if (isIssueByGithubIdFinished)
       throw new Error(
-        `${mappedIsuueFromGithub.githubIssueId} this issue refresh is already finished`,
+        `${mappedIsuueFromGithub.githubIssueId} ${RES.ISSUE_REFRESH_ALREADY_FINISHED}`,
       );
 
     if (areTheSameIssue) return UpsertStrategyKey.SAVE_WITHOUT_GITHUB_UPDATE;
 
     if (isLatestAuditByJsonNumberPending)
-      throw new Error(
-        `${mappedIsuueFromGithub.jsonNumber} has pending audit, finish existing audit before creating a new one`,
-      );
+      throw new Error(`${mappedIsuueFromGithub.jsonNumber} ${RES.PENDING_AUDIT}`);
 
     if (issueByGithubIdExists && !isLatestAuditByJsonNumberPending)
       return UpsertStrategyKey.SAVE_WITHOUT_GITHUB_UPDATE;
@@ -101,9 +103,9 @@ export class UpsertIssueStrategyResolver {
       return UpsertStrategyKey.SAVE_WITH_NEW_AUDIT;
 
     if (!areTheSameIssue && isLatestAuditByJsonNumberPending)
-      throw new Error(`Cannot resolve upsert strategy for ${mappedIsuueFromGithub.jsonNumber}`);
+      throw new Error(`${RES.CANNOT_RESOLVE_UPSERT_STRATEGY} ${mappedIsuueFromGithub.jsonNumber}`);
 
-    throw new Error(`Cannot resolve upsert strategy for ${mappedIsuueFromGithub.jsonNumber}`);
+    throw new Error(`${RES.CANNOT_RESOLVE_UPSERT_STRATEGY} ${mappedIsuueFromGithub.jsonNumber}`);
   }
 
   private analyzeAuditState(
