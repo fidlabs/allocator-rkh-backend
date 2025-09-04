@@ -71,10 +71,7 @@ import { FetchIssuesCommandHandler } from '@src/application/use-cases/refresh-is
 import { BulkCreateIssueCommandHandler } from '@src/application/use-cases/refresh-issues/bulk-create-issue.command';
 import { GetRefreshesQueryHandler } from '@src/application/queries/get-refreshes/get-refreshes.query';
 import { UpsertIssueCommandCommandHandler } from '@src/application/use-cases/refresh-issues/upsert-issue.command';
-import {
-  UpsertStrategy,
-  IUpsertStrategy,
-} from '@src/application/use-cases/refresh-issues/upsert-issue.strategy';
+import { UpsertIssueStrategyResolver } from '@src/application/use-cases/refresh-issues/upsert-issue.strategy';
 import { FetchAllocatorCommandHandler } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
 import { SignRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/sign-refresh-by-rkh.command';
 import { ApproveRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/approve-refresh-by-rkh.command';
@@ -177,7 +174,9 @@ export const initialize = async (): Promise<Container> => {
   container
     .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
     .to(UpsertIssueCommandCommandHandler);
-  container.bind<IUpsertStrategy>(TYPES.UpsertStrategy).to(UpsertStrategy);
+  container
+    .bind<UpsertIssueStrategyResolver>(TYPES.UpsertIssueStrategyResolver)
+    .to(UpsertIssueStrategyResolver);
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(FetchAllocatorCommandHandler);
   container
     .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
