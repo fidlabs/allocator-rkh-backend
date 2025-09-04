@@ -2,7 +2,7 @@ import { IRepository } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 import { BulkWriteResult, Db, Filter, WithId } from 'mongodb';
 import { TYPES } from '@src/types';
-import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
+import { AuditOutcome, IssueDetails } from '@src/infrastructure/repositories/issue-details';
 
 type PaginatedResults<T> = {
   results: T[];
@@ -37,10 +37,20 @@ export interface IIssueDetailsRepository extends IRepository<IssueDetails> {
   findPendingBy(filter: Filter<IssueDetails>): Promise<IssueDetails | null>;
 
   findSignedBy(filter: Filter<IssueDetails>): Promise<IssueDetails | null>;
+
+  findBy<K extends keyof IssueDetails>(
+    key: K,
+    value: IssueDetails[K],
+  ): Promise<WithId<IssueDetails> | null>;
+
+  findWithLatestAuditBy<K extends keyof IssueDetails>(
+    key: K,
+    value: IssueDetails[K],
+  ): Promise<WithId<IssueDetails> | null>;
 }
 
 @injectable()
-class IssueDetailsRepository implements IRepository<IssueDetails> {
+class IssueDetailsRepository implements IIssueDetailsRepository {
   constructor(@inject(TYPES.Db) private readonly _db: Db) {}
 
   async getById(guid: string): Promise<IssueDetails> {
@@ -135,6 +145,27 @@ class IssueDetailsRepository implements IRepository<IssueDetails> {
         itemsPerPage: limit,
       },
     };
+  }
+
+  async findBy<K extends keyof IssueDetails>(
+    key: K,
+    value: IssueDetails[K],
+  ): Promise<WithId<IssueDetails> | null> {
+    return this._db.collection<IssueDetails>('issueDetails').findOne({ [key]: value });
+  }
+
+  async findWithLatestAuditBy<K extends keyof IssueDetails>(
+    key: K,
+    value: IssueDetails[K],
+  ): Promise<WithId<IssueDetails> | null> {
+    return this._db.collection<IssueDetails>('issueDetails').findOne(
+      {
+        [key]: value,
+      },
+      {
+        sort: { 'currentAudit.started': -1 },
+      },
+    );
   }
 
   async getAll(): Promise<IssueDetails[]> {

@@ -36,8 +36,6 @@ import {
   RKHApprovalStarted,
   RKHApprovalsUpdated,
 } from './application.events';
-import { MetaAllocatorName } from '@src/infrastructure/repositories/meta-allocator.repository';
-import { Pathway } from '@src/application/services/allocation-path-resolver';
 
 export interface IDatacapAllocatorRepository extends IRepository<DatacapAllocator> {}
 
@@ -289,7 +287,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   approveGovernanceReview(details: GovernanceReviewApprovedData, allocationPath: AllocationPath) {
-    console.log('approveGovernanceReview');
+    if (debugMode) console.log('approveGovernanceReview');
     this.ensureValidApplicationStatus([ApplicationStatus.GOVERNANCE_REVIEW_PHASE]);
 
     const lastInstructionIndex = this.applicationInstructions.length - 1;
@@ -659,7 +657,8 @@ export class DatacapAllocator extends AggregateRoot {
     event: MetaAllocatorApprovalCompleted,
     allocationPath: AllocationPath,
   ) {
-    console.log('applyMetaAllocatorApprovalCompleted: ', this.guid, this.applicationPullRequest);
+    if (debugMode)
+      console.log('applyMetaAllocatorApprovalCompleted: ', this.guid, this.applicationPullRequest);
     this.ensureValidApplicationStatus([
       ApplicationStatus.GOVERNANCE_REVIEW_PHASE,
       ApplicationStatus.META_APPROVAL_PHASE,

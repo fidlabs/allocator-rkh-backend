@@ -1,6 +1,7 @@
-import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 import { RepoIssue } from '@src/infrastructure/clients/github';
+import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 import { injectable } from 'inversify';
+
 import {
   JSON_HASH_REGEX,
   NEW_TEMPLATE_JSON_NUMBER_REGEX,
