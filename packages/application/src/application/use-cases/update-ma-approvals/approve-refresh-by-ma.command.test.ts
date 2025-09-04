@@ -12,14 +12,28 @@ import { DatabaseRefreshFactory } from '@mocks/factories';
 import { faker } from '@faker-js/faker';
 import { Approval } from '@src/infrastructure/clients/lotus';
 import { IDataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
+import { CommandBus } from '@src/infrastructure/command-bus';
+import { RefreshAuditService } from '@src/application/services/refresh-audit.service';
 
 describe('ApproveRefreshByMaCommand', () => {
   let container: Container;
   let handler: ApproveRefreshByMaCommandHandler;
   const loggerMock = { info: vi.fn(), error: vi.fn() };
-  const repositoryMock = { update: vi.fn() };
+  const commandBusMock = { send: vi.fn() };
   const datacapMapperMock = { fromBigIntBytesToPiBNumber: vi.fn() };
-
+  const refreshAuditServiceMock = { approveAudit: vi.fn() };
+  const auditResult = {
+    auditChange: {
+      started: '2024-01-01T00:00:00.000Z',
+      ended: '2024-01-01T00:00:00.000Z',
+      dcAllocated: '2024-01-01T00:00:00.000Z',
+      outcome: 'MATCH',
+    },
+    branchName: 'b',
+    commitSha: 'c',
+    prNumber: 1,
+    prUrl: 'u',
+  };
   const fixtureIssueDetails = DatabaseRefreshFactory.create();
   const fixtureApproval: Approval = {
     blockNumber: faker.number.int({ min: 1000, max: 9999 }),
@@ -36,16 +50,21 @@ describe('ApproveRefreshByMaCommand', () => {
 
     container.bind<Logger>(TYPES.Logger).toConstantValue(loggerMock as unknown as Logger);
     container
-      .bind<IIssueDetailsRepository>(TYPES.IssueDetailsRepository)
-      .toConstantValue(repositoryMock as unknown as IIssueDetailsRepository);
+      .bind<CommandBus>(TYPES.CommandBus)
+      .toConstantValue(commandBusMock as unknown as CommandBus);
     container
       .bind<IDataCapMapper>(TYPES.DataCapMapper)
       .toConstantValue(datacapMapperMock as unknown as IDataCapMapper);
+    container
+      .bind<RefreshAuditService>(TYPES.RefreshAuditService)
+      .toConstantValue(refreshAuditServiceMock as unknown as RefreshAuditService);
     container.bind<ApproveRefreshByMaCommandHandler>(ApproveRefreshByMaCommandHandler).toSelf();
 
     handler = container.get<ApproveRefreshByMaCommandHandler>(ApproveRefreshByMaCommandHandler);
 
     datacapMapperMock.fromBigIntBytesToPiBNumber.mockReturnValue(fixtureMappedDatacap);
+    refreshAuditServiceMock.approveAudit.mockResolvedValue(auditResult);
+    commandBusMock.send.mockResolvedValue({ success: true });
   });
 
   afterEach(() => {
@@ -59,7 +78,10 @@ describe('ApproveRefreshByMaCommand', () => {
     expect(datacapMapperMock.fromBigIntBytesToPiBNumber).toHaveBeenCalledWith(
       BigInt('1125899906842624'),
     );
-    expect(repositoryMock.update).toHaveBeenCalledWith({
+    expect(refreshAuditServiceMock.approveAudit).toHaveBeenCalledWith(
+      fixtureIssueDetails.jsonNumber,
+    );
+    expect(commandBusMock.send).toHaveBeenCalledWith({
       ...fixtureIssueDetails,
       refreshStatus: 'DC_ALLOCATED',
       transactionCid: fixtureApproval.txHash,
@@ -77,7 +99,7 @@ describe('ApproveRefreshByMaCommand', () => {
 
   it('should handle error during repository update', async () => {
     const error = new Error('Failed to update repository');
-    repositoryMock.update.mockRejectedValue(error);
+    commandBusMock.send.mockRejectedValue(error);
 
     const command = new ApproveRefreshByMaCommand(fixtureIssueDetails, fixtureApproval);
     const result = await handler.handle(command);
@@ -85,7 +107,10 @@ describe('ApproveRefreshByMaCommand', () => {
     expect(datacapMapperMock.fromBigIntBytesToPiBNumber).toHaveBeenCalledWith(
       BigInt('1125899906842624'),
     );
-    expect(repositoryMock.update).toHaveBeenCalledWith({
+    expect(refreshAuditServiceMock.approveAudit).toHaveBeenCalledWith(
+      fixtureIssueDetails.jsonNumber,
+    );
+    expect(commandBusMock.send).toHaveBeenCalledWith({
       ...fixtureIssueDetails,
       refreshStatus: 'DC_ALLOCATED',
       transactionCid: fixtureApproval.txHash,
