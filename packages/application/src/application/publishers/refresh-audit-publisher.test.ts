@@ -37,7 +37,7 @@ describe('RefreshAuditPublisher', () => {
         started: '2023-01-01T00:00:00.000Z',
         ended: '2023-01-02T00:00:00.000Z',
         dc_allocated: '2023-01-03T00:00:00.000Z',
-        outcome: AuditOutcome.APPROVED,
+        outcome: AuditOutcome.MATCH,
         datacap_amount: 1,
       },
     ],
@@ -85,13 +85,16 @@ describe('RefreshAuditPublisher', () => {
     expect(result.auditChange.started).toBe('2024-01-01T00:00:00.000Z');
   });
 
-  it('newAudit throws when last audit is pending', async () => {
-    const pendingAllocator = structuredClone(baseAllocator);
-    pendingAllocator.audits[pendingAllocator.audits.length - 1].outcome = AuditOutcome.PENDING;
-    commandBusMock.send.mockResolvedValueOnce({ success: true, data: pendingAllocator });
+  it.each([AuditOutcome.PENDING, AuditOutcome.APPROVED])(
+    'newAudit throws when last audit is %s',
+    async outcome => {
+      const pendingAllocator = structuredClone(baseAllocator);
+      pendingAllocator.audits[pendingAllocator.audits.length - 1].outcome = outcome;
+      commandBusMock.send.mockResolvedValueOnce({ success: true, data: pendingAllocator });
 
-    await expect(publisher.newAudit('hash123')).rejects.toThrow('Pending audit found');
-  });
+      await expect(publisher.newAudit('hash123')).rejects.toThrow('Pending audit found');
+    },
+  );
 
   it('updateAudit applies partial changes to latest audit and publishes PR', async () => {
     const change = { ended: '2024-01-02T00:00:00.000Z', outcome: AuditOutcome.APPROVED } as any;

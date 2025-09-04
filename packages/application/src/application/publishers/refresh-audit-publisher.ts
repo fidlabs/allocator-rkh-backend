@@ -4,7 +4,11 @@ import { TYPES } from '@src/types';
 import { IGithubClient } from '@src/infrastructure/clients/github';
 import { FetchAllocatorCommand } from '../use-cases/fetch-allocator/fetch-allocator.command';
 import { ApplicationPullRequestFile, AuditCycle } from '../services/pull-request.types';
-import { AuditData, AuditOutcome } from '@src/infrastructure/repositories/issue-details';
+import {
+  AuditData,
+  AuditOutcome,
+  PENDING_AUDIT_OUTCOMES,
+} from '@src/infrastructure/repositories/issue-details';
 import { GithubConfig } from '@src/domain/types';
 import { IAuditMapper } from '@src/infrastructure/mappers/audit-mapper';
 import { nanoid } from 'nanoid';
@@ -55,7 +59,7 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
       datacapAmount: '',
     };
 
-    if (allocator.audits.at(-1)?.outcome === AuditOutcome.PENDING)
+    if (PENDING_AUDIT_OUTCOMES.includes(allocator.audits.at(-1)?.outcome as AuditOutcome))
       throw new Error('Pending audit found');
 
     allocator.audits.push(this._auditMapper.fromAuditDataToDomain(newAudit));
