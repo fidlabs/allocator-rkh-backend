@@ -2,17 +2,25 @@ import 'reflect-metadata';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RefreshAuditPublisher } from './refresh-audit-publisher';
 import { AuditOutcome } from '@src/infrastructure/repositories/issue-details';
+import { Container } from 'inversify';
+import { GithubClient } from '@src/infrastructure/clients/github';
+import { TYPES } from '@src/types';
+import { GithubConfig } from '@src/domain/types';
+import { ICommandBus } from '@filecoin-plus/core/src/interfaces/ICommandBus';
+import { AuditMapper, IAuditMapper } from '@src/infrastructure/mappers/audit-mapper';
 
 describe('RefreshAuditPublisher', () => {
-  const loggerMock = { info: vi.fn() } as any;
+  let container: Container;
+  let publisher: RefreshAuditPublisher;
+
   const githubMock = {
     createBranch: vi.fn(),
     createPullRequest: vi.fn(),
     mergePullRequest: vi.fn(),
     deleteBranch: vi.fn(),
-  } as any;
-  const configMock = { owner: 'o', repo: 'r' } as any;
-  const commandBusMock = { send: vi.fn() } as any;
+  };
+  const configMock = { owner: 'owner', repo: 'repo' };
+  const commandBusMock = { send: vi.fn() };
   const auditMapperMock = {
     fromAuditDataToDomain: vi.fn(a => ({
       started: a.started,
@@ -28,7 +36,7 @@ describe('RefreshAuditPublisher', () => {
       outcome: a.outcome,
       datacap_amount: a.datacapAmount as number,
     })),
-  } as any;
+  };
 
   const baseAllocator = {
     application_number: 123,
@@ -41,14 +49,29 @@ describe('RefreshAuditPublisher', () => {
         datacap_amount: 1,
       },
     ],
-  } as any;
-
-  let publisher: RefreshAuditPublisher;
+  };
 
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-01-01T00:00:00.000Z'));
     vi.clearAllMocks();
+
+    container = new Container();
+    container
+      .bind<GithubClient>(TYPES.GithubClient)
+      .toConstantValue(githubMock as unknown as GithubClient);
+    container
+      .bind<ICommandBus>(TYPES.CommandBus)
+      .toConstantValue(commandBusMock as unknown as ICommandBus);
+    container
+      .bind<IAuditMapper>(TYPES.AuditMapper)
+      .toConstantValue(auditMapperMock as unknown as IAuditMapper);
+    container
+      .bind(TYPES.AllocatorRegistryConfig)
+      .toConstantValue(configMock as unknown as GithubConfig);
+    container.bind<RefreshAuditPublisher>(RefreshAuditPublisher).toSelf();
+
+    publisher = container.get<RefreshAuditPublisher>(RefreshAuditPublisher);
 
     githubMock.createBranch.mockResolvedValue({ ref: 'refs/heads/b' });
     githubMock.createPullRequest.mockResolvedValue({
@@ -60,14 +83,6 @@ describe('RefreshAuditPublisher', () => {
     githubMock.deleteBranch.mockResolvedValue({});
 
     commandBusMock.send.mockResolvedValue({ success: true, data: structuredClone(baseAllocator) });
-
-    publisher = new RefreshAuditPublisher(
-      loggerMock,
-      githubMock,
-      configMock,
-      commandBusMock,
-      auditMapperMock,
-    );
   });
 
   it('newAudit creates a new pending audit and publishes PR', async () => {

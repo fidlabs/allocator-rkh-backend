@@ -36,7 +36,6 @@ export interface IRefreshAuditPublisher {
 @injectable()
 export class RefreshAuditPublisher implements IRefreshAuditPublisher {
   constructor(
-    @inject(TYPES.Logger) private readonly _logger: Logger,
     @inject(TYPES.GithubClient) private readonly _github: IGithubClient,
     @inject(TYPES.AllocatorRegistryConfig) private readonly _allocatorRegistryConfig: GithubConfig,
     @inject(TYPES.CommandBus) private readonly _commandBus: ICommandBus,
