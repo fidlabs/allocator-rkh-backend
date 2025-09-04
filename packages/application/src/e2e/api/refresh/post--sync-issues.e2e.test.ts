@@ -103,5 +103,3 @@ describe('POST /api/v1/refreshes/sync/issues', () => {
     expect(commandBusStub.send).toHaveBeenCalledTimes(1);
   });
 });
-
-
