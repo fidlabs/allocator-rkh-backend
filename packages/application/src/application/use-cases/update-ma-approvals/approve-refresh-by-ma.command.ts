@@ -49,7 +49,7 @@ export class ApproveRefreshByMaCommandHandler
         command.issueDetails.jsonNumber,
       );
 
-      const { auditHistory } = command.issueDetails;
+      const auditHistory = command.issueDetails.auditHistory || [];
       auditHistory?.push(auditResult);
 
       const issueWithApprovedStatus: IssueDetails = {

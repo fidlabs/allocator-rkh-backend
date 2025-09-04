@@ -88,7 +88,7 @@ export class UpsertIssueStrategyResolver {
 
     if (isIssueByGithubIdFinished)
       throw new Error(
-        `${mappedIsuueFromGithub.githubIssueId} ${RES.ISSUE_REFRESH_ALREADY_FINISHED}`,
+        `${mappedIsuueFromGithub.githubIssueNumber} ${RES.ISSUE_REFRESH_ALREADY_FINISHED}`,
       );
 
     if (areTheSameIssue) return UpsertStrategyKey.SAVE_WITHOUT_GITHUB_UPDATE;

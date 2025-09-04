@@ -93,8 +93,8 @@ describe('UpsertStrategy', () => {
 
   it.each`
     refreshStatus     | expectedError
-    ${'DC_ALLOCATED'} | ${'this issue refresh is already finished'}
-    ${'REJECTED'}     | ${'this issue refresh is already finished'}
+    ${'DC_ALLOCATED'} | ${'This issue refresh is already finished'}
+    ${'REJECTED'}     | ${'This issue refresh is already finished'}
   `(
     'throws when issue by github id is finished state as $refreshStatus',
     async ({ refreshStatus, expectedError }) => {
@@ -104,7 +104,9 @@ describe('UpsertStrategy', () => {
       } as any);
       repoMock.findWithLatestAuditBy.mockResolvedValue(null);
 
-      await expect(strategy.resolveAndExecute(fixtureIssue)).rejects.toThrow(expectedError);
+      await expect(strategy.resolveAndExecute(fixtureIssue)).rejects.toThrow(
+        `${fixtureIssue.githubIssueNumber} ${expectedError}`,
+      );
     },
   );
 

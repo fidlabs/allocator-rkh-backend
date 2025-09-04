@@ -7,13 +7,17 @@ import {
   ApproveRefreshByMaCommand,
   ApproveRefreshByMaCommandHandler,
 } from './approve-refresh-by-ma.command';
-import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { DatabaseRefreshFactory } from '@mocks/factories';
 import { faker } from '@faker-js/faker';
 import { Approval } from '@src/infrastructure/clients/lotus';
 import { IDataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
 import { CommandBus } from '@src/infrastructure/command-bus';
 import { RefreshAuditService } from '@src/application/services/refresh-audit.service';
+import { SaveIssueCommand } from '../refresh-issues/save-issue.command';
+
+vi.mock('nanoid', () => ({
+  nanoid: vi.fn().mockReturnValue('guid'),
+}));
 
 describe('ApproveRefreshByMaCommand', () => {
   let container: Container;
@@ -22,7 +26,8 @@ describe('ApproveRefreshByMaCommand', () => {
   const commandBusMock = { send: vi.fn() };
   const datacapMapperMock = { fromBigIntBytesToPiBNumber: vi.fn() };
   const refreshAuditServiceMock = { approveAudit: vi.fn() };
-  const auditResult = {
+
+  const fixtureAuditResult = {
     auditChange: {
       started: '2024-01-01T00:00:00.000Z',
       ended: '2024-01-01T00:00:00.000Z',
@@ -63,7 +68,7 @@ describe('ApproveRefreshByMaCommand', () => {
     handler = container.get<ApproveRefreshByMaCommandHandler>(ApproveRefreshByMaCommandHandler);
 
     datacapMapperMock.fromBigIntBytesToPiBNumber.mockReturnValue(fixtureMappedDatacap);
-    refreshAuditServiceMock.approveAudit.mockResolvedValue(auditResult);
+    refreshAuditServiceMock.approveAudit.mockResolvedValue(fixtureAuditResult);
     commandBusMock.send.mockResolvedValue({ success: true });
   });
 
@@ -82,14 +87,19 @@ describe('ApproveRefreshByMaCommand', () => {
       fixtureIssueDetails.jsonNumber,
     );
     expect(commandBusMock.send).toHaveBeenCalledWith({
-      ...fixtureIssueDetails,
-      refreshStatus: 'DC_ALLOCATED',
-      transactionCid: fixtureApproval.txHash,
-      blockNumber: fixtureApproval.blockNumber,
-      metaAllocator: {
+      guid: 'guid',
+      issueDetails: {
+        ...fixtureIssueDetails,
+        refreshStatus: 'DC_ALLOCATED',
+        transactionCid: fixtureApproval.txHash,
         blockNumber: fixtureApproval.blockNumber,
+        currentAudit: fixtureAuditResult.auditChange,
+        auditHistory: [fixtureAuditResult],
+        metaAllocator: {
+          blockNumber: fixtureApproval.blockNumber,
+        },
+        dataCap: fixtureMappedDatacap,
       },
-      dataCap: fixtureMappedDatacap,
     });
     expect(loggerMock.info).toHaveBeenCalledTimes(2);
     expect(result).toStrictEqual({
@@ -111,15 +121,21 @@ describe('ApproveRefreshByMaCommand', () => {
       fixtureIssueDetails.jsonNumber,
     );
     expect(commandBusMock.send).toHaveBeenCalledWith({
-      ...fixtureIssueDetails,
-      refreshStatus: 'DC_ALLOCATED',
-      transactionCid: fixtureApproval.txHash,
-      blockNumber: fixtureApproval.blockNumber,
-      metaAllocator: {
+      guid: 'guid',
+      issueDetails: {
+        ...fixtureIssueDetails,
+        refreshStatus: 'DC_ALLOCATED',
+        transactionCid: fixtureApproval.txHash,
         blockNumber: fixtureApproval.blockNumber,
+        currentAudit: fixtureAuditResult.auditChange,
+        auditHistory: [fixtureAuditResult],
+        metaAllocator: {
+          blockNumber: fixtureApproval.blockNumber,
+        },
+        dataCap: fixtureMappedDatacap,
       },
-      dataCap: fixtureMappedDatacap,
     });
+    expect(commandBusMock.send).toHaveBeenCalledWith(expect.any(SaveIssueCommand));
     expect(loggerMock.error).toHaveBeenCalled();
     expect(result).toStrictEqual({
       success: false,
