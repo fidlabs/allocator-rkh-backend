@@ -1,4 +1,4 @@
-import { IRepository } from '@filecoin-plus/core';
+import { IRepository, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 import { Db } from 'mongodb';
 
@@ -42,7 +42,10 @@ export interface IApplicationDetailsRepository extends IRepository<ApplicationDe
 
 @injectable()
 class ApplicationDetailsRepository implements IRepository<ApplicationDetails> {
-  constructor(@inject(TYPES.Db) private readonly _db: Db) {}
+  constructor(
+    @inject(TYPES.Db) private readonly _db: Db,
+    @inject(TYPES.Logger) private readonly _logger: Logger,
+  ) {}
 
   async save(applicationDetails: ApplicationDetails, expectedVersion: number = 0): Promise<void> {
     await this._db
@@ -143,12 +146,12 @@ class ApplicationDetailsRepository implements IRepository<ApplicationDetails> {
   }
 
   async getByAddress(address: string): Promise<ApplicationDetails | null> {
-    console.log('getByAddress', address);
+    this._logger.info(`getByAddress ${address}`);
     return this._db.collection<ApplicationDetails>('applicationDetails').findOne({ address });
   }
 
   async getByProposalId(proposalId: number): Promise<ApplicationDetails | null> {
-    console.log('getByProposalId', proposalId);
+    this._logger.info(`getByProposalId ${proposalId}`);
     return this._db.collection<ApplicationDetails>('applicationDetails').findOne({
       'rkhPhase.approvalMessageId': proposalId,
     });

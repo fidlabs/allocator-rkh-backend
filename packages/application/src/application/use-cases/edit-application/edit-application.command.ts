@@ -106,13 +106,16 @@ export class EditApplicationCommandHandler implements ICommandHandler<EditApplic
       status: ao.outcome || 'PENDING',
       datacap_amount: ao.datacap_amount || 0,
     }));
-    console.log('prevApplicationInstructions', prevApplicationInstructions);
-    console.log('currApplicationInstructions', currApplicationInstructions);
+    this.logger.debug('got prevApplicationInstructions');
+    this.logger.debug(prevApplicationInstructions);
+    this.logger.debug('got currApplicationInstructions');
+    this.logger.debug(currApplicationInstructions);
     const validApplicationInstructions = this.ensureValidApplicationInstruction(
       prevApplicationInstructions,
       currApplicationInstructions,
     );
-    console.log('validApplicationInstructions', validApplicationInstructions);
+    this.logger.debug('gitvalidApplicationInstructions');
+    this.logger.debug(validApplicationInstructions);
 
     await application.edit(command.file);
     this.logger.info(`Application ${command.applicationId} edited successfully`);

@@ -39,6 +39,8 @@ import {
 import { MetaAllocatorName } from '@src/infrastructure/repositories/meta-allocator.repository';
 import { Pathway } from '@src/application/services/allocation-path-resolver';
 
+const debugMode = process.env.LOG_LEVEL === 'debug';
+
 export interface IDatacapAllocatorRepository extends IRepository<DatacapAllocator> {}
 
 export interface IDatacapAllocatorEventStore extends IEventStore<DatacapAllocator> {}
@@ -213,7 +215,8 @@ export class DatacapAllocator extends AggregateRoot {
 
   edit(file: ApplicationPullRequestFile) {
     //this.ensureValidApplicationStatus([ApplicationStatus.KYC_PHASE, ApplicationStatus.GOVERNANCE_REVIEW_PHASE])
-    console.log('edit');
+    if (debugMode) console.log('edit');
+
     this.applyChange(new ApplicationEdited(this.guid, file));
   }
 
@@ -242,7 +245,7 @@ export class DatacapAllocator extends AggregateRoot {
     commentId: number,
     refresh: boolean = false,
   ) {
-    console.log('setApplicationPullRequest', this.applicationStatus);
+    if (debugMode) console.log('setApplicationPullRequest', this.applicationStatus);
     if (!refresh) {
       this.ensureValidApplicationStatus([ApplicationStatus.KYC_PHASE]);
       this.applyChange(
@@ -269,7 +272,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   approveKYC(data: KYCApprovedData) {
-    console.log('approveKYC');
+    if (debugMode) console.log('approveKYC');
     this.ensureValidApplicationStatus([ApplicationStatus.KYC_PHASE]);
 
     this.applyChange(new KYCApproved(this.guid, data));
@@ -289,7 +292,8 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   approveGovernanceReview(details: GovernanceReviewApprovedData, allocationPath: AllocationPath) {
-    console.log('approveGovernanceReview');
+    if (debugMode) console.log('approveGovernanceReview');
+
     this.ensureValidApplicationStatus([ApplicationStatus.GOVERNANCE_REVIEW_PHASE]);
 
     const lastInstructionIndex = this.applicationInstructions.length - 1;
@@ -316,7 +320,9 @@ export class DatacapAllocator extends AggregateRoot {
         this.applicationStatus = ApplicationStatus.DC_ALLOCATED;
         this.applicationInstructions[lastInstructionIndex].status =
           ApplicationInstructionStatus.GRANTED;
-        console.log('apply gov review only JSON', this);
+
+        if (debugMode) console.log('apply gov review only JSON', this);
+
         return new MetaAllocatorApprovalCompleted(this.guid, 0, '', this.applicationInstructions);
       }
 
@@ -330,7 +336,7 @@ export class DatacapAllocator extends AggregateRoot {
         this.applicationStatus = ApplicationStatus.DC_ALLOCATED;
         this.applicationInstructions[lastInstructionIndex].status =
           ApplicationInstructionStatus.GRANTED;
-        console.log('apply gov review RKH', this);
+        if (debugMode) console.log('apply gov review RKH', this);
         return new RKHApprovalCompleted(this.guid, this.applicationInstructions);
       }
 
@@ -338,7 +344,7 @@ export class DatacapAllocator extends AggregateRoot {
     };
 
     this.applyChange(action());
-    console.log('apply gov review done', this);
+    if (debugMode) console.log('apply gov review done', this);
   }
 
   rejectGovernanceReview(details: GovernanceReviewRejectedData) {
@@ -360,7 +366,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   async completeMetaAllocatorApproval(blockNumber: number, txHash: string) {
-    console.log('completeMetaAllocatorApproval...', this.guid, txHash);
+    if (debugMode) console.log('completeMetaAllocatorApproval...', this.guid, txHash);
     this.ensureValidApplicationStatus([ApplicationStatus.META_APPROVAL_PHASE]);
     /* Big hack warning (AKA "TODO")
      * All throughout the various steps of the code it's really good at updating the Mongo, so
@@ -388,7 +394,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   completeRKHApproval() {
-    console.log('Completing RKH Approval for application', this);
+    if (debugMode) console.log('Completing RKH Approval for application', this);
     this.ensureValidApplicationStatus([ApplicationStatus.RKH_APPROVAL_PHASE]);
 
     /* Big hack warning (AKA "TODO")
@@ -411,7 +417,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   updateDatacapAllocation(datacap: number) {
-    console.log('updateDatacapAllocation');
+    if (debugMode) console.log('updateDatacapAllocation');
     try {
       this.completeRKHApproval();
     } catch (error) {}
@@ -431,7 +437,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyApplicationCreated(event: ApplicationCreated) {
-    //console.log('applyApplicationCreated', event)
+    if (debugMode) console.log('applyApplicationCreated', event);
     this.guid = event.guid;
 
     this.applicationNumber = event.applicationNumber;
@@ -461,10 +467,13 @@ export class DatacapAllocator extends AggregateRoot {
         },
       ];
     }
+
+    if (debugMode) console.log(`Application Created Ended`, this);
   }
 
   applyApplicationEdited(event: ApplicationEdited) {
-    console.log(`Application Edited Started`, event);
+    if (debugMode) console.log(`Application Edited Started`, event);
+
     this.applicantAddress = event.file.address || this.applicantAddress;
     this.applicantName = event.file.name || this.applicantName;
 
@@ -526,10 +535,12 @@ export class DatacapAllocator extends AggregateRoot {
       status: ao.outcome || 'PENDING',
       datacap_amount: ao.datacap_amount || 0,
     }));
+
+    if (debugMode) console.log(`Application Edited Ended`, this);
   }
 
   applyAllocatorMultisigUpdated(event: AllocatorMultisigUpdated) {
-    console.log('applyAllocatorMultisigUpdated');
+    if (debugMode) console.log('applyAllocatorMultisigUpdated');
     this.allocatorActorId = event.allocatorActorId;
     this.allocatorMultisigAddress = event.multisigAddress;
     this.allocatorMultisigThreshold = event.multisigThreshold;
@@ -537,7 +548,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyApplicationPullRequestUpdated(event: ApplicationPullRequestUpdated) {
-    console.log('applyApplicationPullRequestUpdated');
+    if (debugMode) console.log('applyApplicationPullRequestUpdated');
 
     this.applicationPullRequest = {
       prNumber: event.prNumber,
@@ -551,12 +562,12 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyKYCStarted(_: KYCStarted) {
-    console.log(' applyKYCStarted');
+    if (debugMode) console.log(' applyKYCStarted');
     this.applicationStatus = ApplicationStatus.KYC_PHASE;
   }
 
   applyKYCApproved(event: KYCApproved) {
-    console.log(' applyKYCApproved');
+    if (debugMode) console.log(' applyKYCApproved');
     if (this.applicationStatus === ApplicationStatus.KYC_PHASE) {
       this.status['KYC Submitted'] ??= event.timestamp.getTime();
       this.applicationStatus = ApplicationStatus.GOVERNANCE_REVIEW_PHASE;
@@ -574,7 +585,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyGovernanceReviewStarted(event: GovernanceReviewStarted) {
-    console.log('applyGovernanceReviewStarted');
+    if (debugMode) console.log('applyGovernanceReviewStarted');
     if (this.applicationStatus === ApplicationStatus.IN_REFRESH) {
       this.status['In Refresh'] ??= event.timestamp.getTime();
       this.applicationStatus = ApplicationStatus.GOVERNANCE_REVIEW_PHASE;
@@ -582,7 +593,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyGovernanceReviewApproved(event: GovernanceReviewApproved) {
-    console.log('applyGovernanceReviewApproved');
+    if (debugMode) console.log('applyGovernanceReviewApproved');
     if (this.applicationStatus === ApplicationStatus.GOVERNANCE_REVIEW_PHASE) {
       this.status['Approved'] ??= event.timestamp.getTime();
     }
@@ -597,7 +608,7 @@ export class DatacapAllocator extends AggregateRoot {
        by the on chain data scanners and confuse them. This is because it is never legal for
        the same actor to have multiple applications open, but REJECT closes the application
        and the same allocator can apply again. */
-    console.log('Zeroing out allocatorActorId for rejected application', this.guid);
+    if (debugMode) console.log('Zeroing out allocatorActorId for rejected application', this.guid);
     this.allocatorActorId = 'f00000000';
 
     if (!this.status['Declined']) {
@@ -606,7 +617,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyRKHApprovalStarted(event: RKHApprovalStarted) {
-    console.log('applyRKHApprovalStarted');
+    if (debugMode) console.log('applyRKHApprovalStarted');
     this.applicationStatus = ApplicationStatus.RKH_APPROVAL_PHASE;
     this.allocationTooling = [];
     this.pathway = 'RKH';
@@ -615,7 +626,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyRKHApprovalsUpdated(event: RKHApprovalsUpdated) {
-    console.log('applyRKHApprovalsUpdated');
+    if (debugMode) console.log('applyRKHApprovalsUpdated');
     this.applicationStatus =
       event.approvals.length < event.approvalThreshold
         ? ApplicationStatus.RKH_APPROVAL_PHASE
@@ -659,7 +670,9 @@ export class DatacapAllocator extends AggregateRoot {
     event: MetaAllocatorApprovalCompleted,
     allocationPath: AllocationPath,
   ) {
-    console.log('applyMetaAllocatorApprovalCompleted: ', this.guid, this.applicationPullRequest);
+    if (debugMode)
+      console.log('applyMetaAllocatorApprovalCompleted: ', this.guid, this.applicationPullRequest);
+
     this.ensureValidApplicationStatus([
       ApplicationStatus.GOVERNANCE_REVIEW_PHASE,
       ApplicationStatus.META_APPROVAL_PHASE,
@@ -684,7 +697,7 @@ export class DatacapAllocator extends AggregateRoot {
   }
 
   applyDatacapRefreshRequested(event: DatacapRefreshRequested) {
-    console.log('applyDatacapRefreshRequested', this.applicationStatus);
+    if (debugMode) console.log('applyDatacapRefreshRequested', this.applicationStatus);
     if (this.applicationStatus === ApplicationStatus.DC_ALLOCATED) {
       this.status['In Refresh'] ??= event.timestamp.getTime();
     }
@@ -696,7 +709,7 @@ export class DatacapAllocator extends AggregateRoot {
       startTimestamp: event.timestamp.getTime(),
       status: ApplicationInstructionStatus.PENDING,
     });
-    console.log('applyDatacapRefreshRequested', this.applicationInstructions);
+    if (debugMode) console.log('applyDatacapRefreshRequested', this.applicationInstructions);
   }
 
   private ensureValidApplicationStatus(
@@ -705,9 +718,10 @@ export class DatacapAllocator extends AggregateRoot {
     errorMessage: string = 'Invalid operation for the current phase',
   ): void {
     if (!expectedStatuses.includes(this.applicationStatus)) {
-      console.error(
-        `Invalid application status: ${this.applicationStatus}. Expected one of: ${expectedStatuses.join(', ')}`,
-      );
+      if (debugMode)
+        console.error(
+          `Invalid application status: ${this.applicationStatus}. Expected one of: ${expectedStatuses.join(', ')}`,
+        );
       throw new ApplicationError(StatusCodes.BAD_REQUEST, errorCode, errorMessage);
     }
   }

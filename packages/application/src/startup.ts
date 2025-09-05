@@ -10,6 +10,7 @@ import {
   Logger,
 } from '@filecoin-plus/core';
 import { Container } from 'inversify';
+import config from './config';
 
 import { infrastructureModule } from '@src/infrastructure/module';
 import {
@@ -84,7 +85,7 @@ export const initialize = async (): Promise<Container> => {
   await container.loadAsync(infrastructureModule);
 
   // Logger
-  const logger = createWinstonLogger('filecoin-plus-backend');
+  const logger = createWinstonLogger('filecoin-plus-backend', config.LOG_LEVEL);
   container.bind<Logger>(TYPES.Logger).toConstantValue(logger);
 
   container.bind<PullRequestService>(TYPES.PullRequestService).to(PullRequestService);

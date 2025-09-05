@@ -29,7 +29,8 @@ export class UpdateRKHApprovalsCommandHandler
   ) {}
 
   async handle(command: UpdateRKHApprovalsCommand): Promise<void> {
-    console.log('command', command);
+    this._logger.info('UpdateRKHApprovalsCommandHandler started');
+    this._logger.debug(command);
     let allocator: DatacapAllocator;
     try {
       allocator = await this._repository.getById(command.allocatorId);
