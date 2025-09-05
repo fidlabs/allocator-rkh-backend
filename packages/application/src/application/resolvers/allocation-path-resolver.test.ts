@@ -4,7 +4,7 @@ import { TYPES } from '@src/types';
 import { AllocationPathResolver } from './allocation-path-resolver';
 import { AllocatorType } from '@src/domain/types';
 import { Logger } from 'ethers/lib/utils';
-import { MetaAllocatorService } from './meta-allocator.service';
+import { MetaAllocatorService } from '../services/meta-allocator.service';
 import { RkhConfig } from '@src/infrastructure/interfaces';
 
 describe('AllocationPathResolver', () => {

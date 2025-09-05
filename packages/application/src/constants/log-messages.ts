@@ -76,4 +76,15 @@ export const LOG_MESSAGES = {
     RESOLVING_ALLOCATION_PATHWAY:
       '[AllocationPathResolver]: Resolving allocation pathway for allocator type: ',
   },
+
+  UPSERT_ISSUE_STRATEGY_RESOLVER: {
+    RESOLVING_UPSERT_ISSUE_STRATEGY:
+      '[UpsertIssueStrategyResolver]: Resolving upsert issue strategy',
+    STRATEGY_SELECTED: '[UpsertIssueStrategyResolver]: Strategy selected: ',
+  },
+
+  UPSERT_ISSUE_STRATEGY: {
+    SAVE_WITHOUT_GITHUB_UPDATE: '[UpsertIssueStrategy]: Save without github update',
+    SAVE_WITH_NEW_AUDIT: '[UpsertIssueStrategy]: Save with new audit',
+  },
 };

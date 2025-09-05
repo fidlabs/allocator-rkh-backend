@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { AllocatorType, AuditType } from '@src/domain/types';
 import { TYPES } from '@src/types';
-import { MetaAllocatorService } from './meta-allocator.service';
+import { MetaAllocatorService } from '../services/meta-allocator.service';
 import { MetaAllocatorName } from '@src/infrastructure/repositories/meta-allocator.repository';
 import { Logger } from '@filecoin-plus/core/src/utilities/Logger';
 import { RkhConfig } from '@src/infrastructure/interfaces';

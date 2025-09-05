@@ -73,8 +73,8 @@ export class RefreshController {
     return res.json(ok(RES.UPSERTED_ISSUE));
   }
 
-  @httpPost('/refresh')
-  async refreshIssues(@response() res: Response) {
+  @httpPost('/sync/issues')
+  async syncIssues(@response() res: Response) {
     const result = await this._commandBus.send(new RefreshIssuesCommand());
 
     if (!result.success) {

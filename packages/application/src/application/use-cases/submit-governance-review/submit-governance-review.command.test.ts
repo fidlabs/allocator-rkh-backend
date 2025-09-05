@@ -10,7 +10,7 @@ import {
 } from './submit-governance-review.command';
 import { PhaseStatus } from '../../commands/common';
 import { AllocatorType, GovernanceReviewApprovedData } from '@src/domain/types';
-import { AllocationPathResolver } from '@src/application/services/allocation-path-resolver';
+import { AllocationPathResolver } from '@src/application/resolvers/allocation-path-resolver';
 import { DatacapAllocator } from '@src/domain/application/application';
 
 describe('SubmitGovernanceReviewResultCommandHandler', () => {

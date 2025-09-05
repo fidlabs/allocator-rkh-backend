@@ -1,12 +1,17 @@
 import { Command, ICommandBus, ICommandHandler, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
-import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
+import { AuditOutcome, IssueDetails } from '@src/infrastructure/repositories/issue-details';
 import { TYPES } from '@src/types';
 import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { LOG_MESSAGES, RESPONSE_MESSAGES } from '@src/constants';
 import { FetchAllocatorCommand } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
 import { IIssueMapper } from '@src/infrastructure/mappers/issue-mapper';
-import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
+import {
+  ApplicationPullRequestFile,
+  AuditCycle,
+} from '@src/application/services/pull-request.types';
+import { IAuditMapper } from '@src/infrastructure/mappers/audit-mapper';
+import { IUpsertStrategy, UpsertIssueStrategyResolver } from './upsert-issue.strategy';
 
 const LOG = LOG_MESSAGES.UPSERT_ISSUE_COMMAND;
 const RES = RESPONSE_MESSAGES.UPSERT_ISSUE_COMMAND;
@@ -23,17 +28,30 @@ export class UpsertIssueCommandCommandHandler implements ICommandHandler<UpsertI
 
   constructor(
     @inject(TYPES.Logger) private readonly logger: Logger,
-    @inject(TYPES.IssueDetailsRepository) private readonly repository: IIssueDetailsRepository,
     @inject(TYPES.CommandBus) private readonly commandBus: ICommandBus,
     @inject(TYPES.IssueMapper) private readonly issueMapper: IIssueMapper,
+    @inject(TYPES.AuditMapper) private readonly auditMapper: IAuditMapper,
+    @inject(TYPES.UpsertIssueStrategyResolver)
+    private readonly upsertStrategyResolver: UpsertIssueStrategyResolver,
   ) {}
 
   async handle(command: UpsertIssueCommand) {
     this.logger.info(command);
 
     try {
+      this.logger.info('Connecting allocator to issue');
       const extendedIssueDetails = await this.connectAllocatorToIssue(command.githubIssue);
-      await this.saveIssue(extendedIssueDetails);
+
+      this.logger.info('Resolving upsert strategy');
+
+      const response = await this.commandBus.send(
+        await this.upsertStrategyResolver.resolveAndExecute(extendedIssueDetails),
+      );
+
+      if (!response?.success) throw response.error;
+
+      this.logger.info('Issue upserted successfully');
+      this.logger.info(response);
 
       return {
         success: true,
@@ -48,14 +66,7 @@ export class UpsertIssueCommandCommandHandler implements ICommandHandler<UpsertI
     }
   }
 
-  async saveIssue(issueDetails: IssueDetails) {
-    this.logger.info(LOG.UPSERTING_ISSUE);
-
-    await this.repository.save(issueDetails);
-    this.logger.info(LOG.ISSUE_UPSERTED);
-  }
-
-  async connectAllocatorToIssue(issueDetails: IssueDetails): Promise<IssueDetails> {
+  private async connectAllocatorToIssue(issueDetails: IssueDetails): Promise<IssueDetails> {
     this.logger.info(LOG.CONNECTING_ALLOCATOR_TO_ISSUE);
 
     if (!issueDetails.jsonNumber) throw new Error(RES.JSON_HASH_IS_NOT_FOUND_OR_INCORRECT);
@@ -68,6 +79,30 @@ export class UpsertIssueCommandCommandHandler implements ICommandHandler<UpsertI
     if (commandResponse.error) throw commandResponse.error;
     const data = commandResponse.data as ApplicationPullRequestFile;
 
-    return this.issueMapper.extendWithAllocatorData(issueDetails, data);
+    const withAllocator = this.issueMapper.extendWithAllocatorData(issueDetails, data);
+    const withAudit = this.extendIssueWithAuditData(withAllocator, data.audits);
+
+    return withAudit;
+  }
+
+  private extendIssueWithAuditData(
+    issueDetails: IssueDetails,
+    audits: ApplicationPullRequestFile['audits'],
+  ): IssueDetails {
+    const currentAudit = audits.at(-1);
+    const previousAudit = audits.at(-2);
+
+    if (this.isPendingOrApproved(currentAudit!)) {
+      issueDetails.lastAudit = this.auditMapper.fromDomainToAuditData(previousAudit!);
+      issueDetails.currentAudit = this.auditMapper.fromDomainToAuditData(currentAudit!);
+    } else {
+      issueDetails.lastAudit = this.auditMapper.fromDomainToAuditData(currentAudit!);
+    }
+
+    return issueDetails;
+  }
+
+  private isPendingOrApproved(audit: AuditCycle): boolean {
+    return [AuditOutcome.PENDING, AuditOutcome.APPROVED].includes(audit.outcome as AuditOutcome);
   }
 }

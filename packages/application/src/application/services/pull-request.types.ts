@@ -4,7 +4,7 @@ import config from '@src/config';
 import { epochToZulu, zuluToEpoch } from '@filecoin-plus/core';
 import { getMultisigInfo } from '@src/infrastructure/clients/filfox';
 
-type AuditCycle = {
+export type AuditCycle = {
   started: string;
   ended: string;
   dc_allocated: string;

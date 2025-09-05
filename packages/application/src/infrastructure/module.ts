@@ -34,6 +34,16 @@ import {
   MetaAllocatorRepository,
 } from './repositories/meta-allocator.repository';
 import { LotusClientConfig, RkhConfig, RpcProviderConfig } from './interfaces';
+import { GithubConfig } from '@src/domain/types';
+import { AuditMapper, IAuditMapper } from './mappers/audit-mapper';
+import {
+  IRefreshAuditService,
+  RefreshAuditService,
+} from '../application/services/refresh-audit.service';
+import {
+  IRefreshAuditPublisher,
+  RefreshAuditPublisher,
+} from '../application/publishers/refresh-audit-publisher';
 
 export const infrastructureModule = new AsyncContainerModule(async (bind: interfaces.Bind) => {
   // MongoDB setup
@@ -50,6 +60,19 @@ export const infrastructureModule = new AsyncContainerModule(async (bind: interf
     appInstallationId: config.GITHUB_APP_INSTALLATION_ID,
     githubToken: config.GITHUB_TOKEN,
   };
+
+  const allocatorRegistryConfig: GithubConfig = {
+    owner: config.GITHUB_OWNER,
+    repo: config.GITHUB_REPO,
+  };
+  bind<GithubConfig>(TYPES.AllocatorRegistryConfig).toConstantValue(allocatorRegistryConfig);
+
+  const allocatorGovernanceConfig: GithubConfig = {
+    owner: config.GITHUB_ISSUES_OWNER,
+    repo: config.GITHUB_ISSUES_REPO,
+  };
+  bind<GithubConfig>(TYPES.AllocatorGovernanceConfig).toConstantValue(allocatorGovernanceConfig);
+
   bind<GithubClientConfig>(TYPES.GithubClientConfig).toConstantValue(githubClientConfig);
   bind<IGithubClient>(TYPES.GithubClient).to(GithubClient).inSingletonScope();
 
@@ -110,4 +133,10 @@ export const infrastructureModule = new AsyncContainerModule(async (bind: interf
   // Mappers
   bind<IIssueMapper>(TYPES.IssueMapper).to(IssueMapper).inSingletonScope();
   bind<IDataCapMapper>(TYPES.DataCapMapper).to(DataCapMapper).inSingletonScope();
+  bind<IAuditMapper>(TYPES.AuditMapper).to(AuditMapper).inSingletonScope();
+  bind<IRefreshAuditService>(TYPES.RefreshAuditService).to(RefreshAuditService).inSingletonScope();
+
+  bind<IRefreshAuditPublisher>(TYPES.RefreshAuditPublisher)
+    .to(RefreshAuditPublisher)
+    .inSingletonScope();
 });

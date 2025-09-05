@@ -7,12 +7,12 @@ import {
   SignRefreshByRKHCommand,
   SignRefreshByRKHCommandHandler,
 } from './sign-refresh-by-rkh.command';
-import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { DatabaseRefreshFactory } from '@mocks/factories';
 import { faker } from '@faker-js/faker';
 import { PendingTx } from '@src/infrastructure/clients/lotus';
 import cbor from 'cbor';
 import { IDataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
+import { CommandBus } from '@src/infrastructure/command-bus';
 
 vi.mock('cbor', () => ({
   default: {
@@ -20,12 +20,16 @@ vi.mock('cbor', () => ({
   },
 }));
 
+vi.mock('nanoid', () => ({
+  nanoid: vi.fn().mockReturnValue('guid'),
+}));
+
 describe('SignRefreshByRKHCommand', () => {
   let container: Container;
   let handler: SignRefreshByRKHCommandHandler;
   const loggerMock = { info: vi.fn(), error: vi.fn() };
-  const repositoryMock = { update: vi.fn() };
   const dataCapMapperMock = { fromBufferBytesToPiBNumber: vi.fn() };
+  const commandBusMock = { send: vi.fn() };
 
   const fixtureIssueDetails = DatabaseRefreshFactory.create();
   const fixturePendingTx: PendingTx = {
@@ -43,8 +47,8 @@ describe('SignRefreshByRKHCommand', () => {
 
     container.bind<Logger>(TYPES.Logger).toConstantValue(loggerMock as unknown as Logger);
     container
-      .bind<IIssueDetailsRepository>(TYPES.IssueDetailsRepository)
-      .toConstantValue(repositoryMock as unknown as IIssueDetailsRepository);
+      .bind<CommandBus>(TYPES.CommandBus)
+      .toConstantValue(commandBusMock as unknown as CommandBus);
     container
       .bind<IDataCapMapper>(TYPES.DataCapMapper)
       .toConstantValue(dataCapMapperMock as unknown as IDataCapMapper);
@@ -67,13 +71,16 @@ describe('SignRefreshByRKHCommand', () => {
     const result = await handler.handle(command);
 
     expect(dataCapMapperMock.fromBufferBytesToPiBNumber).toHaveBeenCalledWith(mockDatacap);
-    expect(repositoryMock.update).toHaveBeenCalledWith({
-      ...fixtureIssueDetails,
-      dataCap: fixtureDataCap,
-      refreshStatus: 'SIGNED_BY_RKH',
-      rkhPhase: {
-        messageId: fixturePendingTx.id,
-        approvals: fixturePendingTx.approved,
+    expect(commandBusMock.send).toHaveBeenCalledWith({
+      guid: 'guid',
+      issueDetails: {
+        ...fixtureIssueDetails,
+        dataCap: fixtureDataCap,
+        refreshStatus: 'SIGNED_BY_RKH',
+        rkhPhase: {
+          messageId: fixturePendingTx.id,
+          approvals: fixturePendingTx.approved,
+        },
       },
     });
     expect(loggerMock.info).toHaveBeenCalledTimes(2);
@@ -87,7 +94,7 @@ describe('SignRefreshByRKHCommand', () => {
     (cbor.decode as any).mockReturnValue(['param1', mockDatacap]);
 
     const error = new Error('Failed to update repository');
-    repositoryMock.update.mockRejectedValue(error);
+    commandBusMock.send.mockRejectedValue(error);
 
     const command = new SignRefreshByRKHCommand(fixtureIssueDetails, fixturePendingTx);
     const result = await handler.handle(command);
@@ -110,7 +117,7 @@ describe('SignRefreshByRKHCommand', () => {
     const result = await handler.handle(command);
 
     expect(dataCapMapperMock.fromBufferBytesToPiBNumber).not.toHaveBeenCalled();
-    expect(repositoryMock.update).not.toHaveBeenCalled();
+    expect(commandBusMock.send).not.toHaveBeenCalled();
     expect(result).toStrictEqual({
       success: false,
       error,
@@ -124,9 +131,12 @@ describe('SignRefreshByRKHCommand', () => {
     await handler.handle(command);
 
     expect(dataCapMapperMock.fromBufferBytesToPiBNumber).not.toHaveBeenCalled();
-    expect(repositoryMock.update).toHaveBeenCalledWith(
+    expect(commandBusMock.send).toHaveBeenCalledWith(
       expect.objectContaining({
-        dataCap: 0,
+        guid: 'guid',
+        issueDetails: expect.objectContaining({
+          dataCap: 0,
+        }),
       }),
     );
   });
@@ -138,11 +148,12 @@ describe('SignRefreshByRKHCommand', () => {
       const command = new SignRefreshByRKHCommand(fixtureIssueDetails, fixturePendingTx);
       await handler.handle(command);
 
-      expect(repositoryMock.update).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(commandBusMock.send).toHaveBeenCalledWith({
+        guid: 'guid',
+        issueDetails: expect.objectContaining({
           dataCap: 0,
         }),
-      );
+      });
     });
 
     it('should handle null CBOR result', async () => {
@@ -151,11 +162,12 @@ describe('SignRefreshByRKHCommand', () => {
       const command = new SignRefreshByRKHCommand(fixtureIssueDetails, fixturePendingTx);
       await handler.handle(command);
 
-      expect(repositoryMock.update).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(commandBusMock.send).toHaveBeenCalledWith({
+        guid: 'guid',
+        issueDetails: expect.objectContaining({
           dataCap: 0,
         }),
-      );
+      });
     });
 
     it('should handle empty params string', async () => {
@@ -167,11 +179,12 @@ describe('SignRefreshByRKHCommand', () => {
       const command = new SignRefreshByRKHCommand(fixtureIssueDetails, txWithEmptyParams);
       await handler.handle(command);
 
-      expect(repositoryMock.update).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(commandBusMock.send).toHaveBeenCalledWith({
+        guid: 'guid',
+        issueDetails: expect.objectContaining({
           dataCap: 0,
         }),
-      );
+      });
     });
   });
 });

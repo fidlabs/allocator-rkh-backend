@@ -7,12 +7,14 @@ import { ICommandBus, Logger } from '@filecoin-plus/core';
 import { DatabaseRefreshFactory } from '@mocks/factories';
 import { FetchIssuesCommand } from '@src/application/use-cases/refresh-issues/fetch-issues.command';
 import { BulkCreateIssueCommand } from '@src/application/use-cases/refresh-issues/bulk-create-issue.command';
+import { GithubConfig } from '@src/domain/types';
 
 describe('RefreshIssuesCommand', () => {
   let container: Container;
   let handler: RefreshIssuesCommandHandler;
   const loggerMock = { info: vi.fn(), error: vi.fn() };
   const commandBusMock = { send: vi.fn() };
+  const allocatorGovernanceConfigMock = { owner: 'owner', repo: 'repo' };
   const fixtureIssues = [
     DatabaseRefreshFactory.create(),
     DatabaseRefreshFactory.create(),
@@ -25,6 +27,9 @@ describe('RefreshIssuesCommand', () => {
     container
       .bind<ICommandBus>(TYPES.CommandBus)
       .toConstantValue(commandBusMock as unknown as ICommandBus);
+    container
+      .bind<GithubConfig>(TYPES.AllocatorGovernanceConfig)
+      .toConstantValue(allocatorGovernanceConfigMock as unknown as GithubConfig);
     container.bind<RefreshIssuesCommandHandler>(RefreshIssuesCommandHandler).toSelf();
 
     handler = container.get(RefreshIssuesCommandHandler);

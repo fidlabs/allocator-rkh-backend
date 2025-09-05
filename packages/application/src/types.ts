@@ -32,4 +32,12 @@ export const TYPES = {
   MetaAllocatorRepository: Symbol('MetaAllocatorRepository'),
   RkhConfig: Symbol('RkhConfig'),
   AllocationPathResolver: Symbol('AllocationPathResolver'),
+  RefreshAuditPublisher: Symbol('RefreshAuditPublisher'),
+  RefreshAuditService: Symbol('RefreshAuditService'),
+  AllocatorRegistryConfig: Symbol('AllocatorRegistryConfig'),
+  AllocatorGovernanceConfig: Symbol('AllocatorGovernanceConfig'),
+  AuditMapper: Symbol('AuditMapper'),
+  AuditsChangesEventStore: Symbol('AuditsChangesEventStore'),
+  AuditOutcomeResolver: Symbol('AuditOutcomeResolver'),
+  UpsertIssueStrategyResolver: Symbol('UpsertIssueStrategyResolver'),
 };

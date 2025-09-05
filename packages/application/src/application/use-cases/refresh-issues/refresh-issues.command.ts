@@ -2,11 +2,11 @@ import { Command, ICommandBus, ICommandHandler, Logger } from '@filecoin-plus/co
 import { inject, injectable } from 'inversify';
 import { TYPES } from '@src/types';
 import { FetchIssuesCommand } from '@src/application/use-cases/refresh-issues/fetch-issues.command';
-import config from '@src/config';
 import { LOG_MESSAGES } from '@src/constants';
 import { BulkCreateIssueCommand } from '@src/application/use-cases/refresh-issues/bulk-create-issue.command';
 import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 import { BulkWriteResult } from 'mongodb';
+import { GithubConfig } from '@src/domain/types';
 
 const LOG = LOG_MESSAGES.REFRESH_ISSUES_COMMAND;
 
@@ -25,6 +25,8 @@ export class RefreshIssuesCommandHandler implements ICommandHandler<RefreshIssue
     private readonly logger: Logger,
     @inject(TYPES.CommandBus)
     private readonly commandBus: ICommandBus,
+    @inject(TYPES.AllocatorGovernanceConfig)
+    private readonly allocatorGovernanceConfig: GithubConfig,
   ) {}
 
   async handle(command: RefreshIssuesCommand): Promise<any> {
@@ -52,7 +54,10 @@ export class RefreshIssuesCommandHandler implements ICommandHandler<RefreshIssue
     this.logger.info(LOG.REFRESHING_ISSUES);
 
     const commandResponse = await this.commandBus.send(
-      new FetchIssuesCommand(config.GITHUB_ISSUES_OWNER, config.GITHUB_ISSUES_REPO),
+      new FetchIssuesCommand(
+        this.allocatorGovernanceConfig.owner,
+        this.allocatorGovernanceConfig.repo,
+      ),
     );
 
     if (commandResponse.error) throw commandResponse.error;

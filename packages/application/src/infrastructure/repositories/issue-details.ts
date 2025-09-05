@@ -3,6 +3,67 @@ interface User {
   name: string;
 }
 
+export enum AuditOutcome {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  GRANTED = 'GRANTED',
+  MATCH = 'MATCH',
+  REJECTED = 'REJECTED',
+  DOUBLE = 'DOUBLE',
+  THROTTLE = 'THROTTLE',
+  UNKNOWN = 'UNKNOWN',
+}
+
+export enum RefreshStatus {
+  DC_ALLOCATED = 'DC_ALLOCATED',
+  REJECTED = 'REJECTED',
+  PENDING = 'PENDING',
+  SIGNED_BY_RKH = 'SIGNED_BY_RKH',
+  APPROVED = 'APPROVED',
+}
+
+export const FINISHED_AUDIT_OUTCOMES = [
+  AuditOutcome.DOUBLE,
+  AuditOutcome.GRANTED,
+  AuditOutcome.REJECTED,
+  AuditOutcome.THROTTLE,
+];
+
+export const PENDING_AUDIT_OUTCOMES = [AuditOutcome.PENDING, AuditOutcome.APPROVED];
+
+export const FINISHED_REFRESH_STATUSES = [RefreshStatus.DC_ALLOCATED, RefreshStatus.REJECTED];
+
+export const PENDING_REFRESH_STATUSES = [
+  RefreshStatus.PENDING,
+  RefreshStatus.APPROVED,
+  RefreshStatus.SIGNED_BY_RKH,
+];
+
+export type AuditHistory = {
+  auditChange: Partial<AuditData>;
+  branchName: string;
+  commitSha: string;
+  prNumber: number;
+  prUrl: string;
+};
+
+export type AuditData = {
+  started: string;
+  ended: string;
+  dcAllocated: string;
+  outcome: AuditOutcome;
+  datacapAmount: number | '';
+};
+
+interface RkhPhase {
+  messageId: number;
+  approvals: string[];
+}
+
+interface MetaAllocator {
+  blockNumber: number;
+}
+
 export interface IssueDetails {
   githubIssueId: number;
   githubIssueNumber: number;
@@ -18,16 +79,14 @@ export interface IssueDetails {
   msigAddress?: string;
   metapathwayType?: string;
   maAddress?: string;
-  refreshStatus?: 'DC_ALLOCATED' | 'REJECTED' | 'PENDING' | 'SIGNED_BY_RKH';
+  refreshStatus?: 'DC_ALLOCATED' | 'REJECTED' | 'PENDING' | 'SIGNED_BY_RKH' | 'APPROVED';
   actorId?: string;
   transactionCid?: string;
   blockNumber?: number;
   dataCap?: number;
-  rkhPhase?: {
-    messageId: number;
-    approvals: string[];
-  };
-  metaAllocator?: {
-    blockNumber: number;
-  };
+  rkhPhase?: RkhPhase;
+  metaAllocator?: MetaAllocator;
+  lastAudit?: AuditData;
+  currentAudit?: Partial<AuditData>;
+  auditHistory?: AuditHistory[];
 }
