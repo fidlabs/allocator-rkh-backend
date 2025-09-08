@@ -19,7 +19,7 @@ export async function subscribeApplicationSubmissions(container: Container) {
   // await processRecords(container)
 
   // And now poll for updates periodically
-  console.log(`Start loop (${config.SUBSCRIBE_APPLICATION_SUBMISSIONS_POLLING_INTERVAL})`);
+  logger.info(`Start loop (${config.SUBSCRIBE_APPLICATION_SUBMISSIONS_POLLING_INTERVAL})`);
   setInterval(async () => {
     try {
       processRecords(container);

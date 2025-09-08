@@ -9,6 +9,9 @@ export default {
   MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017',
   DB_NAME: process.env.DB_NAME || 'filecoin-plus',
 
+  // Logging configuration
+  LOG_LEVEL: (process.env.LOG_LEVEL as 'info' | 'debug') || 'info',
+
   // RabbitMQ configuration
   RABBITMQ_URL: process.env.RABBITMQ_URL || 'localhost:5672',
   RABBITMQ_USERNAME: process.env.RABBITMQ_USERNAME || 'guest',
@@ -87,12 +90,12 @@ export default {
     ? process.env.VALID_META_ALLOCATOR_ADDRESSES.split(',').map(address => address.trim())
     : ['0xB6F5d279AEad97dFA45209F3E53969c2EF43C21d'],
 
-  EVM_RPC_URL: process.env.EVM_RPC_URL || 'http://localhost:8545',
+  EVM_RPC_URL: process.env.EVM_RPC_URL || 'http://84.70.152.51:1234/rpc/v1',
 
   // local test net config
   USE_TEST_NET: Boolean(process.env.USE_TEST_NET) || false,
   TEST_NET_CHAIN_ID: Number(process.env.EST_NET_CHAIN_ID) || 31415926,
-  TEST_NET_URL: process.env.TEST_NET_URL || 'http://host.docker.internal:1234/rpc/v0',
+  TEST_NET_URL: process.env.TEST_NET_URL || 'http://84.70.152.51:1234/rpc/v1',
   TEST_NET_NETWORK_NAME: process.env.TEST_NET_NETWORK_NAME || 'local-test-net',
 
   META_ALLOCATOR_CONTRACT_ADDRESS:

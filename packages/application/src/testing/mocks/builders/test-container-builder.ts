@@ -1,6 +1,7 @@
 import { Container } from 'inversify';
 import { Db } from 'mongodb';
 import { TYPES } from '@src/types';
+import config from '@src/config';
 import { createMongodbConnection } from '@src/infrastructure/db/mongodb';
 import {
   createWinstonLogger,
@@ -61,7 +62,7 @@ export class TestContainerBuilder {
   }
 
   withLogger(name = 'test-refresh-e2e') {
-    const logger = createWinstonLogger(name);
+    const logger = createWinstonLogger(name, config.LOG_LEVEL);
     this.container.bind<Logger>(TYPES.Logger).toConstantValue(logger);
     return this;
   }

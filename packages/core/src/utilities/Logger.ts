@@ -1,8 +1,10 @@
 import { createLogger, transports, format, Logger as WinstonLogger } from 'winston';
 
-export function createWinstonLogger(service: string) {
+type LogLevel = 'info' | 'debug';
+
+export function createWinstonLogger(service: string, level: LogLevel) {
   return createLogger({
-    level: 'debug',
+    level,
     defaultMeta: { service },
     format: format.combine(
       format.simple(),

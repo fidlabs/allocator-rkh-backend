@@ -1,4 +1,4 @@
-import { IEventHandler, zuluToEpoch } from '@filecoin-plus/core';
+import { IEventHandler, Logger, zuluToEpoch } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 import { Db } from 'mongodb';
 import { getMultisigInfo } from '@src/infrastructure/clients/filfox';
@@ -39,9 +39,13 @@ export class ApplicationEditedEventHandler implements IEventHandler<ApplicationE
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: ApplicationEdited): Promise<void> {
+    this._logger.info('ApplicationEditedEventHandler started');
+    this._logger.debug(event);
     // Convert human readable Zulu time to epoch for internal handling
     const lifeCycle = event.file.audits.map(ao => ({
       method: (event.file.metapathway_type as MetaAllocatorName) || '',
@@ -82,9 +86,13 @@ export class ApplicationPullRequestUpdatedEventHandler
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: ApplicationPullRequestUpdated): Promise<void> {
+    this._logger.info('ApplicationPullRequestUpdatedEventHandler started');
+    this._logger.debug(event);
     await this._repository.update({
       id: event.aggregateId,
       status: event.status || ApplicationStatus.KYC_PHASE,
@@ -105,9 +113,13 @@ export class AllocatorMultisigUpdatedEventHandler
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: AllocatorMultisigUpdated): Promise<void> {
+    this._logger.info('AllocatorMultisigUpdatedEventHandler started');
+    this._logger.debug(event);
     let signers: string[] = [];
     let threshold = 0;
     try {
@@ -136,9 +148,13 @@ export class KYCStartedEventHandler implements IEventHandler<KYCStarted> {
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: KYCStarted): Promise<void> {
+    this._logger.info('KYCStartedEventHandler started');
+    this._logger.debug(event);
     this._repository.update({
       id: event.aggregateId,
       status: ApplicationStatus.KYC_PHASE,
@@ -153,9 +169,13 @@ export class KYCRevokedEventHandler implements IEventHandler<KYCRevoked> {
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: KYCRevoked): Promise<void> {
+    this._logger.info('KYCRevokedEventHandler started');
+    this._logger.debug(event);
     this._repository.update({
       id: event.aggregateId,
       status: ApplicationStatus.KYC_PHASE,
@@ -170,9 +190,13 @@ export class KYCApprovedEventHandler implements IEventHandler<KYCApproved> {
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: KYCApproved): Promise<void> {
+    this._logger.info('KYCApprovedEventHandler started');
+    this._logger.debug(event);
     await this._repository.update({
       id: event.aggregateId,
       status: ApplicationStatus.GOVERNANCE_REVIEW_PHASE,
@@ -187,9 +211,13 @@ export class KYCRejectedEventHandler implements IEventHandler<KYCRejected> {
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: KYCRejected): Promise<void> {
+    this._logger.info('KYCRejectedEventHandler started');
+    this._logger.debug(event);
     await this._repository.update({
       id: event.aggregateId,
       status: ApplicationStatus.REJECTED,
@@ -204,9 +232,13 @@ export class GovernanceReviewStartedEventHandler implements IEventHandler<Govern
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: GovernanceReviewStarted): Promise<void> {
+    this._logger.info('GovernanceReviewStartedEventHandler started');
+    this._logger.debug(event);
     await this._repository.update({
       id: event.aggregateId,
       status: ApplicationStatus.GOVERNANCE_REVIEW_PHASE,
@@ -220,9 +252,15 @@ export class GovernanceReviewApprovedEventHandler
 {
   public event = GovernanceReviewApproved.name;
 
-  constructor(@inject(TYPES.Db) private readonly _db: Db) {}
+  constructor(
+    @inject(TYPES.Db) private readonly _db: Db,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
+  ) {}
 
   async handle(event: GovernanceReviewApproved): Promise<void> {
+    this._logger.info('GovernanceReviewApprovedEventHandler started');
+    this._logger.debug(event);
     const applicationInstructions = event.applicationInstructions;
     const lastInstruction = applicationInstructions[applicationInstructions.length - 1];
     const lastInstructionMethod = lastInstruction.method;
@@ -252,9 +290,15 @@ export class GovernanceReviewRejectedEventHandler
 {
   public event = GovernanceReviewRejected.name;
 
-  constructor(@inject(TYPES.Db) private readonly _db: Db) {}
+  constructor(
+    @inject(TYPES.Db) private readonly _db: Db,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
+  ) {}
 
   async handle(event: GovernanceReviewRejected): Promise<void> {
+    this._logger.info('GovernanceReviewRejectedEventHandler started');
+    this._logger.debug(event);
     // Update allocator status in the database
     await this._db.collection('applicationDetails').updateOne(
       { id: event.aggregateId },
@@ -280,10 +324,13 @@ export class MetaAllocatorApprovalStartedEventHandler
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: MetaAllocatorApprovalStarted): Promise<void> {
-    console.log('MetaAllocatorApprovalStartedEventHandler', event);
+    this._logger.info('MetaAllocatorApprovalStartedEventHandler started');
+    this._logger.debug(event);
     await this._repository.update({
       id: event.aggregateId,
       status: ApplicationStatus.META_APPROVAL_PHASE,
@@ -297,10 +344,15 @@ export class MetaAllocatorApprovalCompletedEventHandler
 {
   public event = MetaAllocatorApprovalCompleted.name;
 
-  constructor(@inject(TYPES.Db) private readonly _db: Db) {}
+  constructor(
+    @inject(TYPES.Db) private readonly _db: Db,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
+  ) {}
 
   async handle(event: MetaAllocatorApprovalCompleted) {
-    console.log('MetaAllocatorApprovalCompletedEventHandler', event);
+    this._logger.info('MetaAllocatorApprovalCompletedEventHandler started');
+    this._logger.debug(event);
     await this._db.collection('applicationDetails').updateOne(
       { id: event.aggregateId },
       {
@@ -324,9 +376,13 @@ export class RKHApprovalStartedEventHandler implements IEventHandler<RKHApproval
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: RKHApprovalStarted): Promise<void> {
+    this._logger.info('RKHApprovalStartedEventHandler started');
+    this._logger.debug(event);
     await this._repository.update({
       id: event.aggregateId,
       status: ApplicationStatus.RKH_APPROVAL_PHASE,
@@ -345,10 +401,13 @@ export class RKHApprovalsUpdatedEventHandler implements IEventHandler<RKHApprova
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: RKHApprovalsUpdated) {
-    console.log('RKHApprovalsUpdatedEventHandler', event);
+    this._logger.info('RKHApprovalsUpdatedEventHandler started');
+    this._logger.debug(event);
 
     await this._repository.update({
       id: event.aggregateId,
@@ -366,9 +425,15 @@ export class RKHApprovalsUpdatedEventHandler implements IEventHandler<RKHApprova
 export class RKHApprovalCompletedEventHandler implements IEventHandler<RKHApprovalCompleted> {
   public event = RKHApprovalCompleted.name;
 
-  constructor(@inject(TYPES.Db) private readonly _db: Db) {}
+  constructor(
+    @inject(TYPES.Db) private readonly _db: Db,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
+  ) {}
 
   async handle(event: RKHApprovalCompleted) {
+    this._logger.info('RKHApprovalCompletedEventHandler started');
+    this._logger.debug(event);
     // Update allocator status in the database
     await this._db.collection('applicationDetails').updateOne(
       { id: event.aggregateId },
@@ -391,10 +456,13 @@ export class DatacapAllocationUpdatedEventHandler
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: DatacapAllocationUpdated) {
-    console.log('DatacapAllocationUpdatedEventHandler', event);
+    this._logger.info('DatacapAllocationUpdatedEventHandler started');
+    this._logger.debug(event);
 
     await this._repository.update({
       id: event.aggregateId,
@@ -411,10 +479,13 @@ export class DatacapRefreshRequestedEventHandler implements IEventHandler<Dataca
   constructor(
     @inject(TYPES.ApplicationDetailsRepository)
     private readonly _repository: IApplicationDetailsRepository,
+    @inject(TYPES.Logger)
+    private readonly _logger: Logger,
   ) {}
 
   async handle(event: DatacapRefreshRequested) {
-    console.log('DatacapRefreshRequestedEventHandler', event);
+    this._logger.info('DatacapRefreshRequestedEventHandler started');
+    this._logger.debug(event);
 
     const currentDetails = await this._repository.getById(event.aggregateId);
     const updatedInstructions = [

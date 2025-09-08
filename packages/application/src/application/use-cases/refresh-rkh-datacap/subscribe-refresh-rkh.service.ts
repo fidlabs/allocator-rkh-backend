@@ -126,7 +126,8 @@ export async function subscribeRefreshRKH(container: Container) {
 
     try {
       const currentDatacapCache = await fetchCurrentDatacapCache(container);
-      console.log('currentDatacapCache', currentDatacapCache);
+      logger.debug('currentDatacapCache');
+      logger.debug(currentDatacapCache);
       const applicationDetailsRepository = container.get<IApplicationDetailsRepository>(
         TYPES.ApplicationDetailsRepository,
       );

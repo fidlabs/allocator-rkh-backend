@@ -57,10 +57,10 @@ const getProposalIdFromParams = (params: string, logger: Logger): number => {
     logger.debug(`Trying to find proposal ID from ${paramsCbor[proposalIdParam]}`);
     return paramsCbor[proposalIdParam];
   } catch (err) {
-    logger.debug('Could not extract proposal ID from CBOR', paramsCbor);
-    console.log(params);
-    console.log(paramsCbor);
-    console.log(paramsCbor[proposalIdParam]);
+    logger.info('Could not extract proposal ID from CBOR');
+    logger.debug(params);
+    logger.debug(paramsCbor);
+    logger.debug(paramsCbor[proposalIdParam]);
     return 0;
   }
 };
@@ -80,18 +80,19 @@ async function findProcessApprovals(
   logger.debug(`Found ${msigState.pendingTxs.length} pending transactions`);
   for (const tx of msigState.pendingTxs) {
     try {
-      logger.debug(`Processing pending transaction: ${JSON.stringify(tx)}`);
+      logger.info(`Processing pending transaction: ${JSON.stringify(tx)}`);
 
       if (
         tx.to != config.VERIFIED_REGISTRY_ACTOR_ADDRESS ||
         tx.method != VERIFIED_REGISTRY_ACTOR_METHODS.PROPOSE_ADD_VERIFIER
       ) {
-        logger.debug('Skipping irrelevant RKH multisig proposal', tx);
+        logger.info('Skipping irrelevant RKH multisig proposal');
+        logger.debug(tx);
       }
 
       // Parse the params from the pending tx and extract the verifier address
       const verifier = getVerifierFromParams(tx.params, logger);
-      console.log('Found verifier', verifier);
+      logger.info(`Found verifier ${verifier}`);
       await executeWithFallback<Command>({
         primary: () =>
           handleSignRKHRefresh({
@@ -111,7 +112,7 @@ async function findProcessApprovals(
         onSuccess: command => commandBus.send(command),
       });
     } catch (error) {
-      console.error('Error updating RKH open proposals', { error });
+      logger.error('Error updating RKH open proposals', { error });
     }
   }
 
@@ -141,7 +142,7 @@ async function findProcessApprovals(
         onSuccess: command => commandBus.send(command),
       });
     } catch (error) {
-      console.error('Error updating RKH completed approvals', { error });
+      logger.error('Error updating RKH completed approvals', { error });
       // swallow and move on to the next one, it's probably just not for us
     }
   }
@@ -172,7 +173,7 @@ export async function subscribeRKHApprovals(container: Container) {
       );
     } catch (err) {
       logger.error('subscribeRKHApprovals uncaught exception:');
-      console.log(err);
+      logger.error(err);
       // swallow error and wait for next tick
     }
   }, config.SUBSCRIBE_RKH_APPROVALS_POLLING_INTERVAL);

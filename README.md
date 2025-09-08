@@ -147,6 +147,7 @@ The Docker setup can be configured by setting the following environment variable
 | `TEST_NET_CHAIN_ID`              | Chain id of the test net                                     | `31415926`                                   |
 | `TEST_NET_URL`                   | Test net url                                                 | `http://host.docker.internal:1234/rpc/v0`    |
 | `TEST_NET_NETWORK_NAME`          | Test net network name                                        | `local-test-net`                             |
+| `LOG_LEVEL`                      | Logging level for the application                            | `info` (default), `debug`                    |
 
 #### Running
 

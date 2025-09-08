@@ -46,8 +46,6 @@ describe('GET /api/v1/refreshes', () => {
 
     app = server.build();
     app.listen();
-
-    console.log(`Test setup complete. Database: ${db.databaseName}`);
   });
 
   afterEach(async () => {
