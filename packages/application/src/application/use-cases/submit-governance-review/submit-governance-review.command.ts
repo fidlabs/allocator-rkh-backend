@@ -9,7 +9,7 @@ import { TYPES } from '@src/types';
 
 import { PhaseResult, PhaseStatus, SubmitPhaseResultCommand } from '../../commands/common';
 import { GovernanceReviewApprovedData, GovernanceReviewRejectedData } from '@src/domain/types';
-import { AllocationPathResolver } from '@src/application/services/allocation-path-resolver';
+import { AllocationPathResolver } from '@src/application/resolvers/allocation-path-resolver';
 
 export class SubmitGovernanceReviewResultCommand extends SubmitPhaseResultCommand<
   GovernanceReviewApprovedData,

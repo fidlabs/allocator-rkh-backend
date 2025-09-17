@@ -7,6 +7,8 @@ import { PendingTx } from '@src/infrastructure/clients/lotus';
 import { LOG_MESSAGES } from '@src/constants';
 import cbor from 'cbor';
 import { DataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
+import { SaveIssueCommand } from '../refresh-issues/save-issue.command';
+import { CommandBus } from '@src/infrastructure/command-bus';
 
 export class SignRefreshByRKHCommand extends Command {
   constructor(
@@ -26,8 +28,8 @@ export class SignRefreshByRKHCommandHandler implements ICommandHandler<SignRefre
   constructor(
     @inject(TYPES.Logger)
     private readonly _logger: Logger,
-    @inject(TYPES.IssueDetailsRepository)
-    private readonly _repository: IIssueDetailsRepository,
+    @inject(TYPES.CommandBus)
+    private readonly _commandBus: CommandBus,
     @inject(TYPES.DataCapMapper)
     private readonly _dataCapMapper: DataCapMapper,
   ) {}
@@ -36,7 +38,7 @@ export class SignRefreshByRKHCommandHandler implements ICommandHandler<SignRefre
     try {
       this._logger.info(LOG.SIGN_REFRESH_BY_RKH);
       const dataCap = this.getDatacapPiBFromParams(command.tx.params);
-      const issueWithSigndStatus: IssueDetails = {
+      const issueWithSignedStatus: IssueDetails = {
         ...command.issueDetails,
         dataCap,
         refreshStatus: 'SIGNED_BY_RKH',
@@ -45,7 +47,7 @@ export class SignRefreshByRKHCommandHandler implements ICommandHandler<SignRefre
           approvals: command.tx.approved,
         },
       };
-      await this._repository.update(issueWithSigndStatus);
+      await this._commandBus.send(new SaveIssueCommand(issueWithSignedStatus));
       this._logger.info(LOG.REFRESH_SIGNED);
 
       return {

@@ -1,4 +1,4 @@
-import { Pathway } from '@src/application/services/allocation-path-resolver';
+import { Pathway } from '@src/application/resolvers/allocation-path-resolver';
 
 type KYCResultData = {
   // IDs
@@ -61,4 +61,9 @@ export type GovernanceReviewRejectedData = {
   reason: string;
   reviewerAddress: string;
   isMDMAAllocator?: boolean;
+};
+
+export type GithubConfig = {
+  owner: string;
+  repo: string;
 };

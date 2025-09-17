@@ -36,8 +36,6 @@ import {
   RKHApprovalStarted,
   RKHApprovalsUpdated,
 } from './application.events';
-import { MetaAllocatorName } from '@src/infrastructure/repositories/meta-allocator.repository';
-import { Pathway } from '@src/application/services/allocation-path-resolver';
 
 const debugMode = process.env.LOG_LEVEL === 'debug';
 

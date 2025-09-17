@@ -4,19 +4,34 @@ import { Container } from 'inversify';
 import { ICommandBus, Logger } from '@filecoin-plus/core';
 import { TYPES } from '@src/types';
 import { UpsertIssueCommand, UpsertIssueCommandCommandHandler } from './upsert-issue.command';
-import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { DatabaseRefreshFactory } from '@mocks/factories';
 import { faker } from '@faker-js/faker';
 import { FetchAllocatorCommand } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
 import { IIssueMapper } from '@src/infrastructure/mappers/issue-mapper';
+import { IAuditMapper } from '@src/infrastructure/mappers/audit-mapper';
+import { IUpsertStrategy } from './upsert-issue.strategy';
+import { SaveIssueCommand } from './save-issue.command';
+
+vi.mock('nanoid', () => ({
+  nanoid: vi.fn().mockReturnValue('guid'),
+}));
 
 describe('UpsertIssueCommand', () => {
   let container: Container;
   let handler: UpsertIssueCommandCommandHandler;
   const loggerMock = { info: vi.fn(), error: vi.fn() };
-  const repositoryMock = { save: vi.fn() };
   const commandBusMock = { send: vi.fn() };
   const issueMapperMock = { extendWithAllocatorData: vi.fn() };
+  const auditMapperMock = {
+    fromDomainToAuditData: vi.fn(a => ({
+      started: a.started,
+      ended: a.ended,
+      dcAllocated: a.dc_allocated,
+      outcome: a.outcome,
+      datacapAmount: a.datacap_amount,
+    })),
+  };
+  const upsertStrategyMock = { resolveAndExecute: vi.fn() };
 
   const fixtureMsigAddress = `f2${faker.string.alphanumeric(38)}`;
   const fixureAllocatorData = {
@@ -24,6 +39,22 @@ describe('UpsertIssueCommand', () => {
     ma_address: 'f4',
     metapathway_type: 'AMA',
     allocator_id: '1',
+    audits: [
+      {
+        started: '2023-01-01T00:00:00.000Z',
+        ended: '2023-01-02T00:00:00.000Z',
+        dc_allocated: '2023-01-03T00:00:00.000Z',
+        outcome: 'APPROVED',
+        datacap_amount: 1,
+      },
+      {
+        started: '2024-01-01T00:00:00.000Z',
+        ended: '',
+        dc_allocated: '',
+        outcome: 'PENDING',
+        datacap_amount: 1,
+      },
+    ],
   };
   const fixtureIssueDetails = DatabaseRefreshFactory.create();
   const fixtureExtendedMappedIssue = {
@@ -38,9 +69,6 @@ describe('UpsertIssueCommand', () => {
     container = new Container();
 
     container.bind<Logger>(TYPES.Logger).toConstantValue(loggerMock as unknown as Logger);
-    container
-      .bind<IIssueDetailsRepository>(TYPES.IssueDetailsRepository)
-      .toConstantValue(repositoryMock as unknown as IIssueDetailsRepository);
     container.bind<UpsertIssueCommandCommandHandler>(UpsertIssueCommandCommandHandler).toSelf();
     container
       .bind<ICommandBus>(TYPES.CommandBus)
@@ -48,6 +76,12 @@ describe('UpsertIssueCommand', () => {
     container
       .bind<IIssueMapper>(TYPES.IssueMapper)
       .toConstantValue(issueMapperMock as unknown as IIssueMapper);
+    container
+      .bind<IAuditMapper>(TYPES.AuditMapper)
+      .toConstantValue(auditMapperMock as unknown as IAuditMapper);
+    container
+      .bind<IUpsertStrategy>(TYPES.UpsertIssueStrategyResolver)
+      .toConstantValue(upsertStrategyMock as unknown as IUpsertStrategy);
 
     handler = container.get<UpsertIssueCommandCommandHandler>(UpsertIssueCommandCommandHandler);
 
@@ -55,6 +89,10 @@ describe('UpsertIssueCommand', () => {
       data: fixureAllocatorData,
       success: true,
     });
+
+    upsertStrategyMock.resolveAndExecute.mockResolvedValue(
+      new SaveIssueCommand(fixtureExtendedMappedIssue),
+    );
   });
 
   afterEach(() => {
@@ -67,16 +105,15 @@ describe('UpsertIssueCommand', () => {
     const command = new UpsertIssueCommand(fixtureIssueDetails);
     const result = await handler.handle(command);
 
-    expect(commandBusMock.send).toHaveBeenCalledWith(expect.any(FetchAllocatorCommand));
-    expect(commandBusMock.send).toBeCalledWith(
-      expect.objectContaining({
-        jsonNumber: fixtureIssueDetails.jsonNumber,
-        guid: expect.any(String),
-      }),
-    );
-    expect(repositoryMock.save).toHaveBeenCalledWith({
-      ...fixtureExtendedMappedIssue,
-      msigAddress: fixtureMsigAddress,
+    expect(commandBusMock.send).toHaveBeenNthCalledWith(1, expect.any(FetchAllocatorCommand));
+    expect(commandBusMock.send).toHaveBeenNthCalledWith(1, {
+      jsonNumber: fixtureIssueDetails.jsonNumber,
+      guid: expect.any(String),
+    });
+    expect(commandBusMock.send).toHaveBeenNthCalledWith(2, expect.any(SaveIssueCommand));
+    expect(commandBusMock.send).toHaveBeenNthCalledWith(2, {
+      guid: 'guid',
+      issueDetails: fixtureExtendedMappedIssue,
     });
     expect(result).toStrictEqual({
       success: true,
@@ -93,24 +130,24 @@ describe('UpsertIssueCommand', () => {
     const result = await handler.handle(command);
 
     expect(commandBusMock.send).toHaveBeenCalledWith(expect.any(FetchAllocatorCommand));
-    expect(commandBusMock.send).toBeCalledWith(
+    expect(commandBusMock.send).toHaveBeenCalledWith(
       expect.objectContaining({
         jsonNumber: fixtureIssueDetails.jsonNumber,
         guid: expect.any(String),
       }),
     );
-    expect(repositoryMock.save).not.toHaveBeenCalled();
+    expect(commandBusMock.send).not.toHaveBeenCalledWith(expect.any(SaveIssueCommand));
     expect(result).toStrictEqual({
       error: fixtureError,
       success: false,
     });
   });
 
-  it('should handle error during issue upsert', async () => {
+  it('should handle error during command bus send', async () => {
     issueMapperMock.extendWithAllocatorData.mockResolvedValue(fixtureExtendedMappedIssue);
 
-    const error = new Error('Failed to save');
-    repositoryMock.save.mockRejectedValue(error);
+    const error = new Error('Failed to send');
+    commandBusMock.send.mockRejectedValue(error);
 
     const issueDetails = DatabaseRefreshFactory.create();
 
@@ -118,13 +155,6 @@ describe('UpsertIssueCommand', () => {
     const result = await handler.handle(command);
 
     expect(commandBusMock.send).toHaveBeenCalledWith(expect.any(FetchAllocatorCommand));
-    expect(commandBusMock.send).toBeCalledWith(
-      expect.objectContaining({
-        jsonNumber: issueDetails.jsonNumber,
-        guid: expect.any(String),
-      }),
-    );
-    expect(repositoryMock.save).toHaveBeenCalledWith(fixtureExtendedMappedIssue);
     expect(result).toStrictEqual({
       success: false,
       error,
@@ -137,7 +167,6 @@ describe('UpsertIssueCommand', () => {
     const result = await handler.handle(command);
 
     expect(commandBusMock.send).not.toHaveBeenCalled();
-    expect(repositoryMock.save).not.toHaveBeenCalled();
     expect(result).toStrictEqual({
       success: false,
       error: expect.objectContaining({

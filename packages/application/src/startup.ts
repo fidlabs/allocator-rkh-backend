@@ -72,12 +72,16 @@ import { FetchIssuesCommandHandler } from '@src/application/use-cases/refresh-is
 import { BulkCreateIssueCommandHandler } from '@src/application/use-cases/refresh-issues/bulk-create-issue.command';
 import { GetRefreshesQueryHandler } from '@src/application/queries/get-refreshes/get-refreshes.query';
 import { UpsertIssueCommandCommandHandler } from '@src/application/use-cases/refresh-issues/upsert-issue.command';
+import { UpsertIssueStrategyResolver } from '@src/application/use-cases/refresh-issues/upsert-issue.strategy';
 import { FetchAllocatorCommandHandler } from '@src/application/use-cases/fetch-allocator/fetch-allocator.command';
 import { SignRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/sign-refresh-by-rkh.command';
 import { ApproveRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/approve-refresh-by-rkh.command';
 import { ApproveRefreshByMaCommandHandler } from '@src/application/use-cases/update-ma-approvals/approve-refresh-by-ma.command';
 import { MetaAllocatorService } from './application/services/meta-allocator.service';
-import { AllocationPathResolver } from './application/services/allocation-path-resolver';
+import { AllocationPathResolver } from './application/resolvers/allocation-path-resolver';
+import { AuditOutcomeResolver } from './application/resolvers/audit-outcome-resolver';
+import { SaveIssueWithNewAuditCommandHandler } from './application/use-cases/refresh-issues/save-issue-with-new-audit.command';
+import { SaveIssueCommandHandler } from './application/use-cases/refresh-issues/save-issue.command';
 
 export const initialize = async (): Promise<Container> => {
   const container = new Container();
@@ -93,6 +97,7 @@ export const initialize = async (): Promise<Container> => {
   container.bind<MessageService>(TYPES.MessageService).to(MessageService);
   container.bind<MetaAllocatorService>(TYPES.MetaAllocatorService).to(MetaAllocatorService);
   container.bind<AllocationPathResolver>(TYPES.AllocationPathResolver).to(AllocationPathResolver);
+  container.bind<AuditOutcomeResolver>(TYPES.AuditOutcomeResolver).to(AuditOutcomeResolver);
 
   container.bind<IEventHandler<ApplicationCreated>>(TYPES.Event).to(ApplicationCreatedEventHandler);
   container.bind<IEventHandler<ApplicationEdited>>(TYPES.Event).to(ApplicationEditedEventHandler);
@@ -170,6 +175,9 @@ export const initialize = async (): Promise<Container> => {
   container
     .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
     .to(UpsertIssueCommandCommandHandler);
+  container
+    .bind<UpsertIssueStrategyResolver>(TYPES.UpsertIssueStrategyResolver)
+    .to(UpsertIssueStrategyResolver);
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(FetchAllocatorCommandHandler);
   container
     .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
@@ -180,6 +188,10 @@ export const initialize = async (): Promise<Container> => {
   container
     .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
     .to(ApproveRefreshByMaCommandHandler);
+  container
+    .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
+    .to(SaveIssueWithNewAuditCommandHandler);
+  container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(SaveIssueCommandHandler);
 
   const commandBus = container.get<ICommandBus>(TYPES.CommandBus);
   container

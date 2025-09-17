@@ -21,3 +21,6 @@ debug.log
 
 # Misc
 infra/
+
+# Repository tests
+src/repository-tests/
