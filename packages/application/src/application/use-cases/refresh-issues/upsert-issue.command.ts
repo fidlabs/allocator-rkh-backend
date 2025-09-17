@@ -80,17 +80,17 @@ export class UpsertIssueCommandCommandHandler implements ICommandHandler<UpsertI
     const data = commandResponse.data as ApplicationPullRequestFile;
 
     const withAllocator = this.issueMapper.extendWithAllocatorData(issueDetails, data);
-    const withAudit = this.extendIssueWithAuditData(withAllocator, data.audits);
+    const withAudits = this.extendIssueWithAuditData(withAllocator, data.audits);
 
-    return withAudit;
+    return withAudits;
   }
 
   private extendIssueWithAuditData(
     issueDetails: IssueDetails,
     audits: ApplicationPullRequestFile['audits'],
   ): IssueDetails {
-    const currentAudit = audits.at(-1);
-    const previousAudit = audits.at(-2);
+    const currentAudit = audits?.at(-1);
+    const previousAudit = audits?.at(-2);
 
     if (this.isPendingOrApproved(currentAudit!)) {
       issueDetails.lastAudit = this.auditMapper.fromDomainToAuditData(previousAudit!);

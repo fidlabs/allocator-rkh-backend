@@ -2,7 +2,11 @@ import { Command, ICommandHandler, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 
 import { TYPES } from '@src/types';
-import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
+import {
+  AuditHistory,
+  IssueDetails,
+  RefreshStatus,
+} from '@src/infrastructure/repositories/issue-details';
 import { ApprovedTx } from '@src/infrastructure/clients/lotus';
 import { LOG_MESSAGES } from '@src/constants';
 import { RefreshAuditService } from '@src/application/services/refresh-audit.service';
@@ -43,20 +47,11 @@ export class ApproveRefreshByRKHCommandHandler
         command.issueDetails.jsonNumber,
       );
 
-      const auditHistory = command.issueDetails.auditHistory || [];
-      auditHistory?.push(auditResult);
-
-      const issueWithApprovedStatus: IssueDetails = {
-        ...command.issueDetails,
-        refreshStatus: 'DC_ALLOCATED',
-        transactionCid: command.tx.cid,
-        currentAudit: {
-          ...command.issueDetails.currentAudit,
-          ...auditResult.auditChange,
-        },
-        auditHistory,
-      };
-
+      const issueWithApprovedStatus = this.updateIssue(
+        command.issueDetails,
+        auditResult,
+        command.tx,
+      );
       await this._commandBus.send(new SaveIssueCommand(issueWithApprovedStatus));
 
       this._logger.info(LOG.REFRESH_APPROVED);
@@ -70,5 +65,25 @@ export class ApproveRefreshByRKHCommandHandler
         error,
       };
     }
+  }
+
+  private updateIssue(
+    issueDetails: IssueDetails,
+    auditResult: AuditHistory,
+    tx: ApprovedTx,
+  ): IssueDetails {
+    const auditHistory = issueDetails.auditHistory || [];
+    auditHistory?.push(auditResult);
+
+    return {
+      ...issueDetails,
+      refreshStatus: RefreshStatus.DC_ALLOCATED,
+      transactionCid: tx.cid,
+      currentAudit: {
+        ...issueDetails.currentAudit,
+        ...auditResult.auditChange,
+      },
+      auditHistory,
+    };
   }
 }

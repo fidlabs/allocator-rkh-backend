@@ -2,7 +2,11 @@ import { Command, ICommandHandler, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 
 import { TYPES } from '@src/types';
-import { IssueDetails, RefreshStatus } from '@src/infrastructure/repositories/issue-details';
+import {
+  AuditHistory,
+  IssueDetails,
+  RefreshStatus,
+} from '@src/infrastructure/repositories/issue-details';
 import { LOG_MESSAGES } from '@src/constants';
 import { Approval } from '@src/infrastructure/clients/lotus';
 import { DataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
@@ -32,8 +36,6 @@ export class ApproveRefreshByMaCommandHandler
     private readonly _logger: Logger,
     @inject(TYPES.CommandBus)
     private readonly _commandBus: CommandBus,
-    @inject(TYPES.DataCapMapper)
-    private readonly _dataCapMapper: DataCapMapper,
     @inject(TYPES.RefreshAuditService)
     private readonly _refreshAuditService: RefreshAuditService,
   ) {}
@@ -42,35 +44,18 @@ export class ApproveRefreshByMaCommandHandler
     try {
       this._logger.info(LOG.APPROVE_REFRESH_BY_MA);
 
-      const dataCap = this._dataCapMapper.fromBigIntBytesToPiBNumber(
-        BigInt(command.approval.allowanceAfter) - BigInt(command.approval.allowanceBefore),
-      );
-      const auditResult = await this._refreshAuditService.approveAudit(
+      const auditResult = await this._refreshAuditService.finishAudit(
         command.issueDetails.jsonNumber,
       );
-
-      const auditHistory = command.issueDetails.auditHistory || [];
-      auditHistory?.push(auditResult);
-
-      const issueWithApprovedStatus: IssueDetails = {
-        ...command.issueDetails,
-        refreshStatus: RefreshStatus.DC_ALLOCATED,
-        transactionCid: command.approval.txHash,
-        blockNumber: command.approval.blockNumber,
-        metaAllocator: {
-          blockNumber: command.approval.blockNumber,
-        },
-        currentAudit: {
-          ...command.issueDetails.currentAudit,
-          ...auditResult.auditChange,
-        },
-        dataCap,
-        auditHistory,
-      };
+      const issueWithApprovedStatus = this.updateIssue(
+        command.issueDetails,
+        auditResult,
+        command.approval,
+      );
 
       await this._commandBus.send(new SaveIssueCommand(issueWithApprovedStatus));
-
       this._logger.info(LOG.REFRESH_APPROVED);
+
       return {
         success: true,
       };
@@ -81,5 +66,29 @@ export class ApproveRefreshByMaCommandHandler
         error,
       };
     }
+  }
+
+  private updateIssue(
+    issueDetails: IssueDetails,
+    auditResult: AuditHistory,
+    approval: Approval,
+  ): IssueDetails {
+    const auditHistory = issueDetails.auditHistory || [];
+    auditHistory?.push(auditResult);
+
+    return {
+      ...issueDetails,
+      refreshStatus: RefreshStatus.DC_ALLOCATED,
+      transactionCid: approval.txHash,
+      blockNumber: approval.blockNumber,
+      metaAllocator: {
+        blockNumber: approval.blockNumber,
+      },
+      currentAudit: {
+        ...issueDetails.currentAudit,
+        ...auditResult.auditChange,
+      },
+      auditHistory,
+    };
   }
 }
