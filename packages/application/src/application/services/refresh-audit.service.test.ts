@@ -4,6 +4,7 @@ import { Container } from 'inversify';
 import { TYPES } from '@src/types';
 import { AuditOutcome } from '@src/infrastructure/repositories/issue-details';
 import { RefreshAuditService } from './refresh-audit.service';
+import { ApplicationPullRequestFile } from './pull-request.types';
 
 describe('RefreshAuditService', () => {
   let container: Container;
@@ -43,6 +44,7 @@ describe('RefreshAuditService', () => {
   });
 
   it('approveAudit sets ended and APPROVED outcome', async () => {
+    const datacapAmount = 10;
     const expectedChange = {
       ended: new Date().toISOString(),
       outcome: AuditOutcome.APPROVED,
@@ -55,9 +57,12 @@ describe('RefreshAuditService', () => {
       prUrl: 'u',
     });
 
-    const result = await service.approveAudit(jsonHash);
+    const result = await service.approveAudit(jsonHash, datacapAmount);
 
-    expect(refreshAuditPublisherMock.updateAudit).toHaveBeenCalledWith(jsonHash, expectedChange);
+    expect(refreshAuditPublisherMock.updateAudit).toHaveBeenCalledWith(
+      jsonHash,
+      expect.any(Function),
+    );
     expect(result.auditChange).toEqual(expectedChange);
   });
 
@@ -76,32 +81,39 @@ describe('RefreshAuditService', () => {
 
     const result = await service.rejectAudit(jsonHash);
 
-    expect(refreshAuditPublisherMock.updateAudit).toHaveBeenCalledWith(jsonHash, expectedChange);
+    expect(refreshAuditPublisherMock.updateAudit).toHaveBeenCalledWith(
+      jsonHash,
+      expect.any(Function),
+    );
     expect(result.auditChange).toEqual(expectedChange);
   });
 
-  it('finishAudit computes outcome via resolver and sets dcAllocated', async () => {
-    const expectedOutcome = AuditOutcome.MATCH;
-    auditOutcomeResolverMock.resolve.mockReturnValue(expectedOutcome);
+  it('should throw error if current audit is not in the correct status', async () => {
+    await expect(
+      service.ensureCorrectCurrentJsonAuditStatus(
+        { audits: [{ outcome: AuditOutcome.GRANTED }] } as unknown as ApplicationPullRequestFile,
+        [AuditOutcome.PENDING],
+      ),
+    ).rejects.toThrow('Cannot update audit because it is not in the correct status');
+  });
 
-    const allocatorMock = { audits: [{}, {}] } as any;
+  it('should throw error if allocator has no audits', async () => {
+    await expect(
+      service.ensureCorrectCurrentJsonAuditStatus(
+        { audits: [] } as unknown as ApplicationPullRequestFile,
+        [AuditOutcome.PENDING],
+      ),
+    ).rejects.toThrow('Allocator must have at least one audit from completed application');
+  });
 
-    refreshAuditPublisherMock.updateAudit.mockImplementation(
-      async (_hash: string, updater: any) => {
-        const change = updater(allocatorMock);
-        return {
-          auditChange: change,
-          branchName: 'b',
-          commitSha: 'c',
-          prNumber: 1,
-          prUrl: 'u',
-        };
-      },
-    );
-
-    const result = await service.finishAudit(jsonHash);
-
-    expect(refreshAuditPublisherMock.updateAudit).toHaveBeenCalled();
-    expect(result.auditChange.outcome).toBe(expectedOutcome);
+  it('should resolve outcome correctly', async () => {
+    await expect(
+      service.ensureCorrectCurrentJsonAuditStatus(
+        {
+          audits: [{ outcome: AuditOutcome.GRANTED }, { outcome: AuditOutcome.PENDING }],
+        } as unknown as ApplicationPullRequestFile,
+        [AuditOutcome.PENDING],
+      ),
+    ).resolves.toBeUndefined();
   });
 });

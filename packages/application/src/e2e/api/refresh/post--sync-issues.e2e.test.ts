@@ -34,6 +34,7 @@ describe('POST /api/v1/refreshes/sync/issues', () => {
       .withCommandBus()
       .withQueryBus()
       .withGithubClient(githubMock as unknown as IGithubClient)
+      .withConfig(TYPES.AllocatorGovernanceConfig, { owner: 'owner', repo: 'repo' })
       .withMappers()
       .withServices()
       .withRepositories()
@@ -44,13 +45,6 @@ describe('POST /api/v1/refreshes/sync/issues', () => {
 
     container = testSetup.container;
     db = testSetup.db;
-
-    // Provide AllocatorGovernanceConfig if not present
-    if (!container.isBound(TYPES.AllocatorGovernanceConfig)) {
-      container
-        .bind(TYPES.AllocatorGovernanceConfig)
-        .toConstantValue({ owner: 'owner', repo: 'repo' });
-    }
 
     const server = new InversifyExpressServer(container);
     server.setConfig((app: Application) => {
