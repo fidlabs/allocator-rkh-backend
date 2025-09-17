@@ -10,7 +10,7 @@ export class AuditOutcomeResolver {
 
     switch (true) {
       case prevDatacap === currentDatacap:
-        return AuditOutcome.GRANTED;
+        return AuditOutcome.MATCH;
       case prevDatacap && prevDatacap * 2 === currentDatacap:
         return AuditOutcome.DOUBLE;
       case prevDatacap && prevDatacap / 2 === currentDatacap:

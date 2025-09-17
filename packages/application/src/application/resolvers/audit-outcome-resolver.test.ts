@@ -23,8 +23,8 @@ describe('AuditOutcomeResolver', () => {
     service = container.get<AuditOutcomeResolver>(TYPES.AuditOutcomeResolver);
   });
 
-  it('returns GRANTED when datacap unchanged', () => {
-    expect(service.resolve(createAuditCycle(10), createAuditCycle(10))).toBe(AuditOutcome.GRANTED);
+  it('returns MATCH when datacap is unchanged compared to previous audit', () => {
+    expect(service.resolve(createAuditCycle(10), createAuditCycle(10))).toBe(AuditOutcome.MATCH);
   });
 
   it('returns DOUBLE when current equals previous * 2', () => {
