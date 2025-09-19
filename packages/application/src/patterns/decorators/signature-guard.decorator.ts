@@ -13,12 +13,19 @@ interface MessageFactoryProps {
 
 export enum SignatureType {
   RefreshReview = 'refreshReview',
+  ApproveGovernanceReview = 'approveGovernanceReview',
   KycOverride = 'kycOverride',
   KycRevoke = 'kycRevoke',
 }
 
 export const messageFactoryByType = {
   [SignatureType.RefreshReview]: ({
+    result,
+    id,
+    finalDataCap,
+    allocatorType,
+  }: MessageFactoryProps) => `Governance refresh ${result} ${id} ${finalDataCap} ${allocatorType}`,
+  [SignatureType.ApproveGovernanceReview]: ({
     result,
     id,
     finalDataCap,

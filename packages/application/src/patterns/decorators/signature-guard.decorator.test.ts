@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Response } from 'express';
-import { SignatureGuard, SignatureType } from './signature-guard.decorator';
+import { messageFactoryByType, SignatureGuard, SignatureType } from './signature-guard.decorator';
 
 const mocks = vi.hoisted(() => ({
   mockVerifyLedgerPoP: vi.fn(),
@@ -99,5 +99,28 @@ describe('SignatureGuard', () => {
     expect(mocks.mockVerifyLedgerPoP).toHaveBeenCalledOnce();
     expect(mocks.mockOriginal).not.toHaveBeenCalled();
     expect(mocks.mockResponse.res.status).toHaveBeenCalledWith(400);
+  });
+});
+
+describe('SignatureGuard messageFactoryByType', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const props = {
+    result: 'Approved',
+    id: '123',
+    finalDataCap: 1024,
+    allocatorType: 'RKH',
+  };
+
+  it.each`
+    signatureType                            | expectedMessage
+    ${SignatureType.RefreshReview}           | ${'Governance refresh Approved 123 1024 RKH'}
+    ${SignatureType.ApproveGovernanceReview} | ${'Governance Approved 123 1024 RKH'}
+    ${SignatureType.KycOverride}             | ${'KYC Override for 123'}
+    ${SignatureType.KycRevoke}               | ${'KYC Revoke for 123'}
+  `('returns the correct message for $signatureType', ({ signatureType, expectedMessage }) => {
+    expect(messageFactoryByType[signatureType](props)).toBe(expectedMessage);
   });
 });
