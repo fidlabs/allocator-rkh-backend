@@ -77,10 +77,6 @@ export class ApproveRefreshCommandHandler implements ICommandHandler<ApproveRefr
     return {
       ...issueDetails,
       refreshStatus: RefreshStatus.APPROVED,
-      currentAudit: {
-        ...issueDetails.currentAudit,
-        ...auditResult.auditChange,
-      },
       auditHistory,
     };
   }

@@ -85,7 +85,6 @@ describe('ApproveRefreshByMaCommand', () => {
         refreshStatus: RefreshStatus.DC_ALLOCATED,
         transactionCid: fixtureApproval.txHash,
         blockNumber: fixtureApproval.blockNumber,
-        currentAudit: fixtureAuditResult.auditChange,
         auditHistory: [fixtureAuditResult],
         metaAllocator: {
           blockNumber: fixtureApproval.blockNumber,
@@ -115,7 +114,6 @@ describe('ApproveRefreshByMaCommand', () => {
         refreshStatus: RefreshStatus.DC_ALLOCATED,
         transactionCid: fixtureApproval.txHash,
         blockNumber: fixtureApproval.blockNumber,
-        currentAudit: fixtureAuditResult.auditChange,
         auditHistory: [fixtureAuditResult],
         metaAllocator: {
           blockNumber: fixtureApproval.blockNumber,

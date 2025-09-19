@@ -73,10 +73,6 @@ export class RejectRefreshCommandHandler implements ICommandHandler<RejectRefres
     return {
       ...issueDetails,
       refreshStatus: RefreshStatus.REJECTED,
-      currentAudit: {
-        ...issueDetails.currentAudit,
-        ...auditResult.auditChange,
-      },
       auditHistory,
     };
   }

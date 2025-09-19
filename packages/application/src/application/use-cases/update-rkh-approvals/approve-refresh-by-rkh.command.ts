@@ -79,10 +79,6 @@ export class ApproveRefreshByRKHCommandHandler
       ...issueDetails,
       refreshStatus: RefreshStatus.DC_ALLOCATED,
       transactionCid: tx.cid,
-      currentAudit: {
-        ...issueDetails.currentAudit,
-        ...auditResult.auditChange,
-      },
       auditHistory,
     };
   }

@@ -151,14 +151,14 @@ describe('POST /api/v1/refreshes/:githubIssueId/review', () => {
   });
 
   beforeEach(async () => {
-    fixturePendingRefresh = DatabaseRefreshFactory.createWithAudit(AuditOutcome.PENDING, {
+    fixturePendingRefresh = DatabaseRefreshFactory.create({
       githubIssueNumber: 123,
       refreshStatus: RefreshStatus.PENDING,
     });
-    fixtureRefreshWithIncorrectAuditStatusForApprove = DatabaseRefreshFactory.createWithAudit(
-      AuditOutcome.GRANTED,
-      { githubIssueNumber: 456, refreshStatus: RefreshStatus.DC_ALLOCATED },
-    );
+    fixtureRefreshWithIncorrectAuditStatusForApprove = DatabaseRefreshFactory.create({
+      githubIssueNumber: 456,
+      refreshStatus: RefreshStatus.DC_ALLOCATED,
+    });
 
     databasePendingRefresh = await db
       .collection<IssueDetails>('issueDetails')
@@ -221,12 +221,6 @@ describe('POST /api/v1/refreshes/:githubIssueId/review', () => {
       ...fixturePendingRefresh,
       _id: databasePendingRefresh.insertedId,
       refreshStatus: RefreshStatus.APPROVED,
-      currentAudit: {
-        ...fixturePendingRefresh.currentAudit,
-        outcome: AuditOutcome.APPROVED,
-        ended: now.toISOString(),
-        datacapAmount: fixtureChallengeProps.finalDataCap,
-      },
       auditHistory: [
         ...(fixturePendingRefresh.auditHistory || []),
         {
@@ -271,11 +265,6 @@ describe('POST /api/v1/refreshes/:githubIssueId/review', () => {
       ...fixturePendingRefresh,
       _id: databasePendingRefresh.insertedId,
       refreshStatus: RefreshStatus.REJECTED,
-      currentAudit: {
-        ...fixturePendingRefresh.currentAudit,
-        outcome: AuditOutcome.REJECTED,
-        ended: now.toISOString(),
-      },
       auditHistory: [
         ...(fixturePendingRefresh.auditHistory || []),
         {

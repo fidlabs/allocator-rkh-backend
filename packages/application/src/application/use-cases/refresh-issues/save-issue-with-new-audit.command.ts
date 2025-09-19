@@ -38,10 +38,6 @@ export class SaveIssueWithNewAuditCommandHandler
 
       const issueWithAudit = {
         ...command.issueDetails,
-        currentAudit: {
-          ...command.issueDetails.currentAudit,
-          ...auditResult.auditChange,
-        },
         auditHistory,
       };
 

@@ -2,8 +2,10 @@ import { Command, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 import { WithId } from 'mongodb';
 import {
+  AuditOutcome,
   FINISHED_REFRESH_STATUSES,
   IssueDetails,
+  PENDING_AUDIT_OUTCOMES,
   PENDING_REFRESH_STATUSES,
   RefreshStatus,
 } from '@src/infrastructure/repositories/issue-details';
@@ -12,19 +14,21 @@ import { SaveIssueWithNewAuditCommand } from './save-issue-with-new-audit.comman
 import { TYPES } from '@src/types';
 import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { LOG_MESSAGES, RESPONSE_MESSAGES } from '@src/constants';
+import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
 
 const LOG = LOG_MESSAGES.UPSERT_ISSUE_STRATEGY_RESOLVER;
 const RES = RESPONSE_MESSAGES.UPSERT_ISSUE_STRATEGY_RESOLVER;
 
 export enum UpsertStrategyKey {
   SAVE_WITH_NEW_AUDIT = 'save-with-new-audit',
-  SAVE_WITHOUT_GITHUB_UPDATE = 'update-existing-without-github-update',
+  SAVE_WITHOUT_GITHUB_UPDATE = 'save-without-github-update',
 }
 
 interface AuditStateAnalysis {
-  issueByGithubIdExists: boolean;
+  isCurrentAuditNotFinished: boolean;
+  issueByGithubIdExistsInDb: boolean;
   isIssueByGithubIdFinished: boolean;
-  isLatestAuditByJsonNumberPending: boolean;
+  currentAllocatorHasPendingRefresh: boolean;
   areTheSameIssue: boolean;
 }
 
@@ -54,9 +58,12 @@ export class UpsertIssueStrategyResolver {
     private readonly repository: IIssueDetailsRepository,
   ) {}
 
-  public async resolveAndExecute(mappedIsuueFromGithub: IssueDetails): Promise<Command> {
+  public async resolveAndExecute(
+    mappedIsuueFromGithub: IssueDetails,
+    audits: ApplicationPullRequestFile['audits'],
+  ): Promise<Command> {
     this.logger.info(LOG.RESOLVING_UPSERT_ISSUE_STRATEGY);
-    const strategyKey = await this.getStrategyKey(mappedIsuueFromGithub);
+    const strategyKey = await this.getStrategyKey(mappedIsuueFromGithub, audits);
 
     this.logger.info(LOG.STRATEGY_SELECTED + strategyKey);
 
@@ -75,62 +82,83 @@ export class UpsertIssueStrategyResolver {
     }
   }
 
-  private async getStrategyKey(mappedIsuueFromGithub: IssueDetails): Promise<UpsertStrategyKey> {
+  private async getStrategyKey(
+    mappedIsuueFromGithub: IssueDetails,
+    audits: ApplicationPullRequestFile['audits'],
+  ): Promise<UpsertStrategyKey> {
     const [issueByGithubId, issueWithLatestAuditByJsonNumber] =
       await this.getRelatedIssues(mappedIsuueFromGithub);
 
     const {
-      issueByGithubIdExists,
+      isCurrentAuditNotFinished,
+      issueByGithubIdExistsInDb,
       isIssueByGithubIdFinished,
-      isLatestAuditByJsonNumberPending,
+      currentAllocatorHasPendingRefresh,
       areTheSameIssue,
-    } = this.analyzeAuditState(issueByGithubId, issueWithLatestAuditByJsonNumber);
+    } = this.analyzeAuditState(issueByGithubId, issueWithLatestAuditByJsonNumber, audits);
 
+    // if refresh is already finished its not necessary to update the issue
     if (isIssueByGithubIdFinished)
       throw new Error(
         `${mappedIsuueFromGithub.githubIssueNumber} ${RES.ISSUE_REFRESH_ALREADY_FINISHED}`,
       );
 
-    if (areTheSameIssue) return UpsertStrategyKey.SAVE_WITHOUT_GITHUB_UPDATE;
-
-    if (isLatestAuditByJsonNumberPending)
-      throw new Error(`${mappedIsuueFromGithub.jsonNumber} ${RES.PENDING_AUDIT}`);
-
-    if (issueByGithubIdExists && !isLatestAuditByJsonNumberPending)
+    // if issue related to event is same as latest opened refresh, its allowed to update refresh with fresh data
+    if (areTheSameIssue && isCurrentAuditNotFinished)
       return UpsertStrategyKey.SAVE_WITHOUT_GITHUB_UPDATE;
 
-    if (!issueByGithubIdExists && !isLatestAuditByJsonNumberPending)
+    // if issue related to event is same as latest opened refresh, its allowed to update refresh with fresh data
+    if (areTheSameIssue && !isCurrentAuditNotFinished) return UpsertStrategyKey.SAVE_WITH_NEW_AUDIT;
+
+    // database records are different, but allocator has pending refresh, its not allowed to create new refresh
+    if (currentAllocatorHasPendingRefresh)
+      throw new Error(`${mappedIsuueFromGithub.jsonNumber} ${RES.PENDING_AUDIT}`);
+
+    // if issue is not in database yet and there is pending audit, its not allowed to create new refresh
+    if (!issueByGithubIdExistsInDb && isCurrentAuditNotFinished)
+      throw new Error(`${mappedIsuueFromGithub.jsonNumber} ${RES.PENDING_AUDIT}`);
+
+    // if issue is not in database yet and there is no pending audit, its allowed to create new refresh with new audit
+    if (!issueByGithubIdExistsInDb && !isCurrentAuditNotFinished)
       return UpsertStrategyKey.SAVE_WITH_NEW_AUDIT;
 
-    if (!areTheSameIssue && isLatestAuditByJsonNumberPending)
-      throw new Error(`${RES.CANNOT_RESOLVE_UPSERT_STRATEGY} ${mappedIsuueFromGithub.jsonNumber}`);
+    if (issueByGithubIdExistsInDb && !isCurrentAuditNotFinished)
+      return UpsertStrategyKey.SAVE_WITH_NEW_AUDIT;
 
-    throw new Error(`${RES.CANNOT_RESOLVE_UPSERT_STRATEGY} ${mappedIsuueFromGithub.jsonNumber}`);
+    throw new Error(`${mappedIsuueFromGithub.jsonNumber} ${RES.CANNOT_RESOLVE_UPSERT_STRATEGY}`);
   }
 
   private analyzeAuditState(
     issueByGithubId: WithId<IssueDetails> | null,
-    issueWithLatestAuditByJsonNumber: WithId<IssueDetails> | null,
+    latestIssueByJsonNumber: WithId<IssueDetails> | null,
+    audits: ApplicationPullRequestFile['audits'],
   ): AuditStateAnalysis {
-    const issueByGithubIdExists = !!issueByGithubId;
+    const currentAudit = audits?.at(-1);
+
+    const isCurrentAuditNotFinished = PENDING_AUDIT_OUTCOMES.includes(
+      currentAudit?.outcome as AuditOutcome,
+    );
+
+    const issueByGithubIdExistsInDb = !!issueByGithubId;
 
     const isIssueByGithubIdFinished =
-      !!issueByGithubId &&
+      issueByGithubIdExistsInDb &&
       FINISHED_REFRESH_STATUSES.includes(issueByGithubId.refreshStatus as RefreshStatus);
 
-    const isLatestAuditByJsonNumberPending = PENDING_REFRESH_STATUSES.includes(
-      issueWithLatestAuditByJsonNumber?.refreshStatus as RefreshStatus,
+    const currentAllocatorHasPendingRefresh = PENDING_REFRESH_STATUSES.includes(
+      latestIssueByJsonNumber?.refreshStatus as RefreshStatus,
     );
 
     const areTheSameIssue =
-      !!issueByGithubId &&
-      !!issueWithLatestAuditByJsonNumber &&
-      issueByGithubId.githubIssueId === issueWithLatestAuditByJsonNumber.githubIssueId;
+      !!issueByGithubIdExistsInDb &&
+      !!latestIssueByJsonNumber &&
+      issueByGithubId.githubIssueId === latestIssueByJsonNumber.githubIssueId;
 
     return {
-      issueByGithubIdExists,
+      isCurrentAuditNotFinished,
+      issueByGithubIdExistsInDb,
       isIssueByGithubIdFinished,
-      isLatestAuditByJsonNumberPending,
+      currentAllocatorHasPendingRefresh,
       areTheSameIssue,
     };
   }
@@ -140,7 +168,7 @@ export class UpsertIssueStrategyResolver {
   ): Promise<[WithId<IssueDetails> | null, WithId<IssueDetails> | null]> {
     return await Promise.all([
       this.repository.findBy('githubIssueId', issueDetails.githubIssueId),
-      this.repository.findWithLatestAuditBy('jsonNumber', issueDetails.jsonNumber),
+      this.repository.findLatestBy('jsonNumber', issueDetails.jsonNumber),
     ]);
   }
 }

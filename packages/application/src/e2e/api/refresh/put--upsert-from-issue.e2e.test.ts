@@ -11,7 +11,7 @@ import { TestContainerBuilder } from '@mocks/builders';
 import '@src/api/http/controllers/refresh.controller';
 import { IGithubClient } from '@src/infrastructure/clients/github';
 import { TYPES } from '@src/types';
-import { AuditOutcome } from '@src/infrastructure/repositories/issue-details';
+import { AuditOutcome, RefreshStatus } from '@src/infrastructure/repositories/issue-details';
 import { faker } from '@faker-js/faker';
 
 process.env.NODE_ENV = 'test';
@@ -40,6 +40,7 @@ describe('Refresh from Issue E2E', () => {
   const fixtureGithubGantedAudit = GithubAuditFactory.create(AuditOutcome.GRANTED);
   const fixturePendingAllocatorJson = {
     pathway_addresses: { msig: `f2${faker.string.alphanumeric(36)}` },
+    application_number: 10000,
     ma_address: `f4${faker.string.alphanumeric(36)}`,
     metapathway_type: 'RKH',
     allocator_id: `f0${faker.string.numeric(7)}`,
@@ -47,6 +48,7 @@ describe('Refresh from Issue E2E', () => {
   };
   const fixtureGantedAllocatorJson = {
     pathway_addresses: { msig: `f2${faker.string.alphanumeric(36)}` },
+    application_number: 11000,
     ma_address: `f4${faker.string.alphanumeric(36)}`,
     metapathway_type: 'AMA',
     allocator_id: `f0${faker.string.numeric(7)}`,
@@ -107,12 +109,15 @@ describe('Refresh from Issue E2E', () => {
     await db.collection('issueDetails').deleteMany({});
     await db.collection('refreshDetails').deleteMany({});
     await db.collection('applicationDetails').deleteMany({});
+
+    vi.clearAllMocks();
   });
 
   describe('PUT /api/v1/refreshes/upsert-from-issue', () => {
     /**
      * when:
-     * - allocator has not pending audit on github and databasede described by @jsonNumber
+     * - allocator doesn't have pending audit on github
+     * - database described by @jsonNumber doesn't have pending audit
      * - refresh for given github issue id does not exist in database
      * then:
      * - should add refresh by @githubIssueId to database
@@ -169,20 +174,6 @@ describe('Refresh from Issue E2E', () => {
         state: fixtureOpenedGithubEvent.issue.state,
         title: fixtureOpenedGithubEvent.issue.title.replace('[DataCap Refresh] ', ''),
         refreshStatus: 'PENDING',
-        lastAudit: {
-          dcAllocated: fixtureGithubGantedAudit.dc_allocated,
-          datacapAmount: fixtureGithubGantedAudit.datacap_amount,
-          ended: fixtureGithubGantedAudit.ended,
-          outcome: fixtureGithubGantedAudit.outcome,
-          started: fixtureGithubGantedAudit.started,
-        },
-        currentAudit: {
-          dcAllocated: '',
-          datacapAmount: '',
-          ended: '',
-          outcome: AuditOutcome.PENDING,
-          started: now.toISOString(),
-        },
         auditHistory: [
           {
             auditChange: {
@@ -208,8 +199,10 @@ describe('Refresh from Issue E2E', () => {
 
     /**
      * when:
-     * - allocator has pending audit on github and database described by @jsonNumber
+     * - allocator has pending audit on github
+     * - database described by @jsonNumber has pending audit
      * - refresh for given github issue id exists and has pending audit
+     * - refresh and issue matches
      * then:
      * - should update refresh by @githubIssueId in database
      * - should skip publisher since audit is already pending
@@ -221,10 +214,14 @@ describe('Refresh from Issue E2E', () => {
       const fixtureEditedGithubEvent = GithubIssueFactory.createEdited({
         allocator: { jsonNumber: fixtureJsonHash },
       });
-      const fixtureDatabaseIssue = DatabaseRefreshFactory.createWithAudit(AuditOutcome.PENDING);
+      const fixtureDatabaseIssue = DatabaseRefreshFactory.create({
+        refreshStatus: RefreshStatus.PENDING,
+        jsonNumber: fixtureJsonHash,
+      });
 
       vi.setSystemTime(now);
       fixtureEditedGithubEvent.issue.id = fixtureDatabaseIssue.githubIssueId;
+      fixtureDatabaseIssue;
       githubMock.getFile.mockResolvedValue(fixturePendingFileContent);
 
       await db.collection('issueDetails').insertOne(fixtureDatabaseIssue);
@@ -259,20 +256,6 @@ describe('Refresh from Issue E2E', () => {
         msigAddress: fixturePendingAllocatorJson.pathway_addresses.msig,
         maAddress: fixturePendingAllocatorJson.ma_address,
         metapathwayType: fixturePendingAllocatorJson.metapathway_type,
-        lastAudit: {
-          dcAllocated: fixturePendingAllocatorJson.audits[0].dc_allocated,
-          datacapAmount: fixturePendingAllocatorJson.audits[0].datacap_amount,
-          ended: fixturePendingAllocatorJson.audits[0].ended,
-          outcome: fixturePendingAllocatorJson.audits[0].outcome,
-          started: fixturePendingAllocatorJson.audits[0].started,
-        },
-        currentAudit: {
-          dcAllocated: fixturePendingAllocatorJson.audits[1].dc_allocated,
-          datacapAmount: fixturePendingAllocatorJson.audits[1].datacap_amount,
-          ended: fixturePendingAllocatorJson.audits[1].ended,
-          outcome: fixturePendingAllocatorJson.audits[1].outcome,
-          started: fixturePendingAllocatorJson.audits[1].started,
-        },
         // fields updated by github issue
         githubIssueNumber: fixtureEditedGithubEvent.issue.number,
         state: fixtureEditedGithubEvent.issue.state,
@@ -297,13 +280,6 @@ describe('Refresh from Issue E2E', () => {
         dataCap: savedIssue?.dataCap,
         githubIssueId: savedIssue?.githubIssueId,
         refreshStatus: 'PENDING',
-        auditHistory: savedIssue?.auditHistory?.map(audit => ({
-          auditChange: audit.auditChange,
-          branchName: audit.branchName,
-          commitSha: audit.commitSha,
-          prNumber: audit.prNumber,
-          prUrl: audit.prUrl,
-        })),
       });
 
       expect(githubMock.createBranch).not.toHaveBeenCalled();
@@ -320,8 +296,13 @@ describe('Refresh from Issue E2E', () => {
      * - should throw error when upserting new issue but allocator has pending audit
      */
     it('should throw error when upserting new issue but allocator has pending audit', async () => {
-      const fixtureOpenedGithubEvent = GithubIssueFactory.createOpened();
-      const fixtureDatabaseIssue = DatabaseRefreshFactory.create();
+      const fixtureJsonHash = `rec${faker.string.alphanumeric(12)}`;
+      const fixtureOpenedGithubEvent = GithubIssueFactory.createOpened({
+        allocator: { jsonNumber: fixtureJsonHash },
+      });
+      const fixtureDatabaseIssue = DatabaseRefreshFactory.create({
+        jsonNumber: fixtureJsonHash,
+      });
       await db.collection('issueDetails').insertOne(fixtureDatabaseIssue);
 
       const response = await request(app)
@@ -330,10 +311,219 @@ describe('Refresh from Issue E2E', () => {
         .expect(400);
 
       expect(response.body).toStrictEqual({
-        errors: ['Pending audit found'],
+        errors: [
+          `${fixtureJsonHash} has pending audit, finish existing refresh before creating a new one`,
+        ],
         message: 'Failed to upsert issue',
         status: '400',
       });
+    });
+
+    it('should throw error when upserting issue but its already finished', async () => {
+      const fixtureOpenedGithubEvent = GithubIssueFactory.createOpened();
+      const fixtureDatabaseIssue = DatabaseRefreshFactory.create({
+        refreshStatus: RefreshStatus.DC_ALLOCATED,
+      });
+
+      await db.collection('issueDetails').insertOne(fixtureDatabaseIssue);
+      fixtureOpenedGithubEvent.issue.number = fixtureDatabaseIssue.githubIssueNumber;
+      fixtureOpenedGithubEvent.issue.id = fixtureDatabaseIssue.githubIssueId;
+
+      githubMock.getFile.mockResolvedValue(fixtureGantedFileContent);
+
+      const response = await request(app)
+        .put('/api/v1/refreshes/upsert-from-issue')
+        .send(fixtureOpenedGithubEvent)
+        .expect(400);
+
+      expect(response.body).toStrictEqual({
+        errors: [
+          `${fixtureDatabaseIssue.githubIssueNumber} This issue refresh is already finished`,
+        ],
+        message: 'Failed to upsert issue',
+        status: '400',
+      });
+    });
+
+    /**
+     * when:
+     * - allocator does not have pending audit on github
+     * - refresh for given github issue exists in database
+     * - current allocator does not have pending audit
+     * - refresh and issue doesn't match
+     * then:
+     * - should create new refresh and audit
+     */
+    it('should update refresh and create new audit ', async () => {
+      vi.useFakeTimers();
+      const now = new Date('2024-01-01T00:00:00.000Z');
+      const fixtureJsonHash = `rec${faker.string.alphanumeric(12)}`;
+      const fixtureOpenedGithubEvent = GithubIssueFactory.createOpened({
+        allocator: { jsonNumber: fixtureJsonHash },
+      });
+      const fixtureDatabaseIssue = DatabaseRefreshFactory.create({
+        githubIssueNumber: fixtureOpenedGithubEvent.issue.number,
+        githubIssueId: fixtureOpenedGithubEvent.issue.id,
+        jsonNumber: fixtureJsonHash,
+        refreshStatus: RefreshStatus.PENDING,
+      });
+
+      githubMock.getFile.mockResolvedValue(fixtureGantedFileContent);
+      vi.setSystemTime(now);
+      await db.collection('issueDetails').insertOne(fixtureDatabaseIssue);
+
+      const savedIssue = await db
+        .collection('issueDetails')
+        .findOne({ githubIssueId: fixtureDatabaseIssue.githubIssueId });
+
+      const response = await request(app)
+        .put('/api/v1/refreshes/upsert-from-issue')
+        .send(fixtureOpenedGithubEvent)
+        .expect(200);
+
+      expect(response.body).toStrictEqual({
+        message: 'Issue upserted successfully',
+        status: '200',
+      });
+
+      const updatedIssue = await db
+        .collection('issueDetails')
+        .findOne({ githubIssueId: fixtureOpenedGithubEvent.issue.id });
+
+      expect(githubMock.createBranch).toHaveBeenCalled();
+      expect(githubMock.createPullRequest).toHaveBeenCalled();
+      expect(githubMock.mergePullRequest).toHaveBeenCalled();
+      expect(githubMock.deleteBranch).toHaveBeenCalled();
+
+      expect(updatedIssue).toStrictEqual({
+        ...savedIssue,
+        assignees: fixtureOpenedGithubEvent.issue.assignees?.map(assignee => ({
+          name: assignee.login,
+          userId: assignee.id,
+        })),
+        githubIssueNumber: fixtureOpenedGithubEvent.issue.number,
+        githubIssueId: fixtureOpenedGithubEvent.issue.id,
+        creator: {
+          name: fixtureOpenedGithubEvent.issue.user?.login,
+          userId: fixtureOpenedGithubEvent.issue.user?.id,
+        },
+        actorId: fixtureGantedAllocatorJson.allocator_id,
+        msigAddress: fixtureGantedAllocatorJson.pathway_addresses.msig,
+        maAddress: fixtureGantedAllocatorJson.ma_address,
+        metapathwayType: fixtureGantedAllocatorJson.metapathway_type,
+        createdAt: new Date(fixtureOpenedGithubEvent.issue.created_at),
+        updatedAt: new Date(fixtureOpenedGithubEvent.issue.updated_at),
+        closedAt: null,
+        title: fixtureOpenedGithubEvent.issue.title.replace('[DataCap Refresh] ', ''),
+        state: fixtureOpenedGithubEvent.issue.state,
+        labels: fixtureOpenedGithubEvent.issue.labels.map(label =>
+          typeof label === 'string' ? label : label.name,
+        ),
+        jsonNumber: fixtureDatabaseIssue.jsonNumber,
+        refreshStatus: RefreshStatus.PENDING,
+        auditHistory: [
+          {
+            auditChange: {
+              dcAllocated: '',
+              datacapAmount: '',
+              ended: '',
+              outcome: AuditOutcome.PENDING,
+              started: now.toISOString(),
+            },
+            branchName: `refresh-audit-${fixtureDatabaseIssue.jsonNumber}-2-nanoid-id`,
+            commitSha: fixtureCreatePullRequestResponse.head.sha,
+            prNumber: fixtureCreatePullRequestResponse.number,
+            prUrl: fixtureCreatePullRequestResponse.html_url,
+          },
+        ],
+      });
+
+      expect(githubMock.createBranch).toHaveBeenCalled();
+      expect(githubMock.createPullRequest).toHaveBeenCalled();
+      expect(githubMock.mergePullRequest).toHaveBeenCalled();
+      expect(githubMock.deleteBranch).toHaveBeenCalled();
+
+      vi.useRealTimers();
+    });
+
+    /**
+     * when:
+     * - allocator has pending audit on github
+     * - database refresh described by @jsonNumber is pending
+     * - refresh and issue matches
+     * then:
+     * - should update refresh in database by github issue id
+     * - should skip publisher since audit is already pending
+     */
+    it('should update refresh and skip creation of new audit ', async () => {
+      vi.useFakeTimers();
+      const now = new Date('2024-01-01T00:00:00.000Z');
+      const fixtureJsonHash = `rec${faker.string.alphanumeric(12)}`;
+      const fixtureOpenedGithubEvent = GithubIssueFactory.createOpened({
+        allocator: { jsonNumber: fixtureJsonHash },
+      });
+      const fixturePendingDatabaseIssue = DatabaseRefreshFactory.create({
+        githubIssueNumber: fixtureOpenedGithubEvent.issue.number,
+        githubIssueId: fixtureOpenedGithubEvent.issue.id,
+        jsonNumber: fixtureJsonHash,
+        refreshStatus: RefreshStatus.PENDING,
+      });
+      githubMock.getFile.mockResolvedValue(fixturePendingFileContent);
+      vi.setSystemTime(now);
+      await db.collection('issueDetails').insertOne(fixturePendingDatabaseIssue);
+
+      const savedIssue = await db
+        .collection('issueDetails')
+        .findOne({ githubIssueId: fixturePendingDatabaseIssue.githubIssueId });
+
+      const response = await request(app)
+        .put('/api/v1/refreshes/upsert-from-issue')
+        .send(fixtureOpenedGithubEvent)
+        .expect(200);
+
+      expect(response.body).toStrictEqual({
+        message: 'Issue upserted successfully',
+        status: '200',
+      });
+
+      const updatedIssue = await db
+        .collection('issueDetails')
+        .findOne({ githubIssueId: fixtureOpenedGithubEvent.issue.id });
+
+      expect(updatedIssue).toStrictEqual({
+        ...savedIssue,
+        assignees: fixtureOpenedGithubEvent.issue.assignees?.map(assignee => ({
+          name: assignee.login,
+          userId: assignee.id,
+        })),
+        githubIssueNumber: fixtureOpenedGithubEvent.issue.number,
+        githubIssueId: fixtureOpenedGithubEvent.issue.id,
+        creator: {
+          name: fixtureOpenedGithubEvent.issue.user?.login,
+          userId: fixtureOpenedGithubEvent.issue.user?.id,
+        },
+        actorId: fixturePendingAllocatorJson.allocator_id,
+        msigAddress: fixturePendingAllocatorJson.pathway_addresses.msig,
+        maAddress: fixturePendingAllocatorJson.ma_address,
+        metapathwayType: fixturePendingAllocatorJson.metapathway_type,
+        createdAt: new Date(fixtureOpenedGithubEvent.issue.created_at),
+        updatedAt: new Date(fixtureOpenedGithubEvent.issue.updated_at),
+        closedAt: null,
+        title: fixtureOpenedGithubEvent.issue.title.replace('[DataCap Refresh] ', ''),
+        state: fixtureOpenedGithubEvent.issue.state,
+        labels: fixtureOpenedGithubEvent.issue.labels.map(label =>
+          typeof label === 'string' ? label : label.name,
+        ),
+        jsonNumber: fixturePendingDatabaseIssue.jsonNumber,
+        refreshStatus: RefreshStatus.PENDING,
+      });
+
+      expect(githubMock.createBranch).not.toHaveBeenCalled();
+      expect(githubMock.createPullRequest).not.toHaveBeenCalled();
+      expect(githubMock.mergePullRequest).not.toHaveBeenCalled();
+      expect(githubMock.deleteBranch).not.toHaveBeenCalled();
+
+      vi.useRealTimers();
     });
 
     it('should throw validation error when issue is missing', async () => {

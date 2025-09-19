@@ -34,49 +34,41 @@ export class RefreshAuditService implements IRefreshAuditService {
   }
 
   async approveAudit(jsonHash: string, datacapAmount: number): Promise<UpdateAuditResult> {
-    return this._refreshAuditPublisher.updateAudit(jsonHash, allocator => {
-      this.ensureCorrectCurrentJsonAuditStatus(allocator, [AuditOutcome.PENDING]);
-
-      return {
+    return this._refreshAuditPublisher.updateAudit(
+      jsonHash,
+      {
         ended: new Date().toISOString(),
         outcome: AuditOutcome.APPROVED,
         datacapAmount,
-      };
-    });
+      },
+      [AuditOutcome.PENDING],
+    );
   }
 
   async rejectAudit(jsonHash: string): Promise<UpdateAuditResult> {
-    return this._refreshAuditPublisher.updateAudit(jsonHash, allocator => {
-      this.ensureCorrectCurrentJsonAuditStatus(allocator, [AuditOutcome.PENDING]);
-
-      return {
+    return this._refreshAuditPublisher.updateAudit(
+      jsonHash,
+      {
         ended: new Date().toISOString(),
         outcome: AuditOutcome.REJECTED,
-      };
-    });
+      },
+      [AuditOutcome.PENDING],
+    );
   }
 
   async finishAudit(jsonHash: string): Promise<UpdateAuditResult> {
-    return this._refreshAuditPublisher.updateAudit(jsonHash, allocator => {
-      this.ensureCorrectCurrentJsonAuditStatus(allocator, [AuditOutcome.APPROVED]);
-      const prevAudit = allocator.audits.at(-2);
-      const currentAudit = allocator.audits.at(-1);
+    return this._refreshAuditPublisher.updateAudit(
+      jsonHash,
+      allocator => {
+        const prevAudit = allocator.audits.at(-2);
+        const currentAudit = allocator.audits.at(-1);
 
-      return {
-        dcAllocated: new Date().toISOString(),
-        outcome: this._auditOutcomeResolver.resolve(prevAudit, currentAudit),
-      };
-    });
-  }
-
-  async ensureCorrectCurrentJsonAuditStatus(
-    allocator: ApplicationPullRequestFile,
-    status: AuditOutcome[],
-  ): Promise<void> {
-    const lastAudit = allocator?.audits?.at(-1);
-    if (!lastAudit)
-      throw new Error('Allocator must have at least one audit from completed application');
-    if (!status.includes(lastAudit.outcome as AuditOutcome))
-      throw new Error('Cannot update audit because it is not in the correct status');
+        return {
+          dcAllocated: new Date().toISOString(),
+          outcome: this._auditOutcomeResolver.resolve(prevAudit, currentAudit),
+        };
+      },
+      [AuditOutcome.APPROVED],
+    );
   }
 }

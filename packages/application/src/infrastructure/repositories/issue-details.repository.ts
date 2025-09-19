@@ -1,8 +1,8 @@
 import { IRepository } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
-import { BulkWriteResult, Db, Filter, UpdateFilter, WithId } from 'mongodb';
+import { BulkWriteResult, Db, Filter, FindOptions, UpdateFilter, WithId } from 'mongodb';
 import { TYPES } from '@src/types';
-import { AuditOutcome, IssueDetails } from '@src/infrastructure/repositories/issue-details';
+import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 
 type PaginatedResults<T> = {
   results: T[];
@@ -43,11 +43,13 @@ export interface IIssueDetailsRepository extends IRepository<IssueDetails> {
   findBy<K extends keyof IssueDetails>(
     key: K,
     value: IssueDetails[K],
+    options?: FindOptions,
   ): Promise<WithId<IssueDetails> | null>;
 
-  findWithLatestAuditBy<K extends keyof IssueDetails>(
+  findLatestBy<K extends keyof IssueDetails>(
     key: K,
     value: IssueDetails[K],
+    options?: FindOptions,
   ): Promise<WithId<IssueDetails> | null>;
 }
 
@@ -158,11 +160,12 @@ class IssueDetailsRepository implements IIssueDetailsRepository {
   async findBy<K extends keyof IssueDetails>(
     key: K,
     value: IssueDetails[K],
+    options?: FindOptions,
   ): Promise<WithId<IssueDetails> | null> {
-    return this._db.collection<IssueDetails>('issueDetails').findOne({ [key]: value });
+    return this._db.collection<IssueDetails>('issueDetails').findOne({ [key]: value }, options);
   }
 
-  async findWithLatestAuditBy<K extends keyof IssueDetails>(
+  async findLatestBy<K extends keyof IssueDetails>(
     key: K,
     value: IssueDetails[K],
   ): Promise<WithId<IssueDetails> | null> {
@@ -171,7 +174,7 @@ class IssueDetailsRepository implements IIssueDetailsRepository {
         [key]: value,
       },
       {
-        sort: { 'currentAudit.started': -1 },
+        sort: { createdAt: -1 },
       },
     );
   }

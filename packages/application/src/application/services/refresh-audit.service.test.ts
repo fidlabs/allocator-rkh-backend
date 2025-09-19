@@ -4,7 +4,6 @@ import { Container } from 'inversify';
 import { TYPES } from '@src/types';
 import { AuditOutcome } from '@src/infrastructure/repositories/issue-details';
 import { RefreshAuditService } from './refresh-audit.service';
-import { ApplicationPullRequestFile } from './pull-request.types';
 
 describe('RefreshAuditService', () => {
   let container: Container;
@@ -61,7 +60,12 @@ describe('RefreshAuditService', () => {
 
     expect(refreshAuditPublisherMock.updateAudit).toHaveBeenCalledWith(
       jsonHash,
-      expect.any(Function),
+      {
+        datacapAmount,
+        ended: new Date().toISOString(),
+        outcome: AuditOutcome.APPROVED,
+      },
+      [AuditOutcome.PENDING],
     );
     expect(result.auditChange).toEqual(expectedChange);
   });
@@ -83,37 +87,12 @@ describe('RefreshAuditService', () => {
 
     expect(refreshAuditPublisherMock.updateAudit).toHaveBeenCalledWith(
       jsonHash,
-      expect.any(Function),
+      {
+        ended: new Date().toISOString(),
+        outcome: AuditOutcome.REJECTED,
+      },
+      [AuditOutcome.PENDING],
     );
     expect(result.auditChange).toEqual(expectedChange);
-  });
-
-  it('should throw error if current audit is not in the correct status', async () => {
-    await expect(
-      service.ensureCorrectCurrentJsonAuditStatus(
-        { audits: [{ outcome: AuditOutcome.GRANTED }] } as unknown as ApplicationPullRequestFile,
-        [AuditOutcome.PENDING],
-      ),
-    ).rejects.toThrow('Cannot update audit because it is not in the correct status');
-  });
-
-  it('should throw error if allocator has no audits', async () => {
-    await expect(
-      service.ensureCorrectCurrentJsonAuditStatus(
-        { audits: [] } as unknown as ApplicationPullRequestFile,
-        [AuditOutcome.PENDING],
-      ),
-    ).rejects.toThrow('Allocator must have at least one audit from completed application');
-  });
-
-  it('should resolve outcome correctly', async () => {
-    await expect(
-      service.ensureCorrectCurrentJsonAuditStatus(
-        {
-          audits: [{ outcome: AuditOutcome.GRANTED }, { outcome: AuditOutcome.PENDING }],
-        } as unknown as ApplicationPullRequestFile,
-        [AuditOutcome.PENDING],
-      ),
-    ).resolves.toBeUndefined();
   });
 });

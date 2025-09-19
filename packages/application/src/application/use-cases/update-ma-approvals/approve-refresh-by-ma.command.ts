@@ -84,10 +84,6 @@ export class ApproveRefreshByMaCommandHandler
       metaAllocator: {
         blockNumber: approval.blockNumber,
       },
-      currentAudit: {
-        ...issueDetails.currentAudit,
-        ...auditResult.auditChange,
-      },
       auditHistory,
     };
   }
