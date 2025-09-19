@@ -9,7 +9,7 @@ export type AuditCycle = {
   ended: string;
   dc_allocated: string;
   outcome: string; //"PENDING" | "APPROVED" | "REJECTED" | "DOUBLE" | "THROTTLE" | "MATCH",
-  datacap_amount: number;
+  datacap_amount: number | '';
 };
 
 export type ApplicationPullRequestFile = {

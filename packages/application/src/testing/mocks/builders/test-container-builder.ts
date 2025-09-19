@@ -41,6 +41,22 @@ import {
   MetaAllocatorService,
   IMetaAllocatorService,
 } from '@src/application/services/meta-allocator.service';
+import { RefreshAuditService } from '@src/application/services/refresh-audit.service';
+import { AuditMapper, IAuditMapper } from '@src/infrastructure/mappers/audit-mapper';
+import { AllocationPathResolver } from '@src/application/resolvers/allocation-path-resolver';
+import { AuditOutcomeResolver } from '@src/application/resolvers/audit-outcome-resolver';
+import { UpsertIssueStrategyResolver } from '@src/application/use-cases/refresh-issues/upsert-issue.strategy';
+import { RefreshAuditPublisher } from '@src/application/publishers/refresh-audit-publisher';
+import { SignRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/sign-refresh-by-rkh.command';
+import { ApproveRefreshByRKHCommandHandler } from '@src/application/use-cases/update-rkh-approvals/approve-refresh-by-rkh.command';
+import { ApproveRefreshByMaCommandHandler } from '@src/application/use-cases/update-ma-approvals/approve-refresh-by-ma.command';
+import { SaveIssueWithNewAuditCommandHandler } from '@src/application/use-cases/refresh-issues/save-issue-with-new-audit.command';
+import { SaveIssueCommandHandler } from '@src/application/use-cases/refresh-issues/save-issue.command';
+import { MessageService } from '@src/application/services/message.service';
+import { PullRequestService } from '@src/application/services/pull-request.service';
+import { RoleService } from '@src/application/services/role.service';
+import { ApproveRefreshCommandHandler } from '@src/application/use-cases/refresh-issues/approve-refresh.command';
+import { RejectRefreshCommandHandler } from '@src/application/use-cases/refresh-issues/reject-refesh.command';
 
 export class TestContainerBuilder {
   private container: Container;
@@ -58,6 +74,11 @@ export class TestContainerBuilder {
     this.container.bind<Db>(TYPES.Db).toConstantValue(this.db);
     await this.db.admin().ping();
 
+    return this;
+  }
+
+  withConfig(type: symbol, config = {}) {
+    this.container.bind<any>(type).toConstantValue(config);
     return this;
   }
 
@@ -90,6 +111,7 @@ export class TestContainerBuilder {
   withMappers() {
     this.container.bind<IIssueMapper>(TYPES.IssueMapper).to(IssueMapper).inSingletonScope();
     this.container.bind<IDataCapMapper>(TYPES.DataCapMapper).to(DataCapMapper).inSingletonScope();
+    this.container.bind<IAuditMapper>(TYPES.AuditMapper).to(AuditMapper).inSingletonScope();
     return this;
   }
 
@@ -114,6 +136,10 @@ export class TestContainerBuilder {
 
   withServices() {
     this.container.bind<IMetaAllocatorService>(TYPES.MetaAllocatorService).to(MetaAllocatorService);
+    this.container.bind<RefreshAuditService>(TYPES.RefreshAuditService).to(RefreshAuditService);
+    this.container.bind<MessageService>(TYPES.MessageService).to(MessageService);
+    this.container.bind<PullRequestService>(TYPES.PullRequestService).to(PullRequestService);
+    this.container.bind<RoleService>(TYPES.RoleService).to(RoleService);
     return this;
   }
 
@@ -123,6 +149,13 @@ export class TestContainerBuilder {
     this.container.bind(TYPES.CommandHandler).to(BulkCreateIssueCommandHandler);
     this.container.bind(TYPES.CommandHandler).to(UpsertIssueCommandCommandHandler);
     this.container.bind(TYPES.CommandHandler).to(FetchAllocatorCommandHandler);
+    this.container.bind(TYPES.CommandHandler).to(SignRefreshByRKHCommandHandler);
+    this.container.bind(TYPES.CommandHandler).to(ApproveRefreshByRKHCommandHandler);
+    this.container.bind(TYPES.CommandHandler).to(ApproveRefreshByMaCommandHandler);
+    this.container.bind(TYPES.CommandHandler).to(SaveIssueWithNewAuditCommandHandler);
+    this.container.bind(TYPES.CommandHandler).to(SaveIssueCommandHandler);
+    this.container.bind(TYPES.CommandHandler).to(ApproveRefreshCommandHandler);
+    this.container.bind(TYPES.CommandHandler).to(RejectRefreshCommandHandler);
     return this;
   }
 
@@ -144,6 +177,27 @@ export class TestContainerBuilder {
       queryBus.registerHandler(handler as IQueryHandler<ICommand>);
     });
 
+    return this;
+  }
+
+  withResolvers() {
+    this.container
+      .bind<UpsertIssueStrategyResolver>(TYPES.UpsertIssueStrategyResolver)
+      .to(UpsertIssueStrategyResolver);
+
+    this.container.bind<AuditOutcomeResolver>(TYPES.AuditOutcomeResolver).to(AuditOutcomeResolver);
+
+    this.container
+      .bind<AllocationPathResolver>(TYPES.AllocationPathResolver)
+      .to(AllocationPathResolver);
+
+    return this;
+  }
+
+  withPublishers() {
+    this.container
+      .bind<RefreshAuditPublisher>(TYPES.RefreshAuditPublisher)
+      .to(RefreshAuditPublisher);
     return this;
   }
 

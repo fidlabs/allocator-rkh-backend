@@ -11,6 +11,7 @@ import { IIssueMapper } from '@src/infrastructure/mappers/issue-mapper';
 import { IAuditMapper } from '@src/infrastructure/mappers/audit-mapper';
 import { IUpsertStrategy } from './upsert-issue.strategy';
 import { SaveIssueCommand } from './save-issue.command';
+import { SaveIssueWithNewAuditCommand } from './save-issue-with-new-audit.command';
 
 vi.mock('nanoid', () => ({
   nanoid: vi.fn().mockReturnValue('guid'),
@@ -166,7 +167,9 @@ describe('UpsertIssueCommand', () => {
     const command = new UpsertIssueCommand({ ...fixtureIssueDetails, jsonNumber: '' });
     const result = await handler.handle(command);
 
-    expect(commandBusMock.send).not.toHaveBeenCalled();
+    expect(commandBusMock.send).toHaveBeenCalledWith(expect.any(FetchAllocatorCommand));
+    expect(commandBusMock.send).not.toHaveBeenCalledWith(expect.any(SaveIssueCommand));
+    expect(commandBusMock.send).not.toHaveBeenCalledWith(expect.any(SaveIssueWithNewAuditCommand));
     expect(result).toStrictEqual({
       success: false,
       error: expect.objectContaining({

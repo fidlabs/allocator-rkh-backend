@@ -17,3 +17,7 @@ export interface LotusClientConfig {
   rpcUrl: string;
   authToken: string;
 }
+
+export interface GovernanceConfig {
+  addresses: string[];
+}

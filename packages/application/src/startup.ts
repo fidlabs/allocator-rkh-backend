@@ -82,6 +82,8 @@ import { AllocationPathResolver } from './application/resolvers/allocation-path-
 import { AuditOutcomeResolver } from './application/resolvers/audit-outcome-resolver';
 import { SaveIssueWithNewAuditCommandHandler } from './application/use-cases/refresh-issues/save-issue-with-new-audit.command';
 import { SaveIssueCommandHandler } from './application/use-cases/refresh-issues/save-issue.command';
+import { ApproveRefreshCommandHandler } from './application/use-cases/refresh-issues/approve-refresh.command';
+import { RejectRefreshCommandHandler } from './application/use-cases/refresh-issues/reject-refesh.command';
 
 export const initialize = async (): Promise<Container> => {
   const container = new Container();
@@ -192,6 +194,8 @@ export const initialize = async (): Promise<Container> => {
     .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
     .to(SaveIssueWithNewAuditCommandHandler);
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(SaveIssueCommandHandler);
+  container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(ApproveRefreshCommandHandler);
+  container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(RejectRefreshCommandHandler);
 
   const commandBus = container.get<ICommandBus>(TYPES.CommandBus);
   container

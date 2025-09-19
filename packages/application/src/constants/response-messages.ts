@@ -21,7 +21,7 @@ export const RESPONSE_MESSAGES = {
   },
   UPSERT_ISSUE_STRATEGY_RESOLVER: {
     ISSUE_REFRESH_ALREADY_FINISHED: 'This issue refresh is already finished',
-    PENDING_AUDIT: 'has pending audit, finish existing audit before creating a new one',
+    PENDING_AUDIT: 'has pending audit, finish existing refresh before creating a new one',
     CANNOT_RESOLVE_UPSERT_STRATEGY: 'Cannot resolve upsert strategy for ',
   },
 };

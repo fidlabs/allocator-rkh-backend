@@ -3,6 +3,7 @@ import { inject, injectable } from 'inversify';
 import { AuditData, AuditOutcome } from '@src/infrastructure/repositories/issue-details';
 import { RefreshAuditPublisher } from '../publishers/refresh-audit-publisher';
 import { AuditOutcomeResolver } from '../resolvers/audit-outcome-resolver';
+import { ApplicationPullRequestFile } from './pull-request.types';
 
 type UpdateAuditResult = {
   auditChange: Partial<AuditData>;
@@ -14,7 +15,7 @@ type UpdateAuditResult = {
 
 export interface IRefreshAuditService {
   startAudit(jsonHash: string): Promise<UpdateAuditResult>;
-  approveAudit(jsonHash: string): Promise<UpdateAuditResult>;
+  approveAudit(jsonHash: string, datacapAmount: number): Promise<UpdateAuditResult>;
   rejectAudit(jsonHash: string): Promise<UpdateAuditResult>;
   finishAudit(jsonHash: string): Promise<UpdateAuditResult>;
 }
@@ -32,28 +33,42 @@ export class RefreshAuditService implements IRefreshAuditService {
     return this._refreshAuditPublisher.newAudit(jsonHash);
   }
 
-  async approveAudit(jsonHash: string): Promise<UpdateAuditResult> {
-    return this._refreshAuditPublisher.updateAudit(jsonHash, {
-      ended: new Date().toISOString(),
-      outcome: AuditOutcome.APPROVED,
-    });
+  async approveAudit(jsonHash: string, datacapAmount: number): Promise<UpdateAuditResult> {
+    return this._refreshAuditPublisher.updateAudit(
+      jsonHash,
+      {
+        ended: new Date().toISOString(),
+        outcome: AuditOutcome.APPROVED,
+        datacapAmount,
+      },
+      [AuditOutcome.PENDING],
+    );
   }
 
   async rejectAudit(jsonHash: string): Promise<UpdateAuditResult> {
-    return this._refreshAuditPublisher.updateAudit(jsonHash, {
-      ended: new Date().toISOString(),
-      outcome: AuditOutcome.REJECTED,
-    });
+    return this._refreshAuditPublisher.updateAudit(
+      jsonHash,
+      {
+        ended: new Date().toISOString(),
+        outcome: AuditOutcome.REJECTED,
+      },
+      [AuditOutcome.PENDING],
+    );
   }
 
   async finishAudit(jsonHash: string): Promise<UpdateAuditResult> {
-    return this._refreshAuditPublisher.updateAudit(jsonHash, allocator => {
-      const [prevAudit, currentAudit] = allocator.audits.slice(-2);
+    return this._refreshAuditPublisher.updateAudit(
+      jsonHash,
+      allocator => {
+        const prevAudit = allocator.audits.at(-2);
+        const currentAudit = allocator.audits.at(-1);
 
-      return {
-        dcAllocated: new Date().toISOString(),
-        outcome: this._auditOutcomeResolver.resolve(prevAudit, currentAudit),
-      };
-    });
+        return {
+          dcAllocated: new Date().toISOString(),
+          outcome: this._auditOutcomeResolver.resolve(prevAudit, currentAudit),
+        };
+      },
+      [AuditOutcome.APPROVED],
+    );
   }
 }

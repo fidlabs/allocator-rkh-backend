@@ -1,14 +1,22 @@
 import { faker } from '@faker-js/faker';
 import { IssuesWebhookPayload } from '@src/infrastructure/clients/github';
+import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
+
+interface GithubIssueFactoryOverrides {
+  event?: Partial<IssuesWebhookPayload>;
+  allocator?: Partial<IssueDetails>;
+}
 
 export class GithubIssueFactory {
-  static createOpened(overrides: Partial<IssuesWebhookPayload> = {}): IssuesWebhookPayload {
+  static createOpened(
+    overrides: GithubIssueFactoryOverrides = { event: {}, allocator: {} },
+  ): IssuesWebhookPayload {
     const userId = faker.number.int({ min: 10000000, max: 999999999 });
     const issueId = faker.number.int({ min: 100000000, max: 999999999 });
     const issueNumber = faker.number.int({ min: 1000, max: 9999 });
     const repoId = faker.number.int({ min: 10000000, max: 999999999 });
     const userLogin = faker.internet.username();
-    const recHash = `rec${faker.string.alphanumeric(15)}`;
+    const recHash = overrides?.allocator?.jsonNumber || `rec${faker.string.alphanumeric(15)}`;
     const createdDate = faker.date.past({ years: 1 });
     const updatedDate = faker.date.between({ from: createdDate, to: new Date() });
 
@@ -162,12 +170,14 @@ export class GithubIssueFactory {
         type: 'User',
         site_admin: faker.datatype.boolean({ probability: 0.1 }),
       } as IssuesWebhookPayload['sender'],
-      ...overrides,
+      ...overrides.event,
     };
   }
 
-  static createEdited(overrides: Partial<IssuesWebhookPayload> = {}): IssuesWebhookPayload {
-    const baseIssue = this.createOpened();
+  static createEdited(
+    overrides: GithubIssueFactoryOverrides = { event: {}, allocator: {} },
+  ): IssuesWebhookPayload {
+    const baseIssue = this.createOpened(overrides);
     const originalCreatedDate = new Date(baseIssue.issue.created_at);
     const recentUpdatedDate = faker.date.between({
       from: originalCreatedDate,

@@ -4,7 +4,9 @@ import { AuditCycle } from '../services/pull-request.types';
 
 @injectable()
 export class AuditOutcomeResolver {
-  resolve(prevAudit: AuditCycle, currentAudit: AuditCycle): AuditOutcome {
+  resolve(prevAudit?: AuditCycle, currentAudit?: AuditCycle): AuditOutcome {
+    if (!prevAudit || !currentAudit) return AuditOutcome.UNKNOWN;
+
     const prevDatacap = prevAudit.datacap_amount;
     const currentDatacap = currentAudit.datacap_amount;
 

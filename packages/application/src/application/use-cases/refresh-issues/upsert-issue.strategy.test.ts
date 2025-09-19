@@ -2,12 +2,13 @@ import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Container } from 'inversify';
 import { TYPES } from '@src/types';
-import { UpsertIssueStrategyResolver, UpsertStrategyKey } from './upsert-issue.strategy';
+import { UpsertIssueStrategyResolver } from './upsert-issue.strategy';
 import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 import { Logger } from '@filecoin-plus/core';
 import { SaveIssueCommand } from './save-issue.command';
 import { SaveIssueWithNewAuditCommand } from './save-issue-with-new-audit.command';
+import { AuditCycle } from '@src/application/services/pull-request.types';
 
 describe('UpsertStrategy', () => {
   let container: Container;
@@ -15,7 +16,7 @@ describe('UpsertStrategy', () => {
 
   const repoMock = {
     findBy: vi.fn(),
-    findWithLatestAuditBy: vi.fn(),
+    findLatestBy: vi.fn(),
   };
 
   const loggerMock = { info: vi.fn() };
@@ -35,6 +36,22 @@ describe('UpsertStrategy', () => {
     refreshStatus: 'PENDING',
   };
 
+  const fixturePendingAudit: AuditCycle = {
+    started: '2024-01-01T00:00:00.000Z',
+    ended: '',
+    dc_allocated: '',
+    outcome: 'PENDING',
+    datacap_amount: '',
+  };
+
+  const fixtureGantedAudit: AuditCycle = {
+    started: '2024-01-01T00:00:00.000Z',
+    ended: '2024-01-02T00:00:00.000Z',
+    dc_allocated: '2024-01-03T00:00:00.000Z',
+    outcome: 'GRANTED',
+    datacap_amount: 1,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     container = new Container();
@@ -48,47 +65,39 @@ describe('UpsertStrategy', () => {
 
   it('returns SaveIssueWithNewAuditCommand when no issue by github id and no pending latest audit', async () => {
     repoMock.findBy.mockResolvedValue(null);
-    repoMock.findWithLatestAuditBy.mockResolvedValue(null);
+    repoMock.findLatestBy.mockResolvedValue(null);
 
-    const cmd = await strategy.resolveAndExecute(fixtureIssue);
+    const cmd = await strategy.resolveAndExecute(fixtureIssue, [fixtureGantedAudit]);
     expect(cmd).toBeInstanceOf(SaveIssueWithNewAuditCommand);
   });
 
   it('returns SaveIssueCommand when issue exists and no pending latest audit', async () => {
-    repoMock.findBy.mockResolvedValue({
+    repoMock.findBy.mockResolvedValue(fixtureIssue);
+    repoMock.findLatestBy.mockResolvedValue({
       ...fixtureIssue,
-      _id: 'x',
-      refreshStatus: 'PENDING',
-    } as any);
-    repoMock.findWithLatestAuditBy.mockResolvedValue(null);
+      refreshStatus: 'DC_ALLOCATED',
+      githubIssueId: 2,
+      githubIssueNumber: 200,
+    });
 
-    const cmd = await strategy.resolveAndExecute(fixtureIssue);
+    const cmd = await strategy.resolveAndExecute(fixtureIssue, [fixtureGantedAudit]);
+    expect(cmd).toBeInstanceOf(SaveIssueWithNewAuditCommand);
+  });
+
+  it('should save issue with new github audit, when issue is related to last pending audit and audit is finished', async () => {
+    repoMock.findBy.mockResolvedValue(fixtureIssue);
+    repoMock.findLatestBy.mockResolvedValue(fixtureIssue);
+
+    const cmd = await strategy.resolveAndExecute(fixtureIssue, [fixturePendingAudit]);
     expect(cmd).toBeInstanceOf(SaveIssueCommand);
   });
 
-  it('should update issue when issueByGithubId is the same as issueWithLatestAuditByJsonNumber', async () => {
-    const githubIssueId = 1;
+  it('should save issue with new github audit, when issue is related to last pending audit and audit is finished', async () => {
+    repoMock.findBy.mockResolvedValue(fixtureIssue);
+    repoMock.findLatestBy.mockResolvedValue(fixtureIssue);
 
-    repoMock.findBy.mockResolvedValue({
-      ...fixtureIssue,
-      githubIssueId,
-    });
-    repoMock.findWithLatestAuditBy.mockResolvedValue({
-      ...fixtureIssue,
-      githubIssueId,
-    });
-
-    const cmd = await strategy.resolveAndExecute(fixtureIssue);
-    expect(cmd).toBeInstanceOf(SaveIssueCommand);
-  });
-
-  it('returns SaveIssueCommand when issues are related', async () => {
-    const dbIssue = { ...fixtureIssue, _id: 'x', refreshStatus: 'PENDING' } as any;
-    repoMock.findBy.mockResolvedValue(dbIssue);
-    repoMock.findWithLatestAuditBy.mockResolvedValue(dbIssue);
-
-    const cmd = await strategy.resolveAndExecute(fixtureIssue);
-    expect(cmd).toBeInstanceOf(SaveIssueCommand);
+    const cmd = await strategy.resolveAndExecute(fixtureIssue, [fixtureGantedAudit]);
+    expect(cmd).toBeInstanceOf(SaveIssueWithNewAuditCommand);
   });
 
   it.each`
@@ -101,10 +110,10 @@ describe('UpsertStrategy', () => {
       repoMock.findBy.mockResolvedValue({
         ...fixtureIssue,
         refreshStatus,
-      } as any);
-      repoMock.findWithLatestAuditBy.mockResolvedValue(null);
+      });
+      repoMock.findLatestBy.mockResolvedValue(null);
 
-      await expect(strategy.resolveAndExecute(fixtureIssue)).rejects.toThrow(
+      await expect(strategy.resolveAndExecute(fixtureIssue, [fixtureGantedAudit])).rejects.toThrow(
         `${fixtureIssue.githubIssueNumber} ${expectedError}`,
       );
     },
@@ -112,13 +121,13 @@ describe('UpsertStrategy', () => {
 
   it('throws when latest audit by jsonNumber is pending and not related', async () => {
     repoMock.findBy.mockResolvedValue(null);
-    repoMock.findWithLatestAuditBy.mockResolvedValue({
+    repoMock.findLatestBy.mockResolvedValue({
       ...fixtureIssue,
       refreshStatus: 'PENDING',
-    } as any);
+    });
 
-    await expect(strategy.resolveAndExecute(fixtureIssue)).rejects.toThrow(
-      'has pending audit, finish existing audit before creating a new one',
+    await expect(strategy.resolveAndExecute(fixtureIssue, [fixturePendingAudit])).rejects.toThrow(
+      `${fixtureIssue.jsonNumber} has pending audit, finish existing refresh before creating a new one`,
     );
   });
 });

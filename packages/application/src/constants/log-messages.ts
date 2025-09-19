@@ -34,6 +34,7 @@ export const LOG_MESSAGES = {
     ALLOCATOR_CONNECTED_TO_ISSUE: '[UpsertIssueCommand]: Allocator connected to issue successfully',
     FAILED_TO_CONNECT_ALLOCATOR_TO_ISSUE:
       '[UpsertIssueCommand]: Failed to connect allocator to issue',
+    RESOLVING_UPSERT_STRATEGY: '[UpsertIssueCommand]: Resolving saving strategy',
   },
 
   BULK_CREATE_ISSUE_COMMAND: {
@@ -86,5 +87,10 @@ export const LOG_MESSAGES = {
   UPSERT_ISSUE_STRATEGY: {
     SAVE_WITHOUT_GITHUB_UPDATE: '[UpsertIssueStrategy]: Save without github update',
     SAVE_WITH_NEW_AUDIT: '[UpsertIssueStrategy]: Save with new audit',
+  },
+
+  REFRESH_AUDIT_PUBLISHER: {
+    NEW_AUDIT_PUBLISHED: '[RefreshAuditPublisher]: New audit published',
+    AUDIT_UPDATED: '[RefreshAuditPublisher]: Audit updated',
   },
 };
