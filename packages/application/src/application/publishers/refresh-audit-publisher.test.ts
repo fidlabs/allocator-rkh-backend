@@ -7,7 +7,8 @@ import { GithubClient } from '@src/infrastructure/clients/github';
 import { TYPES } from '@src/types';
 import { GithubConfig } from '@src/domain/types';
 import { ICommandBus } from '@filecoin-plus/core/src/interfaces/ICommandBus';
-import { AuditMapper, IAuditMapper } from '@src/infrastructure/mappers/audit-mapper';
+import { IAuditMapper } from '@src/infrastructure/mappers/audit-mapper';
+import { Logger } from '@filecoin-plus/core';
 
 describe('RefreshAuditPublisher', () => {
   let container: Container;
@@ -37,6 +38,7 @@ describe('RefreshAuditPublisher', () => {
       datacap_amount: a.datacapAmount as number,
     })),
   };
+  const loggerMock = { info: vi.fn(), error: vi.fn() };
 
   const baseAllocator = {
     application_number: 123,
@@ -66,6 +68,7 @@ describe('RefreshAuditPublisher', () => {
     container
       .bind<IAuditMapper>(TYPES.AuditMapper)
       .toConstantValue(auditMapperMock as unknown as IAuditMapper);
+    container.bind<Logger>(TYPES.Logger).toConstantValue(loggerMock as unknown as Logger);
     container
       .bind(TYPES.AllocatorRegistryConfig)
       .toConstantValue(configMock as unknown as GithubConfig);
@@ -82,7 +85,7 @@ describe('RefreshAuditPublisher', () => {
     githubMock.mergePullRequest.mockResolvedValue({});
     githubMock.deleteBranch.mockResolvedValue({});
 
-    commandBusMock.send.mockResolvedValue({ success: true, data: structuredClone(baseAllocator) });
+    commandBusMock.send.mockResolvedValue({ success: true, data: baseAllocator });
   });
 
   it('newAudit creates a new pending audit and publishes PR', async () => {
@@ -103,7 +106,7 @@ describe('RefreshAuditPublisher', () => {
   it.each([AuditOutcome.PENDING, AuditOutcome.APPROVED])(
     'newAudit throws when last audit is %s',
     async outcome => {
-      const pendingAllocator = structuredClone(baseAllocator);
+      const pendingAllocator = baseAllocator;
       pendingAllocator.audits[pendingAllocator.audits.length - 1].outcome = outcome;
       commandBusMock.send.mockResolvedValueOnce({ success: true, data: pendingAllocator });
 

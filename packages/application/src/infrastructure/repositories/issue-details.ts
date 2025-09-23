@@ -86,7 +86,5 @@ export interface IssueDetails {
   dataCap?: number;
   rkhPhase?: RkhPhase;
   metaAllocator?: MetaAllocator;
-  lastAudit?: AuditData;
-  currentAudit?: Partial<AuditData>;
   auditHistory?: AuditHistory[];
 }

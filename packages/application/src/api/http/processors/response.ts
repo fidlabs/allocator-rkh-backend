@@ -4,14 +4,14 @@ export const ok = (message: string, data?: any) => ({
   data,
 });
 
-export const badRequest = (message: string, errors: any) => ({
+export const badRequest = (message: string, errors?: any) => ({
   status: '400',
   message: message || 'Bad Request',
   errors,
 });
 
 export const badPermissions = (message?: string) => ({
-  status: '400',
+  status: '403',
   message: message || 'Bad Permissions',
 });
 

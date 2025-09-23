@@ -43,6 +43,7 @@ describe('RefreshAuditService', () => {
   });
 
   it('approveAudit sets ended and APPROVED outcome', async () => {
+    const datacapAmount = 10;
     const expectedChange = {
       ended: new Date().toISOString(),
       outcome: AuditOutcome.APPROVED,
@@ -55,9 +56,17 @@ describe('RefreshAuditService', () => {
       prUrl: 'u',
     });
 
-    const result = await service.approveAudit(jsonHash);
+    const result = await service.approveAudit(jsonHash, datacapAmount);
 
-    expect(refreshAuditPublisherMock.updateAudit).toHaveBeenCalledWith(jsonHash, expectedChange);
+    expect(refreshAuditPublisherMock.updateAudit).toHaveBeenCalledWith(
+      jsonHash,
+      {
+        datacapAmount,
+        ended: new Date().toISOString(),
+        outcome: AuditOutcome.APPROVED,
+      },
+      [AuditOutcome.PENDING],
+    );
     expect(result.auditChange).toEqual(expectedChange);
   });
 
@@ -76,32 +85,14 @@ describe('RefreshAuditService', () => {
 
     const result = await service.rejectAudit(jsonHash);
 
-    expect(refreshAuditPublisherMock.updateAudit).toHaveBeenCalledWith(jsonHash, expectedChange);
-    expect(result.auditChange).toEqual(expectedChange);
-  });
-
-  it('finishAudit computes outcome via resolver and sets dcAllocated', async () => {
-    const expectedOutcome = AuditOutcome.MATCH;
-    auditOutcomeResolverMock.resolve.mockReturnValue(expectedOutcome);
-
-    const allocatorMock = { audits: [{}, {}] } as any;
-
-    refreshAuditPublisherMock.updateAudit.mockImplementation(
-      async (_hash: string, updater: any) => {
-        const change = updater(allocatorMock);
-        return {
-          auditChange: change,
-          branchName: 'b',
-          commitSha: 'c',
-          prNumber: 1,
-          prUrl: 'u',
-        };
+    expect(refreshAuditPublisherMock.updateAudit).toHaveBeenCalledWith(
+      jsonHash,
+      {
+        ended: new Date().toISOString(),
+        outcome: AuditOutcome.REJECTED,
       },
+      [AuditOutcome.PENDING],
     );
-
-    const result = await service.finishAudit(jsonHash);
-
-    expect(refreshAuditPublisherMock.updateAudit).toHaveBeenCalled();
-    expect(result.auditChange.outcome).toBe(expectedOutcome);
+    expect(result.auditChange).toEqual(expectedChange);
   });
 });

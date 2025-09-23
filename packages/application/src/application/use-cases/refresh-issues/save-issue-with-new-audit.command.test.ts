@@ -50,8 +50,8 @@ describe('SaveIssueWithNewAuditCommand', () => {
       SaveIssueWithNewAuditCommandHandler,
     );
 
-    (refreshAuditServiceMock.startAudit as any).mockResolvedValue(auditResult);
-    (commandBusMock.send as any).mockResolvedValue({ success: true });
+    refreshAuditServiceMock.startAudit.mockResolvedValue(auditResult);
+    commandBusMock.send.mockResolvedValue({ success: true });
     vi.clearAllMocks();
   });
 
@@ -61,16 +61,18 @@ describe('SaveIssueWithNewAuditCommand', () => {
     expect(refreshAuditServiceMock.startAudit).toHaveBeenCalledWith(issue.jsonNumber);
     expect(commandBusMock.send).toHaveBeenCalled();
 
-    const sentCommand = (commandBusMock.send as any).mock.calls[0][0] as SaveIssueCommand;
+    const sentCommand = commandBusMock.send.mock.calls[0][0] as SaveIssueCommand;
 
     expect(sentCommand).toBeInstanceOf(SaveIssueCommand);
-    expect(sentCommand.issueDetails.currentAudit?.started).toBe(auditResult.auditChange.started);
+    expect(sentCommand.issueDetails.auditHistory?.at(-1)?.auditChange.started).toBe(
+      auditResult.auditChange.started,
+    );
     expect(result).toStrictEqual({ success: true });
   });
 
   it('returns failure when startAudit throws', async () => {
     const error = new Error('audit failed');
-    (refreshAuditServiceMock.startAudit as any).mockRejectedValueOnce(error);
+    refreshAuditServiceMock.startAudit.mockRejectedValueOnce(error);
 
     const result = await handler.handle(new SaveIssueWithNewAuditCommand(issue));
     expect(result).toStrictEqual({ success: false, error });

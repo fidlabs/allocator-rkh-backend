@@ -33,7 +33,7 @@ import {
   IMetaAllocatorRepository,
   MetaAllocatorRepository,
 } from './repositories/meta-allocator.repository';
-import { LotusClientConfig, RkhConfig, RpcProviderConfig } from './interfaces';
+import { GovernanceConfig, LotusClientConfig, RkhConfig, RpcProviderConfig } from './interfaces';
 import { GithubConfig } from '@src/domain/types';
 import { AuditMapper, IAuditMapper } from './mappers/audit-mapper';
 import {
@@ -110,6 +110,11 @@ export const infrastructureModule = new AsyncContainerModule(async (bind: interf
     rkhThreshold: config.RKH_THRESHOLD,
   };
   bind<RkhConfig>(TYPES.RkhConfig).toConstantValue(rkhConfig);
+
+  const governanceConfig = {
+    addresses: config.GOVERNANCE_REVIEW_ADDRESSES,
+  };
+  bind<GovernanceConfig>(TYPES.GovernanceConfig).toConstantValue(governanceConfig);
 
   // Bindings
   bind<IDatacapAllocatorEventStore>(TYPES.DatacapAllocatorEventStore)

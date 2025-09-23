@@ -12,6 +12,9 @@ import {
 import { GithubConfig } from '@src/domain/types';
 import { IAuditMapper } from '@src/infrastructure/mappers/audit-mapper';
 import { nanoid } from 'nanoid';
+import { LOG_MESSAGES } from '@src/constants';
+
+const LOG = LOG_MESSAGES.REFRESH_AUDIT_PUBLISHER;
 
 export interface IRefreshAuditPublisher {
   newAudit(jsonHash: string): Promise<{
@@ -40,6 +43,7 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
     @inject(TYPES.AllocatorRegistryConfig) private readonly _allocatorRegistryConfig: GithubConfig,
     @inject(TYPES.CommandBus) private readonly _commandBus: ICommandBus,
     @inject(TYPES.AuditMapper) private readonly _auditMapper: IAuditMapper,
+    @inject(TYPES.Logger) private readonly _logger: Logger,
   ) {}
 
   async newAudit(jsonHash: string): Promise<{
@@ -65,6 +69,8 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
 
     const result = await this.publish(jsonHash, allocator);
 
+    this._logger.info(`${LOG.NEW_AUDIT_PUBLISHED} jsonHash: ${jsonHash}`);
+
     return {
       auditChange: newAudit,
       ...result,
@@ -74,6 +80,7 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
   async updateAudit(
     jsonHash: string,
     auditData: Partial<AuditData> | ((jsonA: ApplicationPullRequestFile) => Partial<AuditData>),
+    expectedPreviousAuditOutcome?: AuditOutcome[],
   ): Promise<{
     auditChange: Partial<AuditData>;
     branchName: string;
@@ -82,6 +89,14 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
     prUrl: string;
   }> {
     const { allocator } = await this.getAllocatorJsonDetails(jsonHash);
+
+    if (
+      expectedPreviousAuditOutcome &&
+      !expectedPreviousAuditOutcome.includes(allocator.audits.at(-1)?.outcome as AuditOutcome)
+    )
+      throw new Error(
+        `Previous status not allowed. Expected: ${expectedPreviousAuditOutcome.join(', ')} but got: ${allocator.audits.at(-1)?.outcome}`,
+      );
 
     const auditDataToUpdate = typeof auditData === 'function' ? auditData(allocator!) : auditData;
 
@@ -92,6 +107,10 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
     );
 
     const result = await this.publish(jsonHash, allocator);
+
+    this._logger.info(
+      `${LOG.AUDIT_UPDATED} jsonHash: ${jsonHash} outcome: ${auditDataToUpdate.outcome}`,
+    );
 
     return {
       auditChange: auditDataToUpdate,
@@ -116,7 +135,7 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
 
   private async publish(jsonHash: string, allocator: ApplicationPullRequestFile) {
     const branchName = `refresh-audit-${jsonHash}-${allocator.audits.length}-${nanoid()}`;
-    const prTitle = `Refresh Audit ${allocator.application_number} - ${allocator.audits.length}`;
+    const prTitle = `Refresh Audit ${allocator.application_number} - ${allocator.audits.length} ${allocator.audits.at(-1)?.outcome}`;
     const prBody = `This PR is a refresh audit for the application ${allocator.application_number}.`;
 
     const branch = await this._github.createBranch(

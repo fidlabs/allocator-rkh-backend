@@ -1,5 +1,10 @@
 import { faker } from '@faker-js/faker';
-import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
+import {
+  AuditData,
+  AuditHistory,
+  AuditOutcome,
+  IssueDetails,
+} from '@src/infrastructure/repositories/issue-details';
 
 export class DatabaseRefreshFactory {
   static create(overrides: Partial<IssueDetails> = {}): IssueDetails {

@@ -40,4 +40,7 @@ export const TYPES = {
   AuditsChangesEventStore: Symbol('AuditsChangesEventStore'),
   AuditOutcomeResolver: Symbol('AuditOutcomeResolver'),
   UpsertIssueStrategyResolver: Symbol('UpsertIssueStrategyResolver'),
+  GovernanceConfig: Symbol('GovernanceConfig'),
 };
+
+export type ConfigTypes = typeof TYPES;

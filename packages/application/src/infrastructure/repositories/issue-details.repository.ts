@@ -1,8 +1,8 @@
 import { IRepository } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
-import { BulkWriteResult, Db, Filter, WithId } from 'mongodb';
+import { BulkWriteResult, Db, Filter, FindOptions, UpdateFilter, WithId } from 'mongodb';
 import { TYPES } from '@src/types';
-import { AuditOutcome, IssueDetails } from '@src/infrastructure/repositories/issue-details';
+import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
 
 type PaginatedResults<T> = {
   results: T[];
@@ -38,14 +38,18 @@ export interface IIssueDetailsRepository extends IRepository<IssueDetails> {
 
   findSignedBy(filter: Filter<IssueDetails>): Promise<IssueDetails | null>;
 
+  findApprovedBy(filter: Filter<IssueDetails>): Promise<IssueDetails | null>;
+
   findBy<K extends keyof IssueDetails>(
     key: K,
     value: IssueDetails[K],
+    options?: FindOptions,
   ): Promise<WithId<IssueDetails> | null>;
 
-  findWithLatestAuditBy<K extends keyof IssueDetails>(
+  findLatestBy<K extends keyof IssueDetails>(
     key: K,
     value: IssueDetails[K],
+    options?: FindOptions,
   ): Promise<WithId<IssueDetails> | null>;
 }
 
@@ -60,16 +64,22 @@ class IssueDetailsRepository implements IIssueDetailsRepository {
   }
 
   async save(issueDetails: IssueDetails): Promise<void> {
-    await this._db.collection<IssueDetails>('issueDetails').updateOne(
-      { githubIssueId: issueDetails.githubIssueId },
-      {
-        $set: issueDetails,
-        $setOnInsert: {
-          refreshStatus: 'PENDING' as const,
-        },
-      },
-      { upsert: true },
-    );
+    const { refreshStatus } = issueDetails;
+
+    const updateFilter: UpdateFilter<IssueDetails> = {
+      $set: issueDetails,
+      ...(!refreshStatus
+        ? {
+            $setOnInsert: {
+              refreshStatus: 'PENDING' as const,
+            },
+          }
+        : {}),
+    };
+
+    await this._db
+      .collection<IssueDetails>('issueDetails')
+      .updateOne({ githubIssueId: issueDetails.githubIssueId }, updateFilter, { upsert: true });
   }
 
   async bulkUpsertByField(
@@ -150,11 +160,12 @@ class IssueDetailsRepository implements IIssueDetailsRepository {
   async findBy<K extends keyof IssueDetails>(
     key: K,
     value: IssueDetails[K],
+    options?: FindOptions,
   ): Promise<WithId<IssueDetails> | null> {
-    return this._db.collection<IssueDetails>('issueDetails').findOne({ [key]: value });
+    return this._db.collection<IssueDetails>('issueDetails').findOne({ [key]: value }, options);
   }
 
-  async findWithLatestAuditBy<K extends keyof IssueDetails>(
+  async findLatestBy<K extends keyof IssueDetails>(
     key: K,
     value: IssueDetails[K],
   ): Promise<WithId<IssueDetails> | null> {
@@ -163,13 +174,20 @@ class IssueDetailsRepository implements IIssueDetailsRepository {
         [key]: value,
       },
       {
-        sort: { 'currentAudit.started': -1 },
+        sort: { createdAt: -1 },
       },
     );
   }
 
   async getAll(): Promise<IssueDetails[]> {
     return this._db.collection<IssueDetails>('issueDetails').find({}).toArray();
+  }
+
+  async findApprovedBy(filter: Filter<IssueDetails>): Promise<IssueDetails | null> {
+    return this._db.collection<IssueDetails>('issueDetails').findOne({
+      ...filter,
+      refreshStatus: 'APPROVED',
+    });
   }
 
   async findPendingBy(filter: Filter<IssueDetails>): Promise<IssueDetails | null> {
