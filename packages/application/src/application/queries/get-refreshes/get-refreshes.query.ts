@@ -27,9 +27,11 @@ export class GetRefreshesQueryHandler implements IQueryHandler<GetRefreshesQuery
       page: query.page,
       limit: query.limit,
       search: query.search,
-      filters: {
-        refreshStatus: query.status,
-      },
+      ...(query.status && {
+        filters: {
+          refreshStatus: query.status,
+        },
+      }),
     });
   }
 }
