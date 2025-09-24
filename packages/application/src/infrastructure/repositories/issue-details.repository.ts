@@ -2,7 +2,7 @@ import { IRepository } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 import { BulkWriteResult, Db, Filter, FindOptions, UpdateFilter, WithId } from 'mongodb';
 import { TYPES } from '@src/types';
-import { IssueDetails } from '@src/infrastructure/repositories/issue-details';
+import { IssueDetails, RefreshStatus } from '@src/infrastructure/repositories/issue-details';
 
 type PaginatedResults<T> = {
   results: T[];
@@ -14,14 +14,24 @@ type PaginatedResults<T> = {
   };
 };
 
+type GetPaginatedQuery = {
+  page: number;
+  limit: number;
+  search?: string;
+  filters?: {
+    refreshStatus?: RefreshStatus[];
+  };
+};
+
 export interface IIssueDetailsRepository extends IRepository<IssueDetails> {
   update(issueDetails: Partial<IssueDetails>): Promise<void>;
 
-  getPaginated(
-    page: number,
-    limit: number,
-    search?: string,
-  ): Promise<PaginatedResults<IssueDetails>>;
+  getPaginated({
+    page,
+    limit,
+    search,
+    filters,
+  }: GetPaginatedQuery): Promise<PaginatedResults<IssueDetails>>;
 
   getAll(): Promise<IssueDetails[]>;
 
@@ -112,39 +122,53 @@ class IssueDetailsRepository implements IIssueDetailsRepository {
     );
   }
 
-  async getPaginated(
-    page: number,
-    limit: number,
-    search?: string,
-  ): Promise<PaginatedResults<IssueDetails>> {
-    const skip = (page - 1) * limit;
-    const filter: any = {};
-    const orConditions: any[] = [];
+  async getPaginated({
+    page,
+    limit,
+    search,
+    filters,
+  }: GetPaginatedQuery): Promise<PaginatedResults<IssueDetails>> {
+    const skip: number = (page - 1) * limit;
+    const filter: Filter<IssueDetails> = {};
 
-    if (orConditions.length > 0) {
-      filter.$or = orConditions;
+    if (filters?.refreshStatus?.length) {
+      filter.$or = [
+        {
+          refreshStatus: {
+            $in: filters.refreshStatus,
+          },
+        },
+      ];
     }
 
-    if (search) {
+    const trimmedSearch: string | undefined = search?.trim();
+    if (trimmedSearch) {
+      const escaped: string = trimmedSearch.replace(/[.*+?^${}()|\[\]\\]/g, '\\$&');
+      const regexCondition = { $regex: escaped, $options: 'i' };
+
       filter.$and = [
         {
           $or: [
-            { name: { $regex: search, $options: 'i' } },
-            { address: { $regex: search, $options: 'i' } },
+            { title: regexCondition },
+            { msigAddress: regexCondition },
+            { jsonNumber: regexCondition },
           ],
         },
       ];
     }
 
-    const totalCount = await this._db
-      .collection<IssueDetails>('issueDetails')
-      .countDocuments(filter);
-    const issues = await this._db
-      .collection<IssueDetails>('issueDetails')
-      .find(filter)
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+    const collection = this._db.collection<IssueDetails>('issueDetails');
+
+    const [totalCount, issues] = await Promise.all([
+      collection.countDocuments(filter),
+      collection
+        .find(filter, {
+          skip,
+          limit,
+          sort: { createdAt: -1 },
+        })
+        .toArray(),
+    ]);
 
     return {
       results: issues,

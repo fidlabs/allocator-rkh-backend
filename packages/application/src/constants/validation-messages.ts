@@ -62,4 +62,19 @@ export const VALIDATION_MESSAGES = {
     REQUIRED: 'Governance review github issue number is required',
     INVALID: 'Governance review github issue number must be a positive integer',
   },
+  QUERY: {
+    PAGE: {
+      INVALID: 'Query page must be a positive integer',
+    },
+    LIMIT: {
+      INVALID: 'Query limit must be a positive integer',
+    },
+    SEARCH: {
+      INVALID: 'Query search must be a string',
+    },
+    STATUS: {
+      INVALID: 'Query status must be an array',
+      INVALID_VALUE: 'Query status item must be a valid status',
+    },
+  },
 };

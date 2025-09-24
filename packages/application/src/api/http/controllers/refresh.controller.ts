@@ -7,6 +7,8 @@ import {
   httpGet,
   httpPost,
   httpPut,
+  PARAMETER_TYPE,
+  params,
   request,
   requestBody,
   requestParam,
@@ -30,6 +32,7 @@ import { SignatureType } from '@src/patterns/decorators/signature-guard.decorato
 import { SignatureGuard } from '@src/patterns/decorators/signature-guard.decorator';
 import { RejectRefreshCommand } from '@src/application/use-cases/refresh-issues/reject-refesh.command';
 import { ApproveRefreshCommand } from '@src/application/use-cases/refresh-issues/approve-refresh.command';
+import { GetRefreshesQueryDto } from '@src/application/dtos/GetRefreshesQueryDto';
 
 const RES = RESPONSE_MESSAGES.REFRESH_CONTROLLER;
 
@@ -42,18 +45,16 @@ export class RefreshController {
     @inject(TYPES.RoleService) private readonly _roleService: RoleService,
   ) {}
 
-  @httpGet('', ...validateRefreshesQuery)
-  async getAllRefreshes(@request() req: Request, @response() res: Response) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json(badRequest(RES.INVALID_QUERY, errors.array()));
-    }
+  @httpGet('', validateRequest(validateRefreshesQuery, RES.INVALID_QUERY))
+  async getAllRefreshes(
+    @params(PARAMETER_TYPE.QUERY) getRefreshesQueryDto: GetRefreshesQueryDto,
+    @response() res: Response,
+  ) {
+    const { page, limit, search, status } = getRefreshesQueryDto;
 
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
-    const search = req.query.search as string | undefined;
-
-    const result = await this._queryBus.execute(new GetRefreshesQuery(page, limit, search));
+    const result = await this._queryBus.execute(
+      new GetRefreshesQuery(parseInt(page), parseInt(limit), search, status),
+    );
 
     return res.json(ok(RES.GET_ALL, result));
   }
