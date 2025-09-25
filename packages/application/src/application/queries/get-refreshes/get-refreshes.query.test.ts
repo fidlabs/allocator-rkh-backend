@@ -1,5 +1,5 @@
 import { Container } from 'inversify';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GetRefreshesQuery, GetRefreshesQueryHandler } from './get-refreshes.query';
 import { RefreshStatus } from '@src/infrastructure/repositories/issue-details';
 import { TYPES } from '@src/types';
@@ -10,7 +10,7 @@ describe('GetRefreshesQuery', () => {
   let handler: GetRefreshesQueryHandler;
 
   const repositoryMock = {
-    getPaginated: vi.fn().mockResolvedValue('fixtureRepositoryResponse'),
+    getPaginated: vi.fn(),
   };
 
   beforeEach(() => {
@@ -20,6 +20,12 @@ describe('GetRefreshesQuery', () => {
       .bind<IIssueDetailsRepository>(TYPES.IssueDetailsRepository)
       .toConstantValue(repositoryMock as unknown as IIssueDetailsRepository);
     handler = container.get(GetRefreshesQueryHandler);
+
+    repositoryMock.getPaginated.mockResolvedValue('fixtureRepositoryResponse');
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
   it('should be defined', () => {
