@@ -220,6 +220,7 @@ describe('POST /api/v1/refreshes/:githubIssueId/review', () => {
     expect(refresh).toStrictEqual({
       ...fixturePendingRefresh,
       _id: databasePendingRefresh.insertedId,
+      dataCap: fixtureChallengeProps.finalDataCap,
       refreshStatus: RefreshStatus.APPROVED,
       auditHistory: [
         ...(fixturePendingRefresh.auditHistory || []),

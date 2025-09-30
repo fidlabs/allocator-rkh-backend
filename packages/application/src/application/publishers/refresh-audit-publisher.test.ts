@@ -38,7 +38,7 @@ describe('RefreshAuditPublisher', () => {
       datacap_amount: a.datacapAmount as number,
     })),
   };
-  const loggerMock = { info: vi.fn(), error: vi.fn() };
+  const loggerMock = { info: vi.fn(), error: vi.fn(), debug: vi.fn() };
 
   const baseAllocator = {
     application_number: 123,
@@ -115,13 +115,36 @@ describe('RefreshAuditPublisher', () => {
   );
 
   it('updateAudit applies partial changes to latest audit and publishes PR', async () => {
-    const change = { ended: '2024-01-02T00:00:00.000Z', outcome: AuditOutcome.APPROVED } as any;
+    const change = { ended: '2024-01-02T00:00:00.000Z', outcome: AuditOutcome.APPROVED };
 
     const result = await publisher.updateAudit('hash123', change);
 
     expect(auditMapperMock.partialFromAuditDataToDomain).toHaveBeenCalledWith(change);
     expect(githubMock.createPullRequest).toHaveBeenCalled();
     expect(result.prNumber).toBe(10);
+    expect(result.auditChange).toEqual(change);
+    expect(loggerMock.info).toHaveBeenCalledWith(
+      `[RefreshAuditPublisher]: Audit updated jsonHash: hash123 outcome: APPROVED`,
+    );
+    expect(loggerMock.debug).toHaveBeenCalledWith(`Allocator:`);
+    expect(loggerMock.debug).toHaveBeenCalledWith(baseAllocator);
+    expect(loggerMock.debug).toHaveBeenCalledWith(`Current audit:`);
+    expect(loggerMock.debug).toHaveBeenCalledWith(
+      baseAllocator.audits[baseAllocator.audits.length - 1],
+    );
+    expect(loggerMock.debug).toHaveBeenCalledWith(`Incoming audit update:`);
+    expect(loggerMock.debug).toHaveBeenCalledWith(change);
+    expect(loggerMock.debug).toHaveBeenCalledWith(`Pull request:`);
+    expect(loggerMock.debug).toHaveBeenCalledWith(result.prNumber);
+    expect(loggerMock.debug).toHaveBeenCalledWith(`Branch deleted:`);
+    expect(loggerMock.debug).toHaveBeenCalledWith(result.branchName);
+  });
+
+  it('should preserve fields with empty string values', async () => {
+    const change = { ended: '2024-01-02T00:00:00.000Z', outcome: AuditOutcome.APPROVED } as any;
+
+    const result = await publisher.updateAudit('hash123', change);
+
     expect(result.auditChange).toEqual(change);
   });
 });
