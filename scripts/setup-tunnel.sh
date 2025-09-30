@@ -45,7 +45,7 @@ npx localtunnel --port "$PORT" > "$temp_file" 2>&1 &
 tunnel_pid=$!
 
 echo "Waiting for tunnel URL..."
-sleep 5
+sleep 10
 
 tunnel_url=$(grep -o 'https://[^[:space:]]*\.loca\.lt' "$temp_file" | head -1)
 

@@ -1,5 +1,6 @@
 import { body, query } from 'express-validator';
 import { VALIDATION_MESSAGES } from '@src/constants/validation-messages';
+import { RefreshStatus } from '@src/infrastructure/repositories/issue-details';
 
 export const validateIssueUpsert = [
   body('issue')
@@ -45,7 +46,15 @@ export const validateIssueUpsert = [
 ];
 
 export const validateRefreshesQuery = [
-  query('page').optional().isInt({ min: 1 }),
-  query('limit').optional().isInt({ min: 1, max: 100 }),
-  query('search').optional().isString(),
+  query('page').optional().isInt({ min: 1 }).withMessage(VALIDATION_MESSAGES.QUERY.PAGE.INVALID),
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage(VALIDATION_MESSAGES.QUERY.LIMIT.INVALID),
+  query('search').optional().isString().withMessage(VALIDATION_MESSAGES.QUERY.SEARCH.INVALID),
+  query('status').optional().isArray().withMessage(VALIDATION_MESSAGES.QUERY.STATUS.INVALID),
+  query('status.*')
+    .optional()
+    .isIn(Object.values(RefreshStatus))
+    .withMessage(VALIDATION_MESSAGES.QUERY.STATUS.INVALID_VALUE),
 ];

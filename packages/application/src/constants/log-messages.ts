@@ -93,4 +93,12 @@ export const LOG_MESSAGES = {
     NEW_AUDIT_PUBLISHED: '[RefreshAuditPublisher]: New audit published',
     AUDIT_UPDATED: '[RefreshAuditPublisher]: Audit updated',
   },
+
+  SYNC_ISSUE_COMMAND: {
+    SYNCING_ISSUE: '[SyncIssueCommand]: Syncing issue',
+    ISSUE_SYNCED: '[SyncIssueCommand]: Issue synced successfully',
+    FAILED_TO_SYNC_ISSUE: '[SyncIssueCommand]: Failed to sync issue',
+    MAPPING_ISSUE: '[SyncIssueCommand]: Mapping issue',
+    ISSUE_MAPPED: '[SyncIssueCommand]: Issue mapped successfully',
+  },
 };

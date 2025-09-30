@@ -9,6 +9,9 @@ import { DatabaseRefreshFactory } from '@mocks/factories';
 import '@src/api/http/controllers/refresh.controller';
 import { TestContainerBuilder } from '@mocks/builders';
 import * as dotenv from 'dotenv';
+import { TYPES } from '@src/types';
+import { IGithubClient } from '@src/infrastructure/clients/github';
+import { RefreshStatus } from '@src/infrastructure/repositories/issue-details';
 
 process.env.NODE_ENV = 'test';
 dotenv.config({ path: '.env.test' });
@@ -26,9 +29,14 @@ describe('GET /api/v1/refreshes', () => {
       .withEventBus()
       .withCommandBus()
       .withQueryBus()
-      .withMappers()
+      .withGithubClient({} as unknown as IGithubClient)
+      .withConfig(TYPES.AllocatorGovernanceConfig, { owner: 'owner', repo: 'repo' })
+      .withConfig(TYPES.AllocatorRegistryConfig, { owner: 'owner', repo: 'repo' })
+      .withConfig(TYPES.GovernanceConfig, { addresses: ['0x123'] })
+      .withResolvers()
       .withServices()
-      .withGithubClient()
+      .withPublishers()
+      .withMappers()
       .withRepositories()
       .withCommandHandlers()
       .withQueryHandlers()
@@ -118,7 +126,7 @@ describe('GET /api/v1/refreshes', () => {
   it('should return filtered refreshes when search parameter is provided', async () => {
     const searchTerm = 'testing search term';
     const issue = DatabaseRefreshFactory.create({
-      title: `[DataCap Refresh] - ${searchTerm}`,
+      title: `${searchTerm}`,
     });
     const otherIssues = Array.from({ length: 3 }, () => DatabaseRefreshFactory.create());
     await db.collection('issueDetails').insertMany([issue, ...otherIssues]);
@@ -127,6 +135,9 @@ describe('GET /api/v1/refreshes', () => {
       .get('/api/v1/refreshes')
       .query({ search: searchTerm })
       .expect(200);
+
+    expect(response.body.data.results).toHaveLength(1);
+    expect(response.body.data.results[0].title).toContain(searchTerm);
 
     expect(response.body).toStrictEqual({
       status: '200',
@@ -141,6 +152,68 @@ describe('GET /api/v1/refreshes', () => {
         results: response.body.data.results.map((item: any) => ({
           _id: item._id,
           githubIssueId: item.githubIssueId,
+          githubIssueNumber: item.githubIssueNumber,
+          actorId: item.actorId,
+          maAddress: item.maAddress,
+          msigAddress: item.msigAddress,
+          refreshStatus: item.refreshStatus,
+          metapathwayType: item.metapathwayType,
+          dataCap: item.dataCap,
+          title: item.title,
+          creator: {
+            name: item.creator.name,
+            userId: item.creator.userId,
+          },
+          assignees: item.assignees,
+          labels: item.labels,
+          state: item.state,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          closedAt: item.closedAt,
+          jsonNumber: item.jsonNumber,
+        })),
+      },
+    });
+  });
+
+  it('should filter refreshes when status parameter is provided', async () => {
+    const status = RefreshStatus.PENDING;
+    const pendingIssue = DatabaseRefreshFactory.create({
+      refreshStatus: status,
+    });
+    const otherIssue = DatabaseRefreshFactory.create({
+      refreshStatus: RefreshStatus.APPROVED,
+    });
+    await db.collection('issueDetails').insertMany([pendingIssue, otherIssue]);
+
+    const response = await request(app)
+      .get('/api/v1/refreshes')
+      .query({ 'status[]': [status] })
+      .expect(200);
+
+    expect(response.body.data.results).toHaveLength(1);
+    expect(response.body.data.results[0].refreshStatus).toBe(status);
+
+    expect(response.body).toStrictEqual({
+      status: '200',
+      message: 'Retrieved refreshes',
+      data: {
+        pagination: {
+          currentPage: response.body.data.pagination.currentPage,
+          itemsPerPage: response.body.data.pagination.itemsPerPage,
+          totalItems: response.body.data.pagination.totalItems,
+          totalPages: response.body.data.pagination.totalPages,
+        },
+        results: response.body.data.results.map((item: any) => ({
+          _id: item._id,
+          githubIssueId: item.githubIssueId,
+          githubIssueNumber: item.githubIssueNumber,
+          actorId: item.actorId,
+          maAddress: item.maAddress,
+          msigAddress: item.msigAddress,
+          refreshStatus: item.refreshStatus,
+          metapathwayType: item.metapathwayType,
+          dataCap: item.dataCap,
           title: item.title,
           creator: {
             name: item.creator.name,
@@ -169,22 +242,33 @@ describe('GET /api/v1/refreshes', () => {
       .expect(400);
 
     expect(response.body).toStrictEqual({
-      errors: [
-        {
-          location: 'query',
-          msg: 'Invalid value',
-          path: 'page',
-          type: 'field',
-          value: '-1',
-        },
-        {
-          location: 'query',
-          msg: 'Invalid value',
-          path: 'limit',
-          type: 'field',
-          value: 'invalid',
-        },
-      ],
+      errors: ['Query page must be a positive integer', 'Query limit must be a positive integer'],
+      status: '400',
+      message: 'Invalid query parameters',
+    });
+  });
+
+  it('should return 400 when invalid status parameter is provided', async () => {
+    const response = await request(app)
+      .get('/api/v1/refreshes')
+      .query({ status: 'invalid' })
+      .expect(400);
+
+    expect(response.body).toStrictEqual({
+      errors: ['Query status must be an array'],
+      status: '400',
+      message: 'Invalid query parameters',
+    });
+  });
+
+  it('should return 400 when invalid status item is provided', async () => {
+    const response = await request(app)
+      .get('/api/v1/refreshes')
+      .query({ 'status[]': ['invalid'] })
+      .expect(400);
+
+    expect(response.body).toStrictEqual({
+      errors: ['Query status item must be a valid status'],
       status: '400',
       message: 'Invalid query parameters',
     });

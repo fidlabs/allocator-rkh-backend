@@ -423,6 +423,15 @@ export class GithubClient implements IGithubClient {
     }
   }
 
+  async getIssue(owner: string, repo: string, issueNumber: number): Promise<RepoIssue> {
+    const { data } = await this.octokit.issues.get({
+      owner,
+      repo,
+      issue_number: issueNumber,
+    });
+    return data;
+  }
+
   async createOrUpdateFile(
     owner: string,
     repo: string,

@@ -147,7 +147,8 @@ async function main() {
               });
 
               if (!lotusResponse.ok) {
-                logger.error('Lotus RPC request failed in batch', {
+                logger.error('Lotus RPC request failed in batch');
+                logger.error({
                   status: lotusResponse.status,
                   statusText: lotusResponse.statusText,
                   method,

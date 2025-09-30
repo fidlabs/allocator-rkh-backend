@@ -55,12 +55,12 @@ export type AuditData = {
   datacapAmount: number | '';
 };
 
-interface RkhPhase {
+export interface RkhPhase {
   messageId: number;
   approvals: string[];
 }
 
-interface MetaAllocator {
+export interface MetaAllocator {
   blockNumber: number;
 }
 

@@ -1,7 +1,7 @@
 export interface GovernanceReviewDetailsDto {
   reviewerAddress: string;
   reviewerPublicKey: string;
-  finalDataCap: number;
+  finalDataCap: string;
   allocatorType: string;
 }
 

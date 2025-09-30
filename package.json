@@ -14,7 +14,8 @@
     "core": "npx -w @filecoin-plus/core",
     "format:check": "prettier --check 'packages/**/*.{js,ts,json}'",
     "format:fix": "prettier --write 'packages/**/*.{js,ts,json}'",
-    "test:unit": "cd packages/application && npm run test:unit run"
+    "test:unit": "cd packages/application && npm run test:unit run",
+    "test:e2e": "cd packages/application && npm run test:e2e run"
   },
   "devDependencies": {
     "prettier": "^3.3.3"

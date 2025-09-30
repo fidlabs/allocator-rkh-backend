@@ -62,4 +62,27 @@ export const VALIDATION_MESSAGES = {
     REQUIRED: 'Governance review github issue number is required',
     INVALID: 'Governance review github issue number must be a positive integer',
   },
+  QUERY: {
+    PAGE: {
+      INVALID: 'Query page must be a positive integer',
+    },
+    LIMIT: {
+      INVALID: 'Query limit must be a positive integer',
+    },
+    SEARCH: {
+      INVALID: 'Query search must be a string',
+    },
+    STATUS: {
+      INVALID: 'Query status must be an array',
+      INVALID_VALUE: 'Query status item must be a valid status',
+    },
+  },
+  ISSUE_JSON_NUMBER: {
+    REQUIRED: 'Issue JSON number is required',
+    INVALID: 'Issue JSON number must be a string',
+  },
+  ISSUE_GITHUB_ISSUE_ID: {
+    REQUIRED: 'Issue GitHub issue ID is required',
+    INVALID: 'Issue GitHub issue ID must be a positive integer',
+  },
 };
