@@ -76,6 +76,7 @@ export class ApproveRefreshCommandHandler implements ICommandHandler<ApproveRefr
 
     return {
       ...issueDetails,
+      dataCap: Number(auditResult.auditChange.datacapAmount),
       refreshStatus: RefreshStatus.APPROVED,
       auditHistory,
     };

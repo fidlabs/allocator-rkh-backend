@@ -77,4 +77,12 @@ export const VALIDATION_MESSAGES = {
       INVALID_VALUE: 'Query status item must be a valid status',
     },
   },
+  ISSUE_JSON_NUMBER: {
+    REQUIRED: 'Issue JSON number is required',
+    INVALID: 'Issue JSON number must be a string',
+  },
+  ISSUE_GITHUB_ISSUE_ID: {
+    REQUIRED: 'Issue GitHub issue ID is required',
+    INVALID: 'Issue GitHub issue ID must be a positive integer',
+  },
 };

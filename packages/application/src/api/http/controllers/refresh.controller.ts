@@ -33,6 +33,7 @@ import { SignatureGuard } from '@src/patterns/decorators/signature-guard.decorat
 import { RejectRefreshCommand } from '@src/application/use-cases/refresh-issues/reject-refesh.command';
 import { ApproveRefreshCommand } from '@src/application/use-cases/refresh-issues/approve-refresh.command';
 import { GetRefreshesQueryDto } from '@src/application/dtos/GetRefreshesQueryDto';
+import { SyncIssueCommand } from '@src/application/use-cases/refresh-issues/sync-issue.command';
 
 const RES = RESPONSE_MESSAGES.REFRESH_CONTROLLER;
 
@@ -84,6 +85,19 @@ export class RefreshController {
     return res.json(ok(RES.UPSERTED_ISSUE));
   }
 
+  @httpPost('/sync/issue/:githubIssueNumber')
+  async syncIssue(
+    @requestParam('githubIssueNumber') githubIssueNumber: string,
+    @response() res: Response,
+  ) {
+    const result = await this._commandBus.send(new SyncIssueCommand(parseInt(githubIssueNumber)));
+
+    if (!result?.success) {
+      return res.status(400).json(badRequest(RES.FAILED_TO_UPSERT_ISSUE, [result.error.message]));
+    }
+    return res.json(ok(RES.UPSERTED_ISSUE));
+  }
+
   @httpPost('/sync/issues')
   async syncIssues(@response() res: Response) {
     const result = await this._commandBus.send(new RefreshIssuesCommand());
@@ -114,7 +128,7 @@ export class RefreshController {
 
     const command =
       result === 'approve'
-        ? new ApproveRefreshCommand(id, approveRefreshDto.details.finalDataCap)
+        ? new ApproveRefreshCommand(id, parseInt(approveRefreshDto.details.finalDataCap))
         : new RejectRefreshCommand(id);
 
     const refreshResult = await this._commandBus.send(command);

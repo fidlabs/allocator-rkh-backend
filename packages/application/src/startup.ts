@@ -84,6 +84,7 @@ import { SaveIssueWithNewAuditCommandHandler } from './application/use-cases/ref
 import { SaveIssueCommandHandler } from './application/use-cases/refresh-issues/save-issue.command';
 import { ApproveRefreshCommandHandler } from './application/use-cases/refresh-issues/approve-refresh.command';
 import { RejectRefreshCommandHandler } from './application/use-cases/refresh-issues/reject-refesh.command';
+import { SyncIssueCommandCommandHandler } from './application/use-cases/refresh-issues/sync-issue.command';
 
 export const initialize = async (): Promise<Container> => {
   const container = new Container();
@@ -196,6 +197,9 @@ export const initialize = async (): Promise<Container> => {
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(SaveIssueCommandHandler);
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(ApproveRefreshCommandHandler);
   container.bind<ICommandHandler<ICommand>>(TYPES.CommandHandler).to(RejectRefreshCommandHandler);
+  container
+    .bind<ICommandHandler<ICommand>>(TYPES.CommandHandler)
+    .to(SyncIssueCommandCommandHandler);
 
   const commandBus = container.get<ICommandBus>(TYPES.CommandBus);
   container

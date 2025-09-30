@@ -188,7 +188,7 @@ export async function handleSignRKHRefresh({
   address: string;
   issuesRepository: IIssueDetailsRepository;
 }) {
-  const issue = await issuesRepository.findSignedBy({ msigAddress: address });
+  const issue = await issuesRepository.findApprovedBy({ msigAddress: address });
   if (!issue) throw new Error(`Issue not found for address ${address}`);
 
   return new SignRefreshByRKHCommand(issue, tx);

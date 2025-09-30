@@ -90,6 +90,11 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
   }> {
     const { allocator } = await this.getAllocatorJsonDetails(jsonHash);
 
+    this._logger.debug(`Allocator:`);
+    this._logger.debug(allocator);
+    this._logger.debug(`Current audit:`);
+    this._logger.debug(allocator.audits[allocator.audits.length - 1]);
+
     if (
       expectedPreviousAuditOutcome &&
       !expectedPreviousAuditOutcome.includes(allocator.audits.at(-1)?.outcome as AuditOutcome)
@@ -99,6 +104,8 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
       );
 
     const auditDataToUpdate = typeof auditData === 'function' ? auditData(allocator!) : auditData;
+    this._logger.debug(`Incoming audit update:`);
+    this._logger.debug(auditDataToUpdate);
 
     Object.entries(this._auditMapper.partialFromAuditDataToDomain(auditDataToUpdate)).forEach(
       ([key, value]) => {
@@ -162,6 +169,9 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
       files,
     );
 
+    this._logger.debug(`Pull request:`);
+    this._logger.debug(pr);
+
     await this._github.mergePullRequest(
       this._allocatorRegistryConfig.owner,
       this._allocatorRegistryConfig.repo,
@@ -169,11 +179,17 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
       `Refresh Audit ${jsonHash} ${allocator.audits.length} - ${allocator.application_number}`,
     );
 
+    this._logger.debug(`Pull request merged:`);
+    this._logger.debug(pr.number);
+
     await this._github.deleteBranch(
       this._allocatorRegistryConfig.owner,
       this._allocatorRegistryConfig.repo,
       branchName,
     );
+
+    this._logger.debug(`Branch deleted:`);
+    this._logger.debug(branchName);
 
     return {
       branchName,

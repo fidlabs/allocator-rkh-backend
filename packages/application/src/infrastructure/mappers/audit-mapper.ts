@@ -13,6 +13,14 @@ export interface IAuditMapper {
 
 @injectable()
 export class AuditMapper implements IAuditMapper {
+  private readonly toDomainMapping: Record<keyof AuditData, keyof AuditCycle> = {
+    started: 'started',
+    ended: 'ended',
+    dcAllocated: 'dc_allocated',
+    outcome: 'outcome',
+    datacapAmount: 'datacap_amount',
+  };
+
   fromDomainToAuditData(jsonAuditCycle: AuditCycle): AuditData {
     return {
       started: jsonAuditCycle.started,
@@ -34,12 +42,8 @@ export class AuditMapper implements IAuditMapper {
   }
 
   partialFromAuditDataToDomain(auditData: Partial<AuditData>): Partial<AuditCycle> {
-    return {
-      started: auditData.started,
-      ended: auditData.ended,
-      dc_allocated: auditData.dcAllocated,
-      outcome: auditData.outcome as AuditOutcome,
-      datacap_amount: auditData.datacapAmount as number,
-    };
+    return Object.fromEntries(
+      Object.entries(auditData).map(([key, value]) => [this.toDomainMapping[key], value]),
+    );
   }
 }

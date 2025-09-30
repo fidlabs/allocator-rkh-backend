@@ -51,7 +51,7 @@ export function SignatureGuard(signatureType: SignatureType): HandlerDecorator {
       const expectedPreImage = messageFactoryByType[signatureType]({
         result,
         id,
-        finalDataCap,
+        finalDataCap: parseInt(finalDataCap),
         allocatorType,
       });
 
