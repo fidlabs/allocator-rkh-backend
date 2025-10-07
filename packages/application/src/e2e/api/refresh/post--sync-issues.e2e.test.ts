@@ -10,20 +10,25 @@ import { TestContainerBuilder } from '@mocks/builders';
 import '@src/api/http/controllers/refresh.controller';
 import { TYPES } from '@src/types';
 import { IGithubClient } from '@src/infrastructure/clients/github';
+import { IRpcProvider } from '@src/infrastructure/clients/rpc-provider';
 
 process.env.NODE_ENV = 'test';
 dotenv.config({ path: '.env.test' });
+
+const githubMock = vi.hoisted(() => ({
+  getIssues: vi.fn().mockResolvedValue([]),
+  getIssue: vi.fn(),
+  getFile: vi.fn(),
+}));
+
+const rpcProviderMock = vi.hoisted(() => ({
+  getBlock: vi.fn(),
+}));
 
 describe('POST /api/v1/refreshes/sync/issues', () => {
   let app: Application;
   let container: Container;
   let db: Db;
-
-  const githubMock = vi.hoisted(() => ({
-    getIssues: vi.fn().mockResolvedValue([]),
-    getIssue: vi.fn(),
-    getFile: vi.fn(),
-  }));
 
   beforeAll(async () => {
     const builder = new TestContainerBuilder();
@@ -34,9 +39,14 @@ describe('POST /api/v1/refreshes/sync/issues', () => {
       .withCommandBus()
       .withQueryBus()
       .withGithubClient(githubMock as unknown as IGithubClient)
+      .withRpcProvider(rpcProviderMock as unknown as IRpcProvider)
       .withConfig(TYPES.AllocatorGovernanceConfig, { owner: 'owner', repo: 'repo' })
+      .withConfig(TYPES.AllocatorRegistryConfig, { owner: 'owner', repo: 'repo' })
+      .withConfig(TYPES.GovernanceConfig, { addresses: ['0x123'] })
       .withMappers()
       .withServices()
+      .withResolvers()
+      .withPublishers()
       .withRepositories()
       .withCommandHandlers()
       .withQueryHandlers()

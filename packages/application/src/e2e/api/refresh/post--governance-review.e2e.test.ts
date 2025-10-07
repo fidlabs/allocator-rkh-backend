@@ -21,6 +21,7 @@ import {
   IssueDetails,
   RefreshStatus,
 } from '@src/infrastructure/repositories/issue-details';
+import { IRpcProvider } from '@src/infrastructure/clients/rpc-provider';
 
 const githubMock = vi.hoisted(() => ({
   createBranch: vi.fn(),
@@ -28,6 +29,10 @@ const githubMock = vi.hoisted(() => ({
   mergePullRequest: vi.fn(),
   deleteBranch: vi.fn(),
   getFile: vi.fn(),
+}));
+
+const rpcProviderMock = vi.hoisted(() => ({
+  getBlock: vi.fn(),
 }));
 
 vi.mock('nanoid', () => ({
@@ -121,6 +126,7 @@ describe('POST /api/v1/refreshes/:githubIssueId/review', () => {
       .withConfig(TYPES.GovernanceConfig, {
         addresses: [correctApprove.address],
       })
+      .withRpcProvider(rpcProviderMock as unknown as IRpcProvider)
       .withEventBus()
       .withCommandBus()
       .withQueryBus()

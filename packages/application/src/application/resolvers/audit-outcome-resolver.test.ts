@@ -8,14 +8,6 @@ describe('AuditOutcomeResolver', () => {
   let container: Container;
   let service: AuditOutcomeResolver;
 
-  const createAuditCycle = (dc: number) => ({
-    started: '',
-    ended: '',
-    dc_allocated: '',
-    outcome: '',
-    datacap_amount: dc,
-  });
-
   beforeEach(() => {
     container = new Container();
     container.bind<AuditOutcomeResolver>(TYPES.AuditOutcomeResolver).to(AuditOutcomeResolver);
@@ -23,22 +15,19 @@ describe('AuditOutcomeResolver', () => {
     service = container.get<AuditOutcomeResolver>(TYPES.AuditOutcomeResolver);
   });
 
-  it('returns MATCH when datacap is unchanged compared to previous audit', () => {
-    expect(service.resolve(createAuditCycle(10), createAuditCycle(10))).toBe(AuditOutcome.MATCH);
-  });
-
-  it('returns DOUBLE when current equals previous * 2', () => {
-    expect(service.resolve(createAuditCycle(10), createAuditCycle(20))).toBe(AuditOutcome.DOUBLE);
-  });
-
-  it('returns THROTTLE when current equals previous / 2', () => {
-    expect(service.resolve(createAuditCycle(10), createAuditCycle(5))).toBe(AuditOutcome.THROTTLE);
-  });
-
-  it('returns UNKNOWN for all other cases', () => {
-    expect(service.resolve(createAuditCycle(0), createAuditCycle(7))).toBe(AuditOutcome.UNKNOWN);
-    expect(service.resolve(createAuditCycle(10), createAuditCycle(0))).toBe(AuditOutcome.UNKNOWN);
-    expect(service.resolve(createAuditCycle(7), createAuditCycle(8))).toBe(AuditOutcome.UNKNOWN);
-    expect(service.resolve(createAuditCycle(8), createAuditCycle(7))).toBe(AuditOutcome.UNKNOWN);
-  });
+  it.each`
+    prevDatacap | currentDatacap | expected
+    ${10}       | ${10}          | ${AuditOutcome.MATCH}
+    ${10}       | ${20}          | ${AuditOutcome.DOUBLE}
+    ${10}       | ${5}           | ${AuditOutcome.THROTTLE}
+    ${0}        | ${7}           | ${AuditOutcome.UNKNOWN}
+    ${10}       | ${0}           | ${AuditOutcome.UNKNOWN}
+    ${7}        | ${8}           | ${AuditOutcome.UNKNOWN}
+    ${8}        | ${7}           | ${AuditOutcome.UNKNOWN}
+  `(
+    'returns $expected when prevDatacap is $prevDatacap and currentDatacap is $currentDatacap',
+    ({ prevDatacap, currentDatacap, expected }) => {
+      expect(service.resolve(prevDatacap, currentDatacap)).toBe(expected);
+    },
+  );
 });
