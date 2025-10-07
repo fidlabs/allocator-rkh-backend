@@ -7,7 +7,6 @@ import {
   ApproveRefreshByRKHCommand,
   ApproveRefreshByRKHCommandHandler,
 } from './approve-refresh-by-rkh.command';
-import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { DatabaseRefreshFactory } from '@mocks/factories';
 import { faker } from '@faker-js/faker';
 import { ApprovedTx } from '@src/infrastructure/clients/lotus';
@@ -24,13 +23,15 @@ describe('ApproveRefreshByRKHCommand', () => {
   const loggerMock = { info: vi.fn(), error: vi.fn() };
   const commandBusMock = { send: vi.fn() };
 
+  const fixtureDcAllocatedDate = new Date('2020-01-01T00:00:00.000Z');
+  const fixtureTimestamp = fixtureDcAllocatedDate.getTime() / 1000;
   const refreshAuditServiceMock = { finishAudit: vi.fn() };
   const fixtureIssueDetails = DatabaseRefreshFactory.create();
   const fixtureApprovedTx: ApprovedTx = {
     cid: faker.string.alphanumeric(46),
     to: '',
     from: '',
-    timestamp: 0,
+    timestamp: fixtureTimestamp,
     params: '',
   };
   const fixtureAuditResult = {
@@ -79,8 +80,15 @@ describe('ApproveRefreshByRKHCommand', () => {
         transactionCid: fixtureApprovedTx.cid,
         auditHistory: [fixtureAuditResult],
       },
-    }),
-      expect(loggerMock.info).toHaveBeenCalledTimes(2);
+    });
+    expect(refreshAuditServiceMock.finishAudit).toHaveBeenCalledWith(
+      fixtureIssueDetails.jsonNumber,
+      {
+        newDatacapAmount: fixtureIssueDetails.dataCap,
+        dcAllocatedDate: fixtureDcAllocatedDate.toISOString(),
+      },
+    );
+    expect(loggerMock.info).toHaveBeenCalledTimes(2);
     expect(result).toStrictEqual({
       success: true,
     });
@@ -101,8 +109,16 @@ describe('ApproveRefreshByRKHCommand', () => {
         transactionCid: fixtureApprovedTx.cid,
         auditHistory: [fixtureAuditResult],
       },
-    }),
-      expect(loggerMock.error).toHaveBeenCalled();
+    });
+
+    expect(refreshAuditServiceMock.finishAudit).toHaveBeenCalledWith(
+      fixtureIssueDetails.jsonNumber,
+      {
+        newDatacapAmount: fixtureIssueDetails.dataCap,
+        dcAllocatedDate: fixtureDcAllocatedDate.toISOString(),
+      },
+    );
+    expect(loggerMock.error).toHaveBeenCalled();
     expect(result).toStrictEqual({
       success: false,
       error,

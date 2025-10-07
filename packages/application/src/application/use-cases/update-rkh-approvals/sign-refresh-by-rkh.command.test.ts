@@ -10,11 +10,22 @@ import {
 import { DatabaseRefreshFactory } from '@mocks/factories';
 import { faker } from '@faker-js/faker';
 import { PendingTx } from '@src/infrastructure/clients/lotus';
-import cbor from 'cbor';
 import { CommandBus } from '@src/infrastructure/command-bus';
+import { DataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
+
+const mocks = vi.hoisted(() => ({
+  mockNanoid: vi.fn(),
+  mockCborDecode: vi.fn(),
+}));
 
 vi.mock('nanoid', () => ({
-  nanoid: vi.fn().mockReturnValue('guid'),
+  nanoid: mocks.mockNanoid,
+}));
+
+vi.mock('cbor', () => ({
+  default: {
+    decode: mocks.mockCborDecode,
+  },
 }));
 
 describe('SignRefreshByRKHCommand', () => {
@@ -22,6 +33,7 @@ describe('SignRefreshByRKHCommand', () => {
   let handler: SignRefreshByRKHCommandHandler;
   const loggerMock = { info: vi.fn(), error: vi.fn() };
   const commandBusMock = { send: vi.fn() };
+  const dataCapMapperMock = { fromBufferBytesToPiBNumber: vi.fn().mockReturnValue(1) };
 
   const fixtureIssueDetails = DatabaseRefreshFactory.create();
   const fixturePendingTx: PendingTx = {
@@ -32,6 +44,7 @@ describe('SignRefreshByRKHCommand', () => {
     value: '0',
     approved: [faker.string.alphanumeric(40)],
   };
+  const fixtureCborDecodeResult = [1, 1024];
 
   beforeEach(() => {
     container = new Container();
@@ -41,8 +54,14 @@ describe('SignRefreshByRKHCommand', () => {
       .bind<CommandBus>(TYPES.CommandBus)
       .toConstantValue(commandBusMock as unknown as CommandBus);
     container.bind<SignRefreshByRKHCommandHandler>(SignRefreshByRKHCommandHandler).toSelf();
-
+    container
+      .bind<DataCapMapper>(TYPES.DataCapMapper)
+      .toConstantValue(dataCapMapperMock as unknown as DataCapMapper);
     handler = container.get<SignRefreshByRKHCommandHandler>(SignRefreshByRKHCommandHandler);
+
+    mocks.mockNanoid.mockReturnValue('guid');
+    mocks.mockCborDecode.mockReturnValue(fixtureCborDecodeResult);
+    dataCapMapperMock.fromBufferBytesToPiBNumber.mockReturnValue(fixtureCborDecodeResult[1]);
   });
 
   afterEach(() => {
@@ -57,6 +76,7 @@ describe('SignRefreshByRKHCommand', () => {
       guid: 'guid',
       issueDetails: {
         ...fixtureIssueDetails,
+        dataCap: fixtureCborDecodeResult[1],
         refreshStatus: 'SIGNED_BY_RKH',
         rkhPhase: {
           messageId: fixturePendingTx.id,

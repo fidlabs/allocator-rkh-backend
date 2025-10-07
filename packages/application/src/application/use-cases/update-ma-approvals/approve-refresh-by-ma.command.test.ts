@@ -14,6 +14,8 @@ import { CommandBus } from '@src/infrastructure/command-bus';
 import { RefreshAuditService } from '@src/application/services/refresh-audit.service';
 import { SaveIssueCommand } from '../refresh-issues/save-issue.command';
 import { RefreshStatus } from '@src/infrastructure/repositories/issue-details';
+import { IRpcProvider } from '@src/infrastructure/clients/rpc-provider';
+import { DataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
 
 vi.mock('nanoid', () => ({
   nanoid: vi.fn().mockReturnValue('guid'),
@@ -25,6 +27,11 @@ describe('ApproveRefreshByMaCommand', () => {
   const loggerMock = { info: vi.fn(), error: vi.fn() };
   const commandBusMock = { send: vi.fn() };
   const refreshAuditServiceMock = { finishAudit: vi.fn() };
+  const dataCapMapperMock = { fromBigIntBytesToPiBNumber: vi.fn().mockReturnValue(1) };
+  const rpcProviderMock = {
+    getDcAllocatedDate: vi.fn(),
+    getBlock: vi.fn(),
+  };
 
   const fixtureAuditResult = {
     auditChange: {
@@ -55,7 +62,12 @@ describe('ApproveRefreshByMaCommand', () => {
     container
       .bind<CommandBus>(TYPES.CommandBus)
       .toConstantValue(commandBusMock as unknown as CommandBus);
-
+    container
+      .bind<IRpcProvider>(TYPES.RpcProvider)
+      .toConstantValue(rpcProviderMock as unknown as IRpcProvider);
+    container
+      .bind<DataCapMapper>(TYPES.DataCapMapper)
+      .toConstantValue(dataCapMapperMock as unknown as DataCapMapper);
     container
       .bind<RefreshAuditService>(TYPES.RefreshAuditService)
       .toConstantValue(refreshAuditServiceMock as unknown as RefreshAuditService);
@@ -63,6 +75,10 @@ describe('ApproveRefreshByMaCommand', () => {
 
     handler = container.get<ApproveRefreshByMaCommandHandler>(ApproveRefreshByMaCommandHandler);
 
+    dataCapMapperMock.fromBigIntBytesToPiBNumber.mockReturnValue(1);
+    rpcProviderMock.getBlock.mockResolvedValue({
+      timestamp: new Date('2020-01-01T00:00:00.000Z').getTime() / 1000,
+    });
     refreshAuditServiceMock.finishAudit.mockResolvedValue(fixtureAuditResult);
     commandBusMock.send.mockResolvedValue({ success: true });
   });
@@ -77,6 +93,10 @@ describe('ApproveRefreshByMaCommand', () => {
 
     expect(refreshAuditServiceMock.finishAudit).toHaveBeenCalledWith(
       fixtureIssueDetails.jsonNumber,
+      {
+        newDatacapAmount: 1,
+        dcAllocatedDate: '2020-01-01T00:00:00.000Z',
+      },
     );
     expect(commandBusMock.send).toHaveBeenCalledWith({
       guid: 'guid',
@@ -106,6 +126,10 @@ describe('ApproveRefreshByMaCommand', () => {
 
     expect(refreshAuditServiceMock.finishAudit).toHaveBeenCalledWith(
       fixtureIssueDetails.jsonNumber,
+      {
+        newDatacapAmount: 1,
+        dcAllocatedDate: '2020-01-01T00:00:00.000Z',
+      },
     );
     expect(commandBusMock.send).toHaveBeenCalledWith({
       guid: 'guid',
@@ -125,6 +149,30 @@ describe('ApproveRefreshByMaCommand', () => {
     expect(result).toStrictEqual({
       success: false,
       error,
+    });
+  });
+
+  it('should handle error during rpc provider call', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2020-01-01T00:00:00.000Z'));
+    const now = new Date().toISOString();
+
+    const error = new Error('Failed to get block');
+    rpcProviderMock.getBlock.mockRejectedValue(error);
+
+    const command = new ApproveRefreshByMaCommand(fixtureIssueDetails, fixtureApproval);
+    const result = await handler.handle(command);
+
+    expect(refreshAuditServiceMock.finishAudit).toHaveBeenCalledWith(
+      fixtureIssueDetails.jsonNumber,
+      {
+        newDatacapAmount: 1,
+        dcAllocatedDate: now,
+      },
+    );
+    expect(loggerMock.error).toHaveBeenCalled();
+    expect(result).toStrictEqual({
+      success: true,
     });
   });
 });

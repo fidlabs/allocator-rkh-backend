@@ -45,6 +45,10 @@ export class ApproveRefreshByRKHCommandHandler
 
       const auditResult = await this._refreshAuditService.finishAudit(
         command.issueDetails.jsonNumber,
+        {
+          newDatacapAmount: command.issueDetails.dataCap,
+          dcAllocatedDate: new Date(command.tx.timestamp * 1000).toISOString(),
+        },
       );
 
       const issueWithApprovedStatus = this.updateIssue(

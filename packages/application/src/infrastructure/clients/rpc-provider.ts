@@ -7,6 +7,8 @@ import { RpcProviderConfig } from '../interfaces';
 export interface IRpcProvider {
   getBlockNumber(): Promise<number>;
 
+  getBlock(blockNumber: number): Promise<ethers.providers.Block>;
+
   getLogs(filter: ethers.providers.Filter): Promise<ethers.providers.Log[]>;
 
   send<T>(method: string, params?: Array<unknown>): Promise<T>;
@@ -39,5 +41,9 @@ export class RpcProvider implements IRpcProvider {
 
   async send<T>(method: string, params: unknown[]): Promise<T> {
     return await this.rpcProvider.send(method, params);
+  }
+
+  async getBlock(blockNumber: number): Promise<ethers.providers.Block> {
+    return await this.rpcProvider.getBlock(blockNumber);
   }
 }

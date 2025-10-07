@@ -13,12 +13,17 @@ import { IGithubClient } from '@src/infrastructure/clients/github';
 import { TYPES } from '@src/types';
 import { AuditOutcome, RefreshStatus } from '@src/infrastructure/repositories/issue-details';
 import { faker } from '@faker-js/faker';
+import { IRpcProvider } from '@src/infrastructure/clients/rpc-provider';
 
 process.env.NODE_ENV = 'test';
 dotenv.config({ path: '.env.test' });
 
 vi.mock('nanoid', () => ({
   nanoid: vi.fn().mockReturnValue('nanoid-id'),
+}));
+
+const rpcProviderMock = vi.hoisted(() => ({
+  getBlock: vi.fn(),
 }));
 
 describe('Refresh from Issue E2E', () => {
@@ -71,12 +76,14 @@ describe('Refresh from Issue E2E', () => {
       .withCommandBus()
       .withQueryBus()
       .withGithubClient(githubMock as unknown as IGithubClient)
+      .withRpcProvider(rpcProviderMock as unknown as IRpcProvider)
       .withConfig(TYPES.AllocatorGovernanceConfig, { owner: 'owner', repo: 'repo' })
       .withConfig(TYPES.AllocatorRegistryConfig, { owner: 'owner', repo: 'repo' })
       .withConfig(TYPES.GovernanceConfig, { addresses: ['0x123'] })
       .withResolvers()
       .withServices()
       .withPublishers()
+      .withResolvers()
       .withMappers()
       .withRepositories()
       .withCommandHandlers()
@@ -630,7 +637,13 @@ describe('Refresh from Issue E2E', () => {
         .expect(400);
 
       expect(response.body).toStrictEqual({
-        errors: ['Issue must be an object'],
+        errors: [
+          'Issue must be an object',
+          'Issue ID is required',
+          'Issue body is required',
+          'Issue title is required',
+          'Issue state is required',
+        ],
         message: 'Invalid body',
         status: '400',
       });

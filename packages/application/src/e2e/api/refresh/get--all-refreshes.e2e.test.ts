@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import request from 'supertest';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Container } from 'inversify';
 import { Db } from 'mongodb';
 import { Application, json, urlencoded } from 'express';
@@ -12,6 +12,7 @@ import * as dotenv from 'dotenv';
 import { TYPES } from '@src/types';
 import { IGithubClient } from '@src/infrastructure/clients/github';
 import { RefreshStatus } from '@src/infrastructure/repositories/issue-details';
+import { IRpcProvider } from '@src/infrastructure/clients/rpc-provider';
 
 process.env.NODE_ENV = 'test';
 dotenv.config({ path: '.env.test' });
@@ -20,6 +21,10 @@ describe('GET /api/v1/refreshes', () => {
   let app: Application;
   let container: Container;
   let db: Db;
+
+  const rpcProviderMock = vi.hoisted(() => ({
+    getBlock: vi.fn(),
+  }));
 
   beforeAll(async () => {
     const testBuilder = new TestContainerBuilder();
@@ -33,6 +38,7 @@ describe('GET /api/v1/refreshes', () => {
       .withConfig(TYPES.AllocatorGovernanceConfig, { owner: 'owner', repo: 'repo' })
       .withConfig(TYPES.AllocatorRegistryConfig, { owner: 'owner', repo: 'repo' })
       .withConfig(TYPES.GovernanceConfig, { addresses: ['0x123'] })
+      .withRpcProvider(rpcProviderMock as unknown as IRpcProvider)
       .withResolvers()
       .withServices()
       .withPublishers()

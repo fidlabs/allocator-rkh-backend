@@ -67,6 +67,8 @@ export const LOG_MESSAGES = {
     APPROVE_REFRESH_BY_MA: '[ApproveRefreshByMaCommand]: Approving refresh by Meta allocator',
     REFRESH_APPROVED: '[ApproveRefreshByMaCommand]: Refresh approved successfully',
     FAILED_TO_APPROVE_REFRESH: '[ApproveRefreshByMaCommand]: Failed to approve refresh',
+    FAILED_TO_GET_DC_ALLOCATED_DATE:
+      '[ApproveRefreshByMaCommand]: Failed to get dc allocated date, using current date',
   },
 
   MA_CONTROLLER: {
