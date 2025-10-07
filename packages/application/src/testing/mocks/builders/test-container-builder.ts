@@ -57,6 +57,7 @@ import { PullRequestService } from '@src/application/services/pull-request.servi
 import { RoleService } from '@src/application/services/role.service';
 import { ApproveRefreshCommandHandler } from '@src/application/use-cases/refresh-issues/approve-refresh.command';
 import { RejectRefreshCommandHandler } from '@src/application/use-cases/refresh-issues/reject-refesh.command';
+import { IRpcProvider } from '@src/infrastructure/clients/rpc-provider';
 
 export class TestContainerBuilder {
   private container: Container;
@@ -105,6 +106,11 @@ export class TestContainerBuilder {
 
   withGithubClient(client = {} as IGithubClient) {
     this.container.bind<IGithubClient>(TYPES.GithubClient).toConstantValue(client);
+    return this;
+  }
+
+  withRpcProvider(provider = {} as IRpcProvider) {
+    this.container.bind<IRpcProvider>(TYPES.RpcProvider).toConstantValue(provider);
     return this;
   }
 

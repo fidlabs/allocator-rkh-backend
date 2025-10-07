@@ -1,7 +1,6 @@
 import { Command, ICommandHandler, Logger } from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '@src/types';
-import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
 import { IssueDetails, RefreshStatus } from '@src/infrastructure/repositories/issue-details';
 import { PendingTx } from '@src/infrastructure/clients/lotus';
 import { LOG_MESSAGES } from '@src/constants';
@@ -30,6 +29,8 @@ export class SignRefreshByRKHCommandHandler implements ICommandHandler<SignRefre
     private readonly _logger: Logger,
     @inject(TYPES.CommandBus)
     private readonly _commandBus: CommandBus,
+    @inject(TYPES.DataCapMapper)
+    private readonly _dataCapMapper: DataCapMapper,
   ) {}
 
   async handle(command: SignRefreshByRKHCommand) {
@@ -55,11 +56,27 @@ export class SignRefreshByRKHCommandHandler implements ICommandHandler<SignRefre
   private updateIssue(issueDetails: IssueDetails, tx: PendingTx): IssueDetails {
     return {
       ...issueDetails,
+      dataCap: this.getDatacapPiBFromParams(tx.params),
       refreshStatus: RefreshStatus.SIGNED_BY_RKH,
       rkhPhase: {
         messageId: tx.id,
         approvals: tx.approved,
       },
     };
+  }
+
+  private getDatacapPiBFromParams(params: string): number {
+    const paramsBytes = Uint8Array.from(Buffer.from(params, 'base64'));
+    const paramsCbor = cbor.decode(paramsBytes);
+    if (!Array.isArray(paramsCbor) || paramsCbor.length !== 2) {
+      return 0;
+    }
+    const datacap = paramsCbor[1];
+
+    try {
+      return this._dataCapMapper.fromBufferBytesToPiBNumber(datacap);
+    } catch {
+      return 0;
+    }
   }
 }

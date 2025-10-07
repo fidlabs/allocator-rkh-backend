@@ -13,6 +13,7 @@ import { DataCapMapper } from '@src/infrastructure/mappers/data-cap-mapper';
 import { RefreshAuditService } from '@src/application/services/refresh-audit.service';
 import { CommandBus } from '@src/infrastructure/command-bus';
 import { SaveIssueCommand } from '../refresh-issues/save-issue.command';
+import { IRpcProvider } from '@src/infrastructure/clients/rpc-provider';
 
 const LOG = LOG_MESSAGES.APPROVE_REFRESH_BY_MA_COMMAND;
 
@@ -38,15 +39,28 @@ export class ApproveRefreshByMaCommandHandler
     private readonly _commandBus: CommandBus,
     @inject(TYPES.RefreshAuditService)
     private readonly _refreshAuditService: RefreshAuditService,
+    @inject(TYPES.RpcProvider)
+    private readonly _rpcProvider: IRpcProvider,
+    @inject(TYPES.DataCapMapper)
+    private readonly _dataCapMapper: DataCapMapper,
   ) {}
 
   async handle(command: ApproveRefreshByMaCommand) {
     try {
       this._logger.info(LOG.APPROVE_REFRESH_BY_MA);
 
+      const newDatacapAmount = this._dataCapMapper.fromBigIntBytesToPiBNumber(
+        BigInt(command.approval.allowanceAfter) - BigInt(command.approval.allowanceBefore),
+      );
+      const dcAllocatedDate = await this.getDcAllocatedDate(command.approval.blockNumber);
       const auditResult = await this._refreshAuditService.finishAudit(
         command.issueDetails.jsonNumber,
+        {
+          newDatacapAmount,
+          dcAllocatedDate,
+        },
       );
+
       const issueWithApprovedStatus = this.updateIssue(
         command.issueDetails,
         auditResult,
@@ -86,5 +100,10 @@ export class ApproveRefreshByMaCommandHandler
       },
       auditHistory,
     };
+  }
+
+  private async getDcAllocatedDate(blockNumber: number): Promise<string> {
+    const block = await this._rpcProvider.getBlock(blockNumber);
+    return new Date(block.timestamp).toISOString();
   }
 }
