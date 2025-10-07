@@ -77,7 +77,7 @@ describe('ApproveRefreshByMaCommand', () => {
 
     dataCapMapperMock.fromBigIntBytesToPiBNumber.mockReturnValue(1);
     rpcProviderMock.getBlock.mockResolvedValue({
-      timestamp: new Date('2020-01-01T00:00:00.000Z').getTime(),
+      timestamp: new Date('2020-01-01T00:00:00.000Z').getTime() / 1000,
     });
     refreshAuditServiceMock.finishAudit.mockResolvedValue(fixtureAuditResult);
     commandBusMock.send.mockResolvedValue({ success: true });
@@ -149,6 +149,30 @@ describe('ApproveRefreshByMaCommand', () => {
     expect(result).toStrictEqual({
       success: false,
       error,
+    });
+  });
+
+  it('should handle error during rpc provider call', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2020-01-01T00:00:00.000Z'));
+    const now = new Date().toISOString();
+
+    const error = new Error('Failed to get block');
+    rpcProviderMock.getBlock.mockRejectedValue(error);
+
+    const command = new ApproveRefreshByMaCommand(fixtureIssueDetails, fixtureApproval);
+    const result = await handler.handle(command);
+
+    expect(refreshAuditServiceMock.finishAudit).toHaveBeenCalledWith(
+      fixtureIssueDetails.jsonNumber,
+      {
+        newDatacapAmount: 1,
+        dcAllocatedDate: now,
+      },
+    );
+    expect(loggerMock.error).toHaveBeenCalled();
+    expect(result).toStrictEqual({
+      success: true,
     });
   });
 });

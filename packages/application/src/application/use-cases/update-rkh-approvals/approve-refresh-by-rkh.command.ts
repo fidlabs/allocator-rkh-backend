@@ -47,7 +47,7 @@ export class ApproveRefreshByRKHCommandHandler
         command.issueDetails.jsonNumber,
         {
           newDatacapAmount: command.issueDetails.dataCap,
-          dcAllocatedDate: new Date(command.tx.timestamp).toISOString(),
+          dcAllocatedDate: new Date(command.tx.timestamp * 1000).toISOString(),
         },
       );
 

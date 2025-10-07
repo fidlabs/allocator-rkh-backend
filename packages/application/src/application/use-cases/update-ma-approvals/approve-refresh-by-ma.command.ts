@@ -103,7 +103,14 @@ export class ApproveRefreshByMaCommandHandler
   }
 
   private async getDcAllocatedDate(blockNumber: number): Promise<string> {
-    const block = await this._rpcProvider.getBlock(blockNumber);
-    return new Date(block.timestamp).toISOString();
+    try {
+      const block = await this._rpcProvider.getBlock(blockNumber);
+      return new Date(block.timestamp * 1000).toISOString();
+    } catch (error) {
+      this._logger.error(LOG.FAILED_TO_GET_DC_ALLOCATED_DATE, error);
+
+      // if we fail to get the dc allocated date, use the current date instead
+      return new Date().toISOString();
+    }
   }
 }
