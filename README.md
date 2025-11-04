@@ -3,7 +3,6 @@
 [![License: MIT][license-badge]][license]
 
 [license]: LICENSE.md
-
 [license-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 
 ![banner](./img/banner.png)
@@ -117,7 +116,7 @@ Before running the Docker setup, you need to have the following tools installed:
 The Docker setup can be configured by setting the following environment variables:
 
 | Environment Variable             | Description                                                  | Example Values                               |
-|----------------------------------|--------------------------------------------------------------|----------------------------------------------|
+| -------------------------------- | ------------------------------------------------------------ | -------------------------------------------- |
 | `API_PORT`                       | Port number for the API service                              | `3000`                                       |
 | `MONGODB_URI`                    | URI for connecting to MongoDB                                | `mongodb://host.docker.internal:27017/`      |
 | `RABBITMQ_URL`                   | URL for connecting to RabbitMQ                               | `localhost:5672`                             |
@@ -132,10 +131,10 @@ The Docker setup can be configured by setting the following environment variable
 | `GITHUB_APP_PRIVATE_KEY`         | Private key for the GitHub App                               | `-----BEGIN RSA PRIVATE KEY-----...`         |
 | `GITHUB_APP_INSTALLATION_ID`     | Installation ID for the GitHub App                           | `1337`                                       |
 | `GITHUB_TOKEN`                   | GitHub Token for the GitHub App                              |                                              |
-| `GOVERNANCE_TEAM_GITHUB_HANDLES` | github handles of the governance team                        | 'galen-mcandrew'                             
-| `GOVERNANCE_REVIEW_ADDRESSES`    | Wallet addresses of people on the Fil+ governance team       | 'f1..., f1....'                              
-| `RKH_ADDRESSES`                  | Wallet addresses of Root Key Holders                         | 'f1..., f1....'                              
-| `MA_ADDRESSES`                   | Addresses of contracts controlling Metaallocator Pathways    | ' 0xB6F5d279AEad97dFA45209F3E53969c2EF43C21d 
+| `GOVERNANCE_TEAM_GITHUB_HANDLES` | github handles of the governance team                        | 'galen-mcandrew'                             |
+| `GOVERNANCE_REVIEW_ADDRESSES`    | Wallet addresses of people on the Fil+ governance team       | 'f1..., f1....'                              |
+| `RKH_ADDRESSES`                  | Wallet addresses of Root Key Holders                         | 'f1..., f1....'                              |
+| `MA_ADDRESSES`                   | Addresses of contracts controlling Metaallocator Pathways    | ' 0xB6F5d279AEad97dFA45209F3E53969c2EF43C21d |
 | `AIRTABLE_API_KEY`               | API key for accessing the Airtable API                       | `pat*******************`                     |
 | `AIRTABLE_BASE_ID`               | ID of the Airtable base                                      | `app*******************`                     |
 | `AIRTABLE_TABLE_NAME`            | Name of the Airtable table                                   | `tbl*******************`                     |
@@ -177,3 +176,21 @@ development of the Web3 space. If you are interested in joining our team, please
 
 docker run -it --rm -v $(pwd):/workspace -v /var/run/docker.sock:/var/run/docker.sock act:dev --reuse --verbose
 --verbose --container-options "--interactive --tty" -e workflow-test/issue-test-event.json
+
+# Testing
+
+to run unit tests use
+
+```bash
+ npm run test:e2e
+```
+
+Due to limitations in the Inversify framework, tests should be run separately for each file.
+To run e2e tests use one of following commands:
+
+```bash
+  npm run test:e2e -- get--all-refreshes
+  npm run test:e2e -- post--governance-review
+  npm run test:e2e -- post--sync-issues
+  npm run test:e2e -- put--upsert-from-issue
+```
