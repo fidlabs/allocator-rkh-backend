@@ -24,6 +24,18 @@ describe('AuditOutcomeResolver', () => {
     ${10}       | ${0}           | ${AuditOutcome.UNKNOWN}
     ${7}        | ${8}           | ${AuditOutcome.UNKNOWN}
     ${8}        | ${7}           | ${AuditOutcome.UNKNOWN}
+    ${'10'}     | ${'10'}        | ${AuditOutcome.MATCH}
+    ${'10'}     | ${'20'}        | ${AuditOutcome.DOUBLE}
+    ${'10'}     | ${'5'}         | ${AuditOutcome.THROTTLE}
+    ${'0'}      | ${'7'}         | ${AuditOutcome.UNKNOWN}
+    ${'10'}     | ${'0'}         | ${AuditOutcome.UNKNOWN}
+    ${'7'}      | ${'8'}         | ${AuditOutcome.UNKNOWN}
+    ${'8'}      | ${'7'}         | ${AuditOutcome.UNKNOWN}
+    ${'10'}     | ${10}          | ${AuditOutcome.MATCH}
+    ${10}       | ${'20'}        | ${AuditOutcome.DOUBLE}
+    ${'text'}   | ${'5'}         | ${AuditOutcome.UNKNOWN}
+    ${'text'}   | ${'text'}      | ${AuditOutcome.UNKNOWN}
+    ${'10'}     | ${'text'}      | ${AuditOutcome.UNKNOWN}
   `(
     'returns $expected when prevDatacap is $prevDatacap and currentDatacap is $currentDatacap',
     ({ prevDatacap, currentDatacap, expected }) => {
