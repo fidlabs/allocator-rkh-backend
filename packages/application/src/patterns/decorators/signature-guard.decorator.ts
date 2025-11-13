@@ -16,6 +16,7 @@ export enum SignatureType {
   ApproveGovernanceReview = 'approveGovernanceReview',
   KycOverride = 'kycOverride',
   KycRevoke = 'kycRevoke',
+  MetaAllocatorReject = 'metaAllocatorReject',
 }
 
 export const messageFactoryByType = {
@@ -33,13 +34,18 @@ export const messageFactoryByType = {
   }: MessageFactoryProps) => `Governance ${result} ${id} ${finalDataCap} ${allocatorType}`,
   [SignatureType.KycOverride]: ({ id }: MessageFactoryProps) => `KYC Override for ${id}`,
   [SignatureType.KycRevoke]: ({ id }: MessageFactoryProps) => `KYC Revoke for ${id}`,
+  [SignatureType.MetaAllocatorReject]: ({
+    id,
+    allocatorType,
+  }: MessageFactoryProps) => `Meta Allocator reject ${id} ${allocatorType}`,
 };
 
 export function SignatureGuard(signatureType: SignatureType): HandlerDecorator {
-  return function (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
-    const originalMethod = descriptor.value;
+  return function (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor | unknown) {
+    const desc = descriptor as PropertyDescriptor;
+    const originalMethod = desc.value;
 
-    descriptor.value = async function (
+    desc.value = async function (
       id: string,
       governanceReviewDto: GovernanceReviewDto,
       res: Response,
@@ -54,6 +60,14 @@ export function SignatureGuard(signatureType: SignatureType): HandlerDecorator {
         finalDataCap: parseInt(finalDataCap),
         allocatorType,
       });
+
+      if ([SignatureType.MetaAllocatorReject].includes(signatureType)) {
+        if (!expectedPreImage.match(signature)) {
+          return res.status(403).json(badRequest('Signature verification failure.'));
+        }
+
+        return originalMethod.apply(this, [id, governanceReviewDto, res, ...rest]);
+      }
 
       try {
         const verified = await verifyLedgerPoP(
@@ -76,5 +90,6 @@ export function SignatureGuard(signatureType: SignatureType): HandlerDecorator {
 
       return originalMethod.apply(this, [id, governanceReviewDto, res, ...rest]);
     };
+    return desc;
   };
 }

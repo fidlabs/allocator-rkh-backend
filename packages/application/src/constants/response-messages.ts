@@ -18,6 +18,7 @@ export const RESPONSE_MESSAGES = {
   },
   MA_CONTROLLER: {
     MA_ADDRESSES_RETRIEVED: 'MetaAllocator addresses retrieved successfully',
+    REJECTED_AS_META_ALLOCATOR: 'Refresh rejected as MetaAllocator was successful',
   },
   UPSERT_ISSUE_STRATEGY_RESOLVER: {
     ISSUE_REFRESH_ALREADY_FINISHED: 'This issue refresh is already finished',
