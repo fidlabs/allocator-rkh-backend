@@ -21,7 +21,7 @@ export class RoleService {
       role = 'ROOT_KEY_HOLDER';
     } else if (
       this.metaAllocatorConfig.signers.includes(address.toLowerCase()) ||
-      this.metaAllocatorService.getSigners().includes(address.toLowerCase())
+      this.metaAllocatorService.getSigners().includes(address)
     ) {
       role = 'METADATA_ALLOCATOR';
     }
