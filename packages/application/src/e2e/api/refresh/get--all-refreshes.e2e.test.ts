@@ -35,6 +35,7 @@ describe('GET /api/v1/refreshes', () => {
       .withCommandBus()
       .withQueryBus()
       .withGithubClient({} as unknown as IGithubClient)
+      .withConfig(TYPES.MetaAllocatorConfig, { signers: ['0x999'] })
       .withConfig(TYPES.AllocatorGovernanceConfig, { owner: 'owner', repo: 'repo' })
       .withConfig(TYPES.AllocatorRegistryConfig, { owner: 'owner', repo: 'repo' })
       .withConfig(TYPES.GovernanceConfig, { addresses: ['0x123'] })

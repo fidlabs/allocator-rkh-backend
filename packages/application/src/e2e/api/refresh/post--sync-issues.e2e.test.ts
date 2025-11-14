@@ -40,6 +40,7 @@ describe('POST /api/v1/refreshes/sync/issues', () => {
       .withQueryBus()
       .withGithubClient(githubMock as unknown as IGithubClient)
       .withRpcProvider(rpcProviderMock as unknown as IRpcProvider)
+      .withConfig(TYPES.MetaAllocatorConfig, { signers: ['0x999'] })
       .withConfig(TYPES.AllocatorGovernanceConfig, { owner: 'owner', repo: 'repo' })
       .withConfig(TYPES.AllocatorRegistryConfig, { owner: 'owner', repo: 'repo' })
       .withConfig(TYPES.GovernanceConfig, { addresses: ['0x123'] })

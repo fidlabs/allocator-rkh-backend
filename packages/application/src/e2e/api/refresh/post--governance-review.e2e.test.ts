@@ -121,6 +121,7 @@ describe('POST /api/v1/refreshes/:githubIssueId/review', () => {
     await testBuilder.withDatabase();
     const testSetup = testBuilder
       .withLogger()
+      .withConfig(TYPES.MetaAllocatorConfig, { signers: ['0x999'] })
       .withConfig(TYPES.AllocatorGovernanceConfig, { owner: 'owner', repo: 'repo' })
       .withConfig(TYPES.AllocatorRegistryConfig, { owner: 'owner', repo: 'repo' })
       .withConfig(TYPES.GovernanceConfig, {
