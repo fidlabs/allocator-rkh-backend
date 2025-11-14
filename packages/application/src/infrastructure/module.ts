@@ -33,7 +33,13 @@ import {
   IMetaAllocatorRepository,
   MetaAllocatorRepository,
 } from './repositories/meta-allocator.repository';
-import { GovernanceConfig, LotusClientConfig, MetaAllocatorConfig, RkhConfig, RpcProviderConfig } from './interfaces';
+import {
+  GovernanceConfig,
+  LotusClientConfig,
+  MetaAllocatorConfig,
+  RkhConfig,
+  RpcProviderConfig,
+} from './interfaces';
 import { GithubConfig } from '@src/domain/types';
 import { AuditMapper, IAuditMapper } from './mappers/audit-mapper';
 import {

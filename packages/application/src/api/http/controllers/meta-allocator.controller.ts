@@ -1,5 +1,12 @@
-
-import { controller, httpGet, httpPost, request, requestBody, requestParam, response } from 'inversify-express-utils';
+import {
+  controller,
+  httpGet,
+  httpPost,
+  request,
+  requestBody,
+  requestParam,
+  response,
+} from 'inversify-express-utils';
 import { Request, Response } from 'express';
 import { badPermissions, badRequest, ok } from '@src/api/http/processors/response';
 import { MetaAllocatorService } from '@src/application/services/meta-allocator.service';
@@ -41,7 +48,10 @@ export class MetaAllocatorController {
   ) {
     this.logger.info(LOG.REJECTING_REFRESH_AS_META_ALLOCATOR);
     const id = parseInt(githubIssueNumber);
-    const { result, details: { reviewerAddress } } = rejectMetaAllocatorDto;
+    const {
+      result,
+      details: { reviewerAddress },
+    } = rejectMetaAllocatorDto;
 
     const role = this.roleService.getRole(reviewerAddress);
     if (!['GOVERNANCE_TEAM', 'METADATA_ALLOCATOR'].includes(role as string)) {

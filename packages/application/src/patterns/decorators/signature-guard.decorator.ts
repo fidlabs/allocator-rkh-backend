@@ -34,14 +34,16 @@ export const messageFactoryByType = {
   }: MessageFactoryProps) => `Governance ${result} ${id} ${finalDataCap} ${allocatorType}`,
   [SignatureType.KycOverride]: ({ id }: MessageFactoryProps) => `KYC Override for ${id}`,
   [SignatureType.KycRevoke]: ({ id }: MessageFactoryProps) => `KYC Revoke for ${id}`,
-  [SignatureType.MetaAllocatorReject]: ({
-    id,
-    allocatorType,
-  }: MessageFactoryProps) => `Meta Allocator reject ${id} ${allocatorType}`,
+  [SignatureType.MetaAllocatorReject]: ({ id, allocatorType }: MessageFactoryProps) =>
+    `Meta Allocator reject ${id} ${allocatorType}`,
 };
 
 export function SignatureGuard(signatureType: SignatureType): HandlerDecorator {
-  return function (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor | unknown) {
+  return function (
+    target: any,
+    propertyKey: string | symbol,
+    descriptor: PropertyDescriptor | unknown,
+  ) {
     const desc = descriptor as PropertyDescriptor;
     const originalMethod = desc.value;
 
