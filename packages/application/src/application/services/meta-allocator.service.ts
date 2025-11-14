@@ -25,4 +25,8 @@ export class MetaAllocatorService implements IMetaAllocatorService {
   getByName(name: MetaAllocatorName): MetaAllocator {
     return this.metaAllocatorRepository.getByName(name);
   }
+
+  getSigners(): string[] {
+    return this.metaAllocatorRepository.getAll().flatMap((metaAllocator) => metaAllocator.signers);
+  }
 }

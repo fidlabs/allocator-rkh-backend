@@ -189,8 +189,13 @@ Due to limitations in the Inversify framework, tests should be run separately fo
 To run e2e tests use one of following commands:
 
 ```bash
+  # meta allocator controller
+  npm run test:e2e -- get--all-ma
+  npm run test:e2e -- post--meta-allocator-reject
+  # refresh controller
   npm run test:e2e -- get--all-refreshes
   npm run test:e2e -- post--governance-review
   npm run test:e2e -- post--sync-issues
   npm run test:e2e -- put--upsert-from-issue
+
 ```

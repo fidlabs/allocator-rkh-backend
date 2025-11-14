@@ -39,6 +39,7 @@ export class MetaAllocatorController {
     @requestBody() rejectMetaAllocatorDto: GovernanceReviewDto,
     @response() res: Response,
   ) {
+    this.logger.info(LOG.REJECTING_REFRESH_AS_META_ALLOCATOR);
     const id = parseInt(githubIssueNumber);
     const { result, details: { reviewerAddress } } = rejectMetaAllocatorDto;
 

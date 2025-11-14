@@ -41,6 +41,7 @@ export const TYPES = {
   AuditOutcomeResolver: Symbol('AuditOutcomeResolver'),
   UpsertIssueStrategyResolver: Symbol('UpsertIssueStrategyResolver'),
   GovernanceConfig: Symbol('GovernanceConfig'),
+  MetaAllocatorConfig: Symbol('MetaAllocatorConfig'),
 };
 
 export type ConfigTypes = typeof TYPES;
