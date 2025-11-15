@@ -73,6 +73,7 @@ export const LOG_MESSAGES = {
 
   MA_CONTROLLER: {
     FETCHING_MA_ADDRESSES: '[MaController]: Fetching MetaAllocator addresses',
+    REJECTING_REFRESH_AS_META_ALLOCATOR: '[MaController]: Rejecting refresh as MetaAllocator',
   },
 
   ALLOCATION_PATH_RESOLVER: {

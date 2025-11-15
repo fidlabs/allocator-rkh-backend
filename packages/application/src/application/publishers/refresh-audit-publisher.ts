@@ -62,10 +62,10 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
       datacapAmount: '',
     };
 
-    if (PENDING_AUDIT_OUTCOMES.includes(allocator.audits.at(-1)?.outcome as AuditOutcome))
+    if (PENDING_AUDIT_OUTCOMES.includes(allocator?.audits?.at(-1)?.outcome as AuditOutcome))
       throw new Error('Pending audit found');
 
-    allocator.audits.push(this._auditMapper.fromAuditDataToDomain(newAudit));
+    allocator?.audits?.push(this._auditMapper.fromAuditDataToDomain(newAudit));
 
     const result = await this.publish(jsonHash, allocator);
 
@@ -93,11 +93,11 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
     this._logger.debug(`Allocator:`);
     this._logger.debug(allocator);
     this._logger.debug(`Current audit:`);
-    this._logger.debug(allocator.audits[allocator.audits.length - 1]);
+    this._logger.debug(allocator?.audits?.[allocator?.audits?.length - 1]);
 
     if (
       expectedPreviousAuditOutcome &&
-      !expectedPreviousAuditOutcome.includes(allocator.audits.at(-1)?.outcome as AuditOutcome)
+      !expectedPreviousAuditOutcome.includes(allocator?.audits?.at(-1)?.outcome as AuditOutcome)
     )
       throw new Error(
         `Previous status not allowed. Expected: ${expectedPreviousAuditOutcome.join(', ')} but got: ${allocator.audits.at(-1)?.outcome}`,
@@ -131,7 +131,7 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
     if (!result.success) throw new Error('Failed to fetch allocator JSON');
     const allocator = result.data as ApplicationPullRequestFile;
 
-    const lastAudit = allocator.audits.at(-1);
+    const lastAudit = allocator?.audits?.at(-1);
     if (!lastAudit) throw new Error('No audit found');
 
     return {
@@ -141,8 +141,8 @@ export class RefreshAuditPublisher implements IRefreshAuditPublisher {
   }
 
   private async publish(jsonHash: string, allocator: ApplicationPullRequestFile) {
-    const branchName = `refresh-audit-${jsonHash}-${allocator.audits.length}-${nanoid()}`;
-    const prTitle = `Refresh Audit ${allocator.application_number} - ${allocator.audits.length} ${allocator.audits.at(-1)?.outcome}`;
+    const branchName = `refresh-audit-${jsonHash}-${allocator?.audits?.length}-${nanoid()}`;
+    const prTitle = `Refresh Audit ${allocator.application_number} - ${allocator?.audits?.length} ${allocator?.audits?.at(-1)?.outcome}`;
     const prBody = `This PR is a refresh audit for the application ${allocator.application_number}.`;
 
     const branch = await this._github.createBranch(

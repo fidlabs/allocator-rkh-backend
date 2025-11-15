@@ -6,6 +6,9 @@ import { InversifyExpressServer } from 'inversify-express-utils';
 import '@src/api/http/controllers/meta-allocator.controller';
 import * as dotenv from 'dotenv';
 import { TestContainerBuilder } from '@mocks/builders';
+import { TYPES } from '@src/types';
+import { IGithubClient } from '@src/infrastructure/clients/github';
+import { IRpcProvider } from '@src/infrastructure/clients/rpc-provider';
 
 process.env.NODE_ENV = 'test';
 dotenv.config({ path: '.env.test' });
@@ -15,7 +18,29 @@ describe('GET /api/v1/ma', () => {
 
   beforeAll(async () => {
     const testBuilder = new TestContainerBuilder();
-    const testSetup = testBuilder.withLogger().withRepositories().withServices().build();
+    await testBuilder.withDatabase();
+    const testSetup = testBuilder
+      .withLogger()
+      .withConfig(TYPES.MetaAllocatorConfig, { signers: ['0x123'] })
+      .withConfig(TYPES.AllocatorGovernanceConfig, { owner: 'owner', repo: 'repo' })
+      .withConfig(TYPES.AllocatorRegistryConfig, { owner: 'owner', repo: 'repo' })
+      .withConfig(TYPES.GovernanceConfig, {
+        addresses: ['0x123'],
+      })
+      .withRpcProvider({} as unknown as IRpcProvider)
+      .withEventBus()
+      .withCommandBus()
+      .withQueryBus()
+      .withMappers()
+      .withResolvers()
+      .withPublishers()
+      .withServices()
+      .withGithubClient({} as unknown as IGithubClient)
+      .withRepositories()
+      .withCommandHandlers()
+      .withQueryHandlers()
+      .registerHandlers()
+      .build();
 
     const server = new InversifyExpressServer(testSetup.container);
     server.setConfig((app: Application) => {

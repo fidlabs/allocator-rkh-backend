@@ -36,6 +36,7 @@ export class FetchAllocatorCommandHandler implements ICommandHandler<FetchAlloca
       const jsonFile = await this.handleFetchAllocatorFile(command.jsonNumber);
       const githubAllocator = await this.mapFileToJson(jsonFile);
 
+      console.log('githubAllocator', githubAllocator);
       return {
         data: githubAllocator,
         success: true,

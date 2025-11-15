@@ -79,8 +79,8 @@ export class RefreshAuditService implements IRefreshAuditService {
       jsonHash,
       allocator => {
         const now = new Date().toISOString();
-        const prevAudit = allocator.audits.at(-2);
-        const currentAudit = allocator.audits.at(-1);
+        const prevAudit = allocator?.audits?.at(-2);
+        const currentAudit = allocator?.audits?.at(-1);
         const endedDate = currentAudit?.ended || dcAllocatedDate || now;
         const dcAllocated = dcAllocatedDate || now;
         const datacapAmount = newDatacapAmount || currentAudit?.datacap_amount || 0;

@@ -21,3 +21,7 @@ export interface LotusClientConfig {
 export interface GovernanceConfig {
   addresses: string[];
 }
+
+export interface MetaAllocatorConfig {
+  signers: string[];
+}
