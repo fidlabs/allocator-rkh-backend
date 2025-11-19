@@ -41,7 +41,6 @@ describe('verifyLedgerPoP (integration)', () => {
     const challenge = 'challenge';
     const { address, transaction } = await new FilecoinTxBuilder().withChallenge(challenge).build();
 
-    // Provide a mismatching pubkey (different private key)
     const otherPriv = Uint8Array.from(
       Buffer.from('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'),
     );
@@ -83,7 +82,6 @@ describe('verifyLedgerPoP (integration)', () => {
       .build();
     const parsed = JSON.parse(transaction);
     const sigBytes = Buffer.from(parsed.Signature.Data, 'base64');
-    // Drop recovery byte to make it 64
     const wrongLen = sigBytes.subarray(0, 64);
     parsed.Signature.Data = Buffer.from(wrongLen).toString('base64');
 

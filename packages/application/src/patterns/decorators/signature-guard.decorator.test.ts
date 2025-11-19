@@ -1,9 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Response } from 'express';
-import { messageFactoryByType, SignatureGuard, SignatureType } from './signature-guard.decorator';
+import {
+  messageFactoryByType,
+  SignatureGuard,
+  SignatureType,
+  WalletType,
+} from './signature-guard.decorator';
 
 const mocks = vi.hoisted(() => ({
   mockVerifyLedgerPoP: vi.fn(),
+  mockVerifyEvmSignature: vi.fn(),
   mockBadRequest: vi.fn(),
   mockResponse: {
     res: {
@@ -16,6 +22,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@src/api/http/controllers/authutils', () => ({
   verifyLedgerPoP: mocks.mockVerifyLedgerPoP,
+  verifyEvmSignature: mocks.mockVerifyEvmSignature,
 }));
 
 vi.mock('@src/api/http/processors/response', () => ({
@@ -29,10 +36,10 @@ describe('SignatureGuard', () => {
     details: {
       reviewerAddress: 'f1address',
       reviewerPublicKey: '04abcdef',
-      signature: '0xsig',
       finalDataCap: 1024,
       allocatorType: 'RKH',
     },
+    signature: '0xsig',
   };
   class TestController {
     @SignatureGuard(SignatureType.RefreshReview)
@@ -99,6 +106,26 @@ describe('SignatureGuard', () => {
     expect(mocks.mockVerifyLedgerPoP).toHaveBeenCalledOnce();
     expect(mocks.mockOriginal).not.toHaveBeenCalled();
     expect(mocks.mockResponse.res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('uses MetaMask verifier when walletType is MetaMask', async () => {
+    class MetaMaskTestController {
+      @SignatureGuard(SignatureType.MetaAllocatorReject, WalletType.MetaMask)
+      handler(...args: unknown[]) {
+        return mocks.mockOriginal(...args);
+      }
+    }
+
+    mocks.mockVerifyEvmSignature.mockResolvedValue(true);
+    mocks.mockOriginal.mockResolvedValue('ok');
+
+    const controller = new MetaMaskTestController();
+
+    await controller.handler(fixtureId, fixtureDto, mocks.mockResponse.res as unknown as Response);
+
+    expect(mocks.mockVerifyEvmSignature).toHaveBeenCalledOnce();
+    expect(mocks.mockVerifyLedgerPoP).not.toHaveBeenCalled();
+    expect(mocks.mockOriginal).toHaveBeenCalledOnce();
   });
 });
 

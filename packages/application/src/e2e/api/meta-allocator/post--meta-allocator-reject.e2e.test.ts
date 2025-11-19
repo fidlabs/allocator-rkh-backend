@@ -21,6 +21,7 @@ import {
   messageFactoryByType,
   SignatureType,
 } from '@src/patterns/decorators/signature-guard.decorator';
+import { Wallet } from 'ethers';
 
 process.env.NODE_ENV = 'test';
 dotenv.config({ path: '.env.test' });
@@ -40,6 +41,21 @@ const rpcProviderMock = vi.hoisted(() => ({
 vi.mock('nanoid', () => ({
   nanoid: vi.fn().mockReturnValue('nanoid-id'),
 }));
+
+const metaAllocatorWallet = new Wallet(
+  '0x59c6995e998f97a5a0044966f094538b292f17fba95a2c7c6c4a0d2b6f8a4f61',
+);
+const nonMetaAllocatorWallet = new Wallet(
+  '0x8b3a350cf5c34c9194ca85829a2db0f1a0f9a166bf8c7c2281b5e9f3b6c2c8e1',
+);
+
+const signMessageWithWallet = (
+  wallet: Wallet,
+  details: { id: string; allocatorType: string; result: string; finalDataCap: number },
+) => {
+  const message = messageFactoryByType[SignatureType.MetaAllocatorReject](details);
+  return wallet.signMessage(message);
+};
 
 describe('POST /api/v1/ma/:githubIssueNumber/reject', () => {
   let app: Application;
@@ -83,7 +99,9 @@ describe('POST /api/v1/ma/:githubIssueNumber/reject', () => {
     await testBuilder.withDatabase();
     const testSetup = testBuilder
       .withLogger()
-      .withConfig(TYPES.MetaAllocatorConfig, { signers: ['0x123'] })
+      .withConfig(TYPES.MetaAllocatorConfig, {
+        signers: [metaAllocatorWallet.address.toLowerCase()],
+      })
       .withConfig(TYPES.AllocatorGovernanceConfig, { owner: 'owner', repo: 'repo' })
       .withConfig(TYPES.AllocatorRegistryConfig, { owner: 'owner', repo: 'repo' })
       .withConfig(TYPES.GovernanceConfig, {
@@ -153,12 +171,17 @@ describe('POST /api/v1/ma/:githubIssueNumber/reject', () => {
 
     const details = { id: '123', allocatorType: 'AMA', result: 'reject', finalDataCap: 0 };
 
+    const signature = await signMessageWithWallet(metaAllocatorWallet, details);
     const response = await request(app)
       .post('/api/v1/ma/123/reject')
       .send({
         result: 'reject',
-        details: { reviewerAddress: '0x123', reviewerPublicKey: 'fixturePublicKey', ...details },
-        signature: messageFactoryByType[SignatureType.MetaAllocatorReject](details),
+        details: {
+          reviewerAddress: metaAllocatorWallet.address,
+          reviewerPublicKey: 'fixturePublicKey',
+          ...details,
+        },
+        signature,
       })
       .expect(200);
 
@@ -192,17 +215,18 @@ describe('POST /api/v1/ma/:githubIssueNumber/reject', () => {
 
   it('should return 400 when refresh is not in PENDING status', async () => {
     const details = { id: '456', allocatorType: 'AMA', finalDataCap: 0, result: 'reject' };
+    const signature = await signMessageWithWallet(metaAllocatorWallet, details);
 
     const response = await request(app)
       .post('/api/v1/ma/456/reject')
       .send({
         result: 'reject',
         details: {
-          reviewerAddress: '0x123',
+          reviewerAddress: metaAllocatorWallet.address,
           reviewerPublicKey: 'fixturePublicKey',
           ...details,
         },
-        signature: messageFactoryByType[SignatureType.MetaAllocatorReject](details),
+        signature,
       })
       .expect(400);
 
@@ -258,12 +282,17 @@ describe('POST /api/v1/ma/:githubIssueNumber/reject', () => {
 
   it('should return 403 when user is not a MetaAllocator', async () => {
     const details = { id: '123', allocatorType: 'AMA', result: 'reject', finalDataCap: 0 };
+    const signature = await signMessageWithWallet(nonMetaAllocatorWallet, details);
     const response = await request(app)
       .post('/api/v1/ma/123/reject')
       .send({
         result: 'reject',
-        details: { reviewerAddress: '0x9999', reviewerPublicKey: 'fixturePublicKey', ...details },
-        signature: messageFactoryByType[SignatureType.MetaAllocatorReject](details),
+        details: {
+          reviewerAddress: nonMetaAllocatorWallet.address,
+          reviewerPublicKey: 'fixturePublicKey',
+          ...details,
+        },
+        signature,
       })
       .expect(403);
 
@@ -275,12 +304,17 @@ describe('POST /api/v1/ma/:githubIssueNumber/reject', () => {
 
   it('should return 400 when refresh is not found', async () => {
     const details = { id: '789', allocatorType: 'AMA', result: 'reject', finalDataCap: 0 };
+    const signature = await signMessageWithWallet(metaAllocatorWallet, details);
     const response = await request(app)
       .post('/api/v1/ma/789/reject')
       .send({
         result: 'reject',
-        details: { reviewerAddress: '0x123', reviewerPublicKey: 'fixturePublicKey', ...details },
-        signature: messageFactoryByType[SignatureType.MetaAllocatorReject](details),
+        details: {
+          reviewerAddress: metaAllocatorWallet.address,
+          reviewerPublicKey: 'fixturePublicKey',
+          ...details,
+        },
+        signature,
       })
       .expect(400);
 
@@ -289,5 +323,83 @@ describe('POST /api/v1/ma/:githubIssueNumber/reject', () => {
         'Cannot reject audit refresh because it is not in the correct status. GithubIssueNumber: 789',
       status: '400',
     });
+  });
+
+  it('should return 403 when signature verification fails (wrong wallet)', async () => {
+    const details = { id: '123', allocatorType: 'AMA', result: 'reject', finalDataCap: 0 };
+    const signature = await signMessageWithWallet(nonMetaAllocatorWallet, details);
+    const response = await request(app)
+      .post('/api/v1/ma/123/reject')
+      .send({
+        result: 'reject',
+        details: {
+          reviewerAddress: metaAllocatorWallet.address,
+          reviewerPublicKey: 'fixturePublicKey',
+          ...details,
+        },
+        signature,
+      });
+
+    expect(response.body).toStrictEqual({
+      message: 'Signature verification failure.',
+      status: '400',
+    });
+
+    const dbRefresh = await db
+      .collection<IssueDetails>('issueDetails')
+      .findOne({ githubIssueNumber: 123 });
+    expect(dbRefresh?.refreshStatus).toBe(RefreshStatus.PENDING);
+  });
+
+  it('should return 400 when signature verification fails (invalid signature format)', async () => {
+    const details = { id: '123', allocatorType: 'AMA', result: 'reject', finalDataCap: 0 };
+    const response = await request(app)
+      .post('/api/v1/ma/123/reject')
+      .send({
+        result: 'reject',
+        details: {
+          reviewerAddress: metaAllocatorWallet.address,
+          reviewerPublicKey: 'fixturePublicKey',
+          ...details,
+        },
+        signature: '0xinvalid_signature_format',
+      });
+
+    expect(response.body).toStrictEqual({
+      message: 'Evm signature verification failed: signature missing v and recoveryParam',
+      status: '400',
+    });
+
+    const dbRefresh = await db
+      .collection<IssueDetails>('issueDetails')
+      .findOne({ githubIssueNumber: 123 });
+    expect(dbRefresh?.refreshStatus).toBe(RefreshStatus.PENDING);
+  });
+
+  it('should return 403 when signature verification fails (wrong message)', async () => {
+    const details = { id: '123', allocatorType: 'AMA', result: 'reject', finalDataCap: 0 };
+    const wrongMessage = 'Wrong message to sign';
+    const signature = await metaAllocatorWallet.signMessage(wrongMessage);
+    const response = await request(app)
+      .post('/api/v1/ma/123/reject')
+      .send({
+        result: 'reject',
+        details: {
+          reviewerAddress: metaAllocatorWallet.address,
+          reviewerPublicKey: 'fixturePublicKey',
+          ...details,
+        },
+        signature,
+      });
+
+    expect(response.body).toStrictEqual({
+      message: 'Signature verification failure.',
+      status: '400',
+    });
+
+    const dbRefresh = await db
+      .collection<IssueDetails>('issueDetails')
+      .findOne({ githubIssueNumber: 123 });
+    expect(dbRefresh?.refreshStatus).toBe(RefreshStatus.PENDING);
   });
 });
