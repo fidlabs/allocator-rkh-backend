@@ -19,7 +19,11 @@ import { validateRequest } from '../middleware/validate-request.middleware';
 import { GovernanceReviewDto } from '@src/application/dtos/GovernanceReviewDto';
 import { RoleService } from '@src/application/services/role.service';
 import { RejectRefreshCommand } from '@src/application/use-cases/refresh-issues/reject-refesh.command';
-import { SignatureGuard, SignatureType } from '@src/patterns/decorators/signature-guard.decorator';
+import {
+  SignatureGuard,
+  SignatureType,
+  WalletType,
+} from '@src/patterns/decorators/signature-guard.decorator';
 
 const LOG = LOG_MESSAGES.MA_CONTROLLER;
 const RES = RESPONSE_MESSAGES.MA_CONTROLLER;
@@ -40,7 +44,7 @@ export class MetaAllocatorController {
   }
 
   @httpPost('/:githubIssueNumber/reject', validateRequest(validateGovernanceReview))
-  @SignatureGuard(SignatureType.MetaAllocatorReject)
+  @SignatureGuard(SignatureType.MetaAllocatorReject, WalletType.MetaMask)
   async rejectMetaAllocator(
     @requestParam('githubIssueNumber') githubIssueNumber: string,
     @requestBody() rejectMetaAllocatorDto: GovernanceReviewDto,

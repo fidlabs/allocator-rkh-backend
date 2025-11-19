@@ -4,6 +4,14 @@ import { Signature, verify } from '@noble/secp256k1';
 import { blake2b } from '@noble/hashes/blake2';
 import { hexToBytes } from '@noble/hashes/utils';
 import cbor from 'cbor';
+import { ethers } from 'ethers';
+
+interface EvmSignatureVerificationError {
+  reason: string | undefined;
+  code: string | undefined;
+  argument: string | undefined;
+  value: string | undefined;
+}
 
 /* Verify a message with Ledger proof of possession */
 export async function verifyLedgerPoP(
@@ -71,4 +79,23 @@ export async function verifyLedgerPoP(
   }
 
   return false;
+}
+
+export async function verifyEvmSignature(
+  address: string,
+  _pubkey: string,
+  signature: string,
+  challenge: string,
+): Promise<boolean> {
+  try {
+    const digest = ethers.utils.hashMessage(challenge);
+    const recovered = ethers.utils.recoverAddress(digest, signature);
+
+    return ethers.utils.getAddress(recovered) === ethers.utils.getAddress(address);
+  } catch (error: unknown) {
+    console.error(error);
+
+    const evmError = error as EvmSignatureVerificationError;
+    throw new Error(`Evm signature verification failed: ${evmError.reason}`);
+  }
 }

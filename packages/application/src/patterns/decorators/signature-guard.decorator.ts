@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { badRequest } from '@src/api/http/processors/response';
-import { verifyLedgerPoP } from '@src/api/http/controllers/authutils';
+import { verifyEvmSignature, verifyLedgerPoP } from '@src/api/http/controllers/authutils';
 import { HandlerDecorator } from 'inversify-express-utils';
 import { GovernanceReviewDto } from '@src/application/dtos/GovernanceReviewDto';
 
@@ -9,6 +9,12 @@ interface MessageFactoryProps {
   id: string;
   finalDataCap: number;
   allocatorType: string;
+}
+
+export enum WalletType {
+  Ledger = 'ledger',
+  Filsnap = 'filsnap',
+  MetaMask = 'metamask',
 }
 
 export enum SignatureType {
@@ -38,7 +44,10 @@ export const messageFactoryByType = {
     `Meta Allocator reject ${id} ${allocatorType}`,
 };
 
-export function SignatureGuard(signatureType: SignatureType): HandlerDecorator {
+export function SignatureGuard(
+  signatureType: SignatureType,
+  walletType: WalletType = WalletType.Ledger,
+): HandlerDecorator {
   return function (
     target: any,
     propertyKey: string | symbol,
@@ -46,6 +55,11 @@ export function SignatureGuard(signatureType: SignatureType): HandlerDecorator {
   ) {
     const desc = descriptor as PropertyDescriptor;
     const originalMethod = desc.value;
+    const verifyMethodByWalletType = {
+      [WalletType.Ledger]: verifyLedgerPoP,
+      [WalletType.Filsnap]: verifyLedgerPoP,
+      [WalletType.MetaMask]: verifyEvmSignature,
+    };
 
     desc.value = async function (
       id: string,
@@ -63,16 +77,8 @@ export function SignatureGuard(signatureType: SignatureType): HandlerDecorator {
         allocatorType,
       });
 
-      if ([SignatureType.MetaAllocatorReject].includes(signatureType)) {
-        if (!expectedPreImage.match(signature)) {
-          return res.status(403).json(badRequest('Signature verification failure.'));
-        }
-
-        return originalMethod.apply(this, [id, governanceReviewDto, res, ...rest]);
-      }
-
       try {
-        const verified = await verifyLedgerPoP(
+        const verified = await verifyMethodByWalletType[walletType](
           reviewerAddress,
           reviewerPublicKey,
           signature,
