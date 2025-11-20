@@ -241,7 +241,7 @@ export async function handleApproval({
 }) {
   logger.info(`Processing approval ${approval.txHash}, approved by ${approval.contractAddress}...`);
 
-  if (!config.VALID_META_ALLOCATOR_ADDRESSES.includes(approval.contractAddress)) {
+  if (!config.VALID_META_ALLOCATOR_ADDRESSES.includes(approval.contractAddress.toLowerCase())) {
     logger.debug(`Invalid contract address: ${approval.contractAddress}`);
     logger.debug(config.VALID_META_ALLOCATOR_ADDRESSES);
     return;
