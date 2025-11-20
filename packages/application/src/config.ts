@@ -87,8 +87,10 @@ export default {
     Number(process.env.SUBSCRIBE_META_ALLOCATOR_APPROVALS_POLLING_INTERVAL) ||
     DEFAULT_POLLING_INTERVAL,
   VALID_META_ALLOCATOR_ADDRESSES: process.env.VALID_META_ALLOCATOR_ADDRESSES
-    ? process.env.VALID_META_ALLOCATOR_ADDRESSES.split(',').map(address => address.trim())
-    : ['0xB6F5d279AEad97dFA45209F3E53969c2EF43C21d'],
+    ? process.env.VALID_META_ALLOCATOR_ADDRESSES.split(',').map(address =>
+        address.trim().toLowerCase(),
+      )
+    : ['0xb6f5d279aead97dfa45209f3e53969c2ef43c21d'],
 
   EVM_RPC_URL: process.env.EVM_RPC_URL || 'http://84.70.152.51:1234/rpc/v1',
 
