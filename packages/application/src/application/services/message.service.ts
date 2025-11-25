@@ -110,7 +110,7 @@ export class MessageService {
 Your application is currently under review by the Fil+ governance team.
 
 ### ✏️ Making Changes
-If you would like to propose changes to your application, please do so by making comments on this PR tagging @galen-mcandrew.
+If you would like to propose changes to your application, please do so by making comments on this PR tagging @Kevin-FF-USA and @Amin-Foundation.
 The governance team will review your comments and make any necessary adjustments.
 
 💬 Please be prepared to respond to any questions or requests for clarification.
