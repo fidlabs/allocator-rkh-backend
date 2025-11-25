@@ -131,7 +131,7 @@ The Docker setup can be configured by setting the following environment variable
 | `GITHUB_APP_PRIVATE_KEY`         | Private key for the GitHub App                               | `-----BEGIN RSA PRIVATE KEY-----...`         |
 | `GITHUB_APP_INSTALLATION_ID`     | Installation ID for the GitHub App                           | `1337`                                       |
 | `GITHUB_TOKEN`                   | GitHub Token for the GitHub App                              |                                              |
-| `GOVERNANCE_TEAM_GITHUB_HANDLES` | github handles of the governance team                        | 'galen-mcandrew'                             |
+| `GOVERNANCE_TEAM_GITHUB_HANDLES` | github handles of the governance team                        | 'Kevin-FF-USA,Amin-Foundation'                             |
 | `GOVERNANCE_REVIEW_ADDRESSES`    | Wallet addresses of people on the Fil+ governance team       | 'f1..., f1....'                              |
 | `RKH_ADDRESSES`                  | Wallet addresses of Root Key Holders                         | 'f1..., f1....'                              |
 | `MA_ADDRESSES`                   | Addresses of contracts controlling Metaallocator Pathways    | ' 0xB6F5d279AEad97dFA45209F3E53969c2EF43C21d |

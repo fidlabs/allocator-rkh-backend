@@ -42,7 +42,7 @@ export default {
   // GitHub handles & wallets for the governance team
   GOVERNANCE_TEAM_GITHUB_HANDLES: process.env.GOVERNANCE_TEAM_GITHUB_HANDLES
     ? process.env.GOVERNANCE_TEAM_GITHUB_HANDLES.split(',').map(handle => handle.trim())
-    : ['galen-mcandrew', 'Kevin-FF-USA'],
+    : ['Kevin-FF-USA','Amin-Foundation'],
   GOVERNANCE_REVIEW_ADDRESSES: process.env.GOVERNANCE_REVIEW_ADDRESSES
     ? process.env.GOVERNANCE_REVIEW_ADDRESSES.split(',').map(handle => handle.trim())
     : [],
