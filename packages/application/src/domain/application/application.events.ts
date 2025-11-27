@@ -1,4 +1,4 @@
-import { Event } from '@filecoin-plus/core';
+import { Event, EventSource } from '@filecoin-plus/core';
 import { AllocationPath, AllocatorType, KYCApprovedData, KYCRejectedData } from '@src/domain/types';
 import { ApplicationInstruction, ApplicationStatus } from './application';
 import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
@@ -41,8 +41,9 @@ export class ApplicationEdited extends Event {
   constructor(
     allocatorId: string,
     public file: ApplicationPullRequestFile,
+    source: EventSource = 'api',
   ) {
-    super(allocatorId);
+    super(allocatorId, source);
     this.timestamp = new Date();
   }
 }

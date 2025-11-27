@@ -20,6 +20,10 @@ export abstract class AggregateRoot {
     return this.__changes;
   }
 
+  public hasPublishableEvents(): boolean {
+    return this.getUncommittedEvents().some(event => ['api'].includes(event?.source || ''));
+  }
+
   public markChangesAsCommitted(): void {
     this.__changes = [];
   }

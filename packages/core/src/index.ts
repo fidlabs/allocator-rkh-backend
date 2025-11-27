@@ -5,6 +5,7 @@ export * from './Event';
 export * from './EventDescriptor';
 export * from './EventSourcedRepository';
 export * from './EventStore';
+export * from './Result';
 export * from './interfaces/ICommand';
 export * from './interfaces/ICommandBus';
 export * from './interfaces/ICommandHandler';

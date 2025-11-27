@@ -8,7 +8,7 @@ import { EditApplicationCommand } from '@src/application/use-cases/edit-applicat
 import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import { ApplicationPullRequestFile } from '@src/application/services/pull-request.types';
 
-export async function subscribeApplicationEdits(container: Container) {
+export async function subscribeApplicationEdits(container: Container): Promise<NodeJS.Timeout> {
   const githubClient = container.get<IGithubClient>(TYPES.GithubClient);
   const commandBus = container.get<ICommandBus>(TYPES.CommandBus);
   const applicationRepository = container.get<IApplicationDetailsRepository>(
@@ -19,7 +19,7 @@ export async function subscribeApplicationEdits(container: Container) {
   // A map of application IDs to their corresponding sha of the allocators.json file
   const applicationCache = new Map<string, string>();
 
-  setInterval(async () => {
+  const interval = setInterval(async () => {
     try {
       const applications = await applicationRepository.getAll();
 
@@ -49,6 +49,9 @@ export async function subscribeApplicationEdits(container: Container) {
 
           // Check if the sha of the file is the same as the one in the cache
           if (file.sha === applicationCache.get(application.id)) {
+            logger.info(
+              `file sha ${file.sha} for application ${application.id} is the same as the one in the cache, skipping`,
+            );
             continue;
           }
 
@@ -62,15 +65,24 @@ export async function subscribeApplicationEdits(container: Container) {
           const command = new EditApplicationCommand({
             applicationId: application.id,
             file: applicationPullRequestFile,
+            source: 'github',
           });
-          await commandBus.send(command);
+          const result = await commandBus.send(command);
+          if (result.success) {
+            logger.info(`Application ${application.id} edited successfully`);
+          } else {
+            logger.error(`Error editing application ${application.id}: ${result.error.message}`);
+          }
         } catch (error: any) {
           logger.error(`Error processing application ${application.id}: ${error.message}`);
         }
       }
     } catch (err) {
-      logger.error('subscribeApplicationEdits uncaught exception', err);
+      logger.error('subscribeApplicationEdits uncaught exception');
+      logger.error(err);
       // swallow error and wait for next tick
     }
   }, config.SUBSCRIBE_APPLICATION_EDITS_POLLING_INTERVAL);
+
+  return interval;
 }

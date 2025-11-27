@@ -85,10 +85,10 @@ export async function mapApplicationToPullRequestFile(
       const msigData = await getMultisigInfo(application.allocatorMultisigAddress);
 
       if (msigData.robust !== application.allocatorMultisigAddress) {
-        allocatorAddress = msigData.robust;
+        allocatorAddress = msigData.robust ?? '';
       }
       allocatorId = msigData.address;
-      const fetchedSigners = msigData.multisig.signers;
+      const fetchedSigners = (msigData.multisig as { signers: string[] })?.signers ?? [];
       if (JSON.stringify(fetchedSigners) !== JSON.stringify(application.allocatorMultisigSigners)) {
         updatedSigners = fetchedSigners;
       }

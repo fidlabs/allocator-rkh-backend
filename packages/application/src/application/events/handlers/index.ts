@@ -124,8 +124,8 @@ export class AllocatorMultisigUpdatedEventHandler
     let threshold = 0;
     try {
       const msigData = await getMultisigInfo(event.multisigAddress);
-      signers = msigData.multisig?.signers ?? [];
-      threshold = msigData.multisig?.approvalThreshold ?? 0;
+      signers = (msigData.multisig as { signers: string[] })?.signers ?? [];
+      threshold = (msigData.multisig as { approvalThreshold: number })?.approvalThreshold ?? 0;
     } catch (err) {
       console.error(`Failed to fetch multisig info for ${event.multisigAddress}:`, err);
     }

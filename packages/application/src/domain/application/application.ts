@@ -1,6 +1,7 @@
 import {
   AggregateRoot,
   ApplicationError,
+  EventSource,
   IEventStore,
   IRepository,
   zuluToEpoch,
@@ -211,11 +212,11 @@ export class DatacapAllocator extends AggregateRoot {
     return allocator;
   }
 
-  edit(file: ApplicationPullRequestFile) {
+  edit(file: ApplicationPullRequestFile, source: EventSource = 'api') {
     //this.ensureValidApplicationStatus([ApplicationStatus.KYC_PHASE, ApplicationStatus.GOVERNANCE_REVIEW_PHASE])
     if (debugMode) console.log('edit');
 
-    this.applyChange(new ApplicationEdited(this.guid, file));
+    this.applyChange(new ApplicationEdited(this.guid, file, source));
   }
 
   setAllocatorMultisig(

@@ -12,7 +12,9 @@ const REQUIRED_AIRTABLE_FIELDS = [
   'On-chain address for DC Allocation',
 ]; // TODO: Add required fields
 
-export async function subscribeApplicationSubmissions(container: Container) {
+export async function subscribeApplicationSubmissions(
+  container: Container,
+): Promise<NodeJS.Timeout> {
   const logger = container.get<Logger>(TYPES.Logger);
 
   // Uncomment if you want to do the first pass immediately
@@ -20,14 +22,16 @@ export async function subscribeApplicationSubmissions(container: Container) {
 
   // And now poll for updates periodically
   logger.info(`Start loop (${config.SUBSCRIBE_APPLICATION_SUBMISSIONS_POLLING_INTERVAL})`);
-  setInterval(async () => {
+  const interval = setInterval(async () => {
     try {
-      processRecords(container);
+      await processRecords(container);
     } catch (err) {
       logger.error('subscribeApplicationSubmissions uncaught exception', err);
       // swallow error and wait for next tick
     }
   }, config.SUBSCRIBE_APPLICATION_SUBMISSIONS_POLLING_INTERVAL);
+
+  return interval;
 }
 
 async function processRecords(container: Container) {
@@ -47,14 +51,21 @@ async function processRecords(container: Container) {
         const command = mapRecordToCommand(record);
         processedRecords.add(record.id);
         logger.debug(`Finalising record ${record.id}...`);
-        await commandBus.send(command);
+        const resultCommand = await commandBus.send(command);
+        if (resultCommand.success) {
+          logger.info(`Record ${record.id} processed successfully`);
+        } else {
+          logger.error(`Record ${record.id} processed with error: ${resultCommand.error}`);
+        }
       } else {
-        logger.debug(`Skipping record ${record.id}...`, record);
+        logger.info(`Skipping record ${record.id}...`);
+        logger.debug(record);
       }
     }
   } catch (error) {
     processedRecords.clear();
-    logger.error('Error processing application submissions:', error);
+    logger.error('Error processing application submissions:');
+    logger.error(error);
   }
 }
 
