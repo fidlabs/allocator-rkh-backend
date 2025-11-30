@@ -1,8 +1,16 @@
-import { Command, ICommandHandler, Logger } from '@filecoin-plus/core';
+import {
+  Command,
+  EventSource,
+  ICommandHandler,
+  Logger,
+  NotFoundException,
+  Result,
+} from '@filecoin-plus/core';
 import { inject, injectable } from 'inversify';
 
 import {
   ApplicationInstruction,
+  DatacapAllocator,
   IDatacapAllocatorRepository,
 } from '@src/domain/application/application';
 import { TYPES } from '@src/types';
@@ -13,6 +21,7 @@ import { AllocatorType } from '@src/domain/types';
 export class EditApplicationCommand extends Command {
   public readonly applicationId: string;
   public readonly file: ApplicationPullRequestFile;
+  public readonly source: EventSource;
   /**
    * Creates a new EditApplicationCommand instance.
    * @param applicationId - The application id.
@@ -21,13 +30,16 @@ export class EditApplicationCommand extends Command {
   constructor({
     applicationId,
     file,
+    source = 'api',
   }: {
     applicationId: string;
     file: ApplicationPullRequestFile;
+    source?: EventSource;
   }) {
     super();
     this.applicationId = applicationId;
     this.file = file;
+    this.source = source;
   }
 }
 
@@ -85,16 +97,21 @@ export class EditApplicationCommandHandler implements ICommandHandler<EditApplic
     return currApplicationInstructions;
   }
 
-  async handle(command: EditApplicationCommand): Promise<void> {
+  async handle(command: EditApplicationCommand): Promise<Result<DatacapAllocator>> {
     this.logger.info(
       `Handling edit application command for application ${command.file.application_number}`,
     );
     const application = await this.repository.getById(command.applicationId);
     if (!application) {
       this.logger.error('Application not found');
-      throw new Error('Application not found');
+      return {
+        success: false,
+        error: new NotFoundException('Application not found'),
+      };
     }
 
+    this.logger.debug('application');
+    this.logger.debug(application);
     const prevApplicationInstructions = application.applicationInstructions;
 
     // FIXME ? the original code ALWAYS forced it to META_ALLOCATOR but I think that was wrong (?)
@@ -117,9 +134,14 @@ export class EditApplicationCommandHandler implements ICommandHandler<EditApplic
     this.logger.debug('gitvalidApplicationInstructions');
     this.logger.debug(validApplicationInstructions);
 
-    await application.edit(command.file);
+    application.edit(command.file, command.source);
     this.logger.info(`Application ${command.applicationId} edited successfully`);
 
     await this.repository.save(application, -1);
+
+    return {
+      success: true,
+      data: application,
+    };
   }
 }

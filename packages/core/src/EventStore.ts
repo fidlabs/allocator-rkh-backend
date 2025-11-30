@@ -15,7 +15,11 @@ export abstract class EventStore implements IEventStore {
     @unmanaged() private readonly _eventBus: IEventBus,
   ) {}
 
-  async saveEvents(aggregateGuid: string, events: IEvent[], expectedVersion: number) {
+  async saveEvents(
+    aggregateGuid: string,
+    events: IEvent[],
+    expectedVersion: number,
+  ): Promise<void> {
     const operations: any[] = [];
 
     const latestEvent = await this.getLastEventDescriptor(aggregateGuid);

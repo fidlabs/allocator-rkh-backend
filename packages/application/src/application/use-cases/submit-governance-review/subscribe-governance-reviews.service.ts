@@ -92,11 +92,8 @@ async function processApplication(
       await submitGovernanceReview(commandBus, application.id, approvedReview, logger);
     }
   } catch (error) {
+    logger.error('Error processing application');
     logger.error(error);
-    logger.error('Error processing application', {
-      applicationId: application.id,
-      error,
-    });
   }
 }
 

@@ -25,10 +25,9 @@ export class DatacapAllocatorRepository
   }
 
   async save(aggregateRoot: DatacapAllocator, expectedVersion: number) {
-    this.logger.info('DatacapAllocatorRepository save started');
-    if (aggregateRoot.getUncommittedEvents().length > 0) {
+    if (aggregateRoot.hasPublishableEvents()) {
       try {
-        this.pullRequestService.updatePullRequest(aggregateRoot);
+        await this.pullRequestService.updatePullRequest(aggregateRoot);
       } catch (error) {
         this.logger.error('error updating pull request');
         this.logger.error(error);
