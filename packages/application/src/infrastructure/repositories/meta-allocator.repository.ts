@@ -32,7 +32,7 @@ export class MetaAllocatorRepository implements IMetaAllocatorRepository {
       ethSafeAddress: '0x2e25A2f6bC2C0b7669DFB25180Ed57e07dAabe9e',
       filSafeAddress: 'f410ffys2f5v4fqfxm2o7wjiyb3kx4b62vpu66gmu7ia',
       signers: [
-        '0x106A371ab66ACA71753757eBD9Bb0a323e055229',
+        '0xe608ce46c79c60dca7022e5e3b6caf4a3a42fe98',
         '0xDABAe878B6D1045a9417Eaf2cc4280Dbc510f3f6',
         '0x5E9e7a90732c666EFB39B17Cf1C2af7E72d7EE90',
         '0xd697365CFEF16cF29477aFe7E4a3d5f452f83383',
@@ -57,7 +57,7 @@ export class MetaAllocatorRepository implements IMetaAllocatorRepository {
       ethSafeAddress: '0xe6A3b5afFc95f8dA2cf618BAd7C63311aBCeDa1d',
       filSafeAddress: 'f410f42r3ll74sx4nulhwdc5nprrtcgv45wq5rwcsh3y',
       signers: [
-        '0x106A371ab66ACA71753757eBD9Bb0a323e055229',
+        '0xe608ce46c79c60dca7022e5e3b6caf4a3a42fe98',
         '0xd697365CFEF16cF29477aFe7E4a3d5f452f83383',
         '0x5E9e7a90732c666EFB39B17Cf1C2af7E72d7EE90',
       ],
