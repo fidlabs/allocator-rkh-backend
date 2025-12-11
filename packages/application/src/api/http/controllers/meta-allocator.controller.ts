@@ -59,6 +59,7 @@ export class MetaAllocatorController {
 
     const role = this.roleService.getRole(reviewerAddress);
     if (!['GOVERNANCE_TEAM', 'METADATA_ALLOCATOR'].includes(role as string)) {
+      this.logger.error(`Cannot reject refresh: ${role as string} for address ${reviewerAddress} not authorised`)
       return res.status(403).json(badPermissions());
     }
 
