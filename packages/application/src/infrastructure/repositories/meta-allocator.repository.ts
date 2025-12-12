@@ -33,9 +33,9 @@ export class MetaAllocatorRepository implements IMetaAllocatorRepository {
       filSafeAddress: 'f410ffys2f5v4fqfxm2o7wjiyb3kx4b62vpu66gmu7ia',
       signers: [
         '0xe608ce46c79c60dca7022e5e3b6caf4a3a42fe98',
-        '0xDABAe878B6D1045a9417Eaf2cc4280Dbc510f3f6',
-        '0x5E9e7a90732c666EFB39B17Cf1C2af7E72d7EE90',
-        '0xd697365CFEF16cF29477aFe7E4a3d5f452f83383',
+        '0xdabae878b6d1045a9417eaf2cc4280dbc510f3f6',
+        '0x5e9e7a90732c666efb39b17cf1c2af7e72d7ee90',
+        '0xd697365cfef16cf29477afe7e4a3d5f452f83383',
       ],
     },
     [MetaAllocatorName.ORMA]: {
@@ -46,8 +46,8 @@ export class MetaAllocatorRepository implements IMetaAllocatorRepository {
       filSafeAddress: 'f410f72wlzjtgzirx6apqwgjpxh2d2yptf5a2f6ns7gi',
       signers: [
         '0x7285B7D3248fde1cCF9E087993fdfC79EC54b54a',
-        '0xDABAe878B6D1045a9417Eaf2cc4280Dbc510f3f6',
-        '0x5E9e7a90732c666EFB39B17Cf1C2af7E72d7EE90',
+        '0xdabae878b6d1045a9417eaf2cc4280dbc510f3f6',
+        '0x5e9e7a90732c666efb39b17cf1c2af7e72d7ee90',
       ],
     },
     [MetaAllocatorName.AMA]: {
@@ -59,7 +59,7 @@ export class MetaAllocatorRepository implements IMetaAllocatorRepository {
       signers: [
         '0xe608ce46c79c60dca7022e5e3b6caf4a3a42fe98',
         '0xd697365CFEF16cF29477aFe7E4a3d5f452f83383',
-        '0x5E9e7a90732c666EFB39B17Cf1C2af7E72d7EE90',
+        '0x5e9e7a90732c666efb39b17cf1c2af7e72d7ee90',
       ],
     },
     // EPMA: {
