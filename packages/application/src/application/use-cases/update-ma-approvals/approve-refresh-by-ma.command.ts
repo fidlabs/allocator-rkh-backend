@@ -16,7 +16,6 @@ import { SaveIssueCommand } from '../refresh-issues/save-issue.command';
 import { IRpcProvider } from '@src/infrastructure/clients/rpc-provider';
 
 const LOG = LOG_MESSAGES.APPROVE_REFRESH_BY_MA_COMMAND;
-
 export class ApproveRefreshByMaCommand extends Command {
   constructor(
     public readonly issueDetails: IssueDetails,
@@ -99,6 +98,7 @@ export class ApproveRefreshByMaCommandHandler
         blockNumber: approval.blockNumber,
       },
       auditHistory,
+      dataCap: Number(auditResult.auditChange.datacapAmount) || 0,
     };
   }
 
