@@ -24,10 +24,14 @@ vi.mock('nanoid', () => ({
 describe('ApproveRefreshByMaCommand', () => {
   let container: Container;
   let handler: ApproveRefreshByMaCommandHandler;
+  const fixtureDatacapAmount = 1;
+
   const loggerMock = { info: vi.fn(), error: vi.fn() };
   const commandBusMock = { send: vi.fn() };
   const refreshAuditServiceMock = { finishAudit: vi.fn() };
-  const dataCapMapperMock = { fromBigIntBytesToPiBNumber: vi.fn().mockReturnValue(1) };
+  const dataCapMapperMock = {
+    fromBigIntBytesToPiBNumber: vi.fn().mockReturnValue(fixtureDatacapAmount),
+  };
   const rpcProviderMock = {
     getDcAllocatedDate: vi.fn(),
     getBlock: vi.fn(),
@@ -39,13 +43,14 @@ describe('ApproveRefreshByMaCommand', () => {
       ended: '2024-01-01T00:00:00.000Z',
       dcAllocated: '2024-01-01T00:00:00.000Z',
       outcome: 'MATCH',
+      datacapAmount: fixtureDatacapAmount,
     },
     branchName: 'b',
     commitSha: 'c',
     prNumber: 1,
     prUrl: 'u',
   };
-  const fixtureIssueDetails = DatabaseRefreshFactory.create();
+  const fixtureIssueDetails = DatabaseRefreshFactory.create({ dataCap: 0 });
   const fixtureApproval: Approval = {
     blockNumber: faker.number.int({ min: 1000, max: 9999 }),
     txHash: faker.string.alphanumeric(66),
@@ -109,6 +114,7 @@ describe('ApproveRefreshByMaCommand', () => {
         metaAllocator: {
           blockNumber: fixtureApproval.blockNumber,
         },
+        dataCap: fixtureDatacapAmount,
       },
     });
     expect(loggerMock.info).toHaveBeenCalledTimes(2);
@@ -142,6 +148,7 @@ describe('ApproveRefreshByMaCommand', () => {
         metaAllocator: {
           blockNumber: fixtureApproval.blockNumber,
         },
+        dataCap: fixtureDatacapAmount,
       },
     });
     expect(commandBusMock.send).toHaveBeenCalledWith(expect.any(SaveIssueCommand));
