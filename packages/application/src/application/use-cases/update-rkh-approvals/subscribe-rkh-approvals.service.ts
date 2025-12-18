@@ -188,7 +188,7 @@ export async function handleSignRKHRefresh({
   address: string;
   issuesRepository: IIssueDetailsRepository;
 }) {
-  const issue = await issuesRepository.findApprovedBy({ msigAddress: address });
+  const issue = await issuesRepository.findPendingBy({ msigAddress: address });
   if (!issue) throw new Error(`Issue not found for address ${address}`);
 
   return new SignRefreshByRKHCommand(issue, tx);
@@ -218,7 +218,7 @@ export async function handleApproveRKHRefresh({
   approvalId: number;
   issuesRepository: IIssueDetailsRepository;
 }) {
-  const issue = await issuesRepository.findSignedBy({ rkhPhase: { messageId: approvalId } });
+  const issue = await issuesRepository.findSignedBy({ 'rkhPhase.messageId': approvalId });
   if (!issue) throw new Error(`Issue not found for approval ID ${approvalId}`);
 
   return new ApproveRefreshByRKHCommand(issue, tx);
