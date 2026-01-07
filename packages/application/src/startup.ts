@@ -85,6 +85,7 @@ import { SaveIssueCommandHandler } from './application/use-cases/refresh-issues/
 import { ApproveRefreshCommandHandler } from './application/use-cases/refresh-issues/approve-refresh.command';
 import { RejectRefreshCommandHandler } from './application/use-cases/refresh-issues/reject-refesh.command';
 import { SyncIssueCommandCommandHandler } from './application/use-cases/refresh-issues/sync-issue.command';
+import { SubMultisigApprovalsSubscriberService } from './application/use-cases/update-rkh-approvals/sub-multisig-approvals-service';
 
 export const initialize = async (): Promise<Container> => {
   const container = new Container();
@@ -101,6 +102,9 @@ export const initialize = async (): Promise<Container> => {
   container.bind<MetaAllocatorService>(TYPES.MetaAllocatorService).to(MetaAllocatorService);
   container.bind<AllocationPathResolver>(TYPES.AllocationPathResolver).to(AllocationPathResolver);
   container.bind<AuditOutcomeResolver>(TYPES.AuditOutcomeResolver).to(AuditOutcomeResolver);
+  container
+    .bind<SubMultisigApprovalsSubscriberService>(TYPES.SubMultisigApprovalsSubscriberService)
+    .to(SubMultisigApprovalsSubscriberService);
 
   container.bind<IEventHandler<ApplicationCreated>>(TYPES.Event).to(ApplicationCreatedEventHandler);
   container.bind<IEventHandler<ApplicationEdited>>(TYPES.Event).to(ApplicationEditedEventHandler);

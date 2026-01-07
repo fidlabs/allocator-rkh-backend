@@ -42,6 +42,9 @@ export const TYPES = {
   UpsertIssueStrategyResolver: Symbol('UpsertIssueStrategyResolver'),
   GovernanceConfig: Symbol('GovernanceConfig'),
   MetaAllocatorConfig: Symbol('MetaAllocatorConfig'),
+  SubMultisigApprovalsSubscriberService: Symbol('SubMultisigApprovalsSubscriberService'),
+  FilfoxClient: Symbol('FilfoxClient'),
+  FilfoxClientConfig: Symbol('FilfoxClientConfig'),
 };
 
 export type ConfigTypes = typeof TYPES;

@@ -25,3 +25,7 @@ export interface GovernanceConfig {
 export interface MetaAllocatorConfig {
   signers: string[];
 }
+
+export interface FilfoxClientConfig {
+  apiBase: string;
+}

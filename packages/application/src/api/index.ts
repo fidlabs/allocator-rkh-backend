@@ -18,9 +18,10 @@ import { subscribeApplicationSubmissions } from '@src/application/use-cases/crea
 import { subscribeApplicationEdits } from '@src/application/use-cases/edit-application/subscribe-application-edits.service';
 import { subscribeGovernanceReviews } from '@src/application/use-cases/submit-governance-review/subscribe-governance-reviews.service';
 import { subscribeDatacapAllocations } from '@src/application/use-cases/update-datacap-allocation/subscribe-datacap-allocations.service';
-import { subscribeRKHApprovals } from '@src/application/use-cases/update-rkh-approvals/subscribe-rkh-approvals.service';
+import { SubMultisigApprovalsSubscriberService } from '@src/application/use-cases/update-rkh-approvals/sub-multisig-approvals-service';
 import { subscribeMetaAllocatorApprovals } from '@src/application/use-cases/update-ma-approvals/subscribe-ma-approvals.service';
 import { subscribeMetaAllocatorAllowances } from '@src/application/use-cases/refresh-application/subscribe-refresh-ma.service';
+import { subscribeRKHApprovals } from '@src/application/use-cases/update-rkh-approvals/subscribe-rkh-approvals.service';
 
 dotenv.config();
 
@@ -309,6 +310,12 @@ async function main() {
   await subscribeMetaAllocatorApprovals(container);
   await subscribeRefreshMetaAllocator(container);
   await subscribeMetaAllocatorAllowances(container);
+
+  const subMultisigApprovalsSubscriber = container.get<SubMultisigApprovalsSubscriberService>(
+    TYPES.SubMultisigApprovalsSubscriberService,
+  );
+
+  subMultisigApprovalsSubscriber.start();
 
   // Start the API server
   apiServer.listen({ host: '0.0.0.0', port: config.API_PORT });
