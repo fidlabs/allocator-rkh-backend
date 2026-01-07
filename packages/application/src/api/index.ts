@@ -21,6 +21,7 @@ import { subscribeDatacapAllocations } from '@src/application/use-cases/update-d
 import { SubMultisigApprovalsSubscriberService } from '@src/application/use-cases/update-rkh-approvals/sub-multisig-approvals-service';
 import { subscribeMetaAllocatorApprovals } from '@src/application/use-cases/update-ma-approvals/subscribe-ma-approvals.service';
 import { subscribeMetaAllocatorAllowances } from '@src/application/use-cases/refresh-application/subscribe-refresh-ma.service';
+import { subscribeRKHApprovals } from '@src/application/use-cases/update-rkh-approvals/subscribe-rkh-approvals.service';
 
 dotenv.config();
 
@@ -304,6 +305,7 @@ async function main() {
   await subscribeApplicationSubmissions(container);
   await subscribeApplicationEdits(container);
   await subscribeGovernanceReviews(container);
+  await subscribeRKHApprovals(container);
   await subscribeDatacapAllocations(container);
   await subscribeMetaAllocatorApprovals(container);
   await subscribeRefreshMetaAllocator(container);
