@@ -1,6 +1,7 @@
 export interface RkhConfig {
   rkhAddress: string;
   rkhThreshold: number;
+  indirectRKHAddresses: string[];
 }
 
 export interface RpcProviderConfig {

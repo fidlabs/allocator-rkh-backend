@@ -7,11 +7,11 @@ import { SubMultisigApprovalsSubscriberService } from './sub-multisig-approvals-
 import { IFilfoxClient, Message, Subcall } from '@src/infrastructure/clients/filfox';
 import { IApplicationDetailsRepository } from '@src/infrastructure/repositories/application-details.repository';
 import { IIssueDetailsRepository } from '@src/infrastructure/repositories/issue-details.repository';
-import { PendingTx } from '@src/infrastructure/clients/lotus';
 import { SignRefreshByRKHCommand } from './sign-refresh-by-rkh.command';
 import { UpdateRKHApprovalsCommand } from './update-rkh-approvals.command';
 import { DatabaseRefreshFactory } from '@mocks/factories';
 import { faker } from '@faker-js/faker';
+import { RkhConfig } from '@src/infrastructure/interfaces';
 
 vi.mock('@src/config', () => ({
   default: {
@@ -24,9 +24,9 @@ describe('SubMultisigApprovalsSubscriberService', () => {
   let service: SubMultisigApprovalsSubscriberService;
 
   const loggerMock = {
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
+    info: vi.fn((...args) => console.log(...args)),
+    error: vi.fn((...args) => console.error(...args)),
+    warn: vi.fn((...args) => console.warn(...args)),
   };
 
   const filfoxClientMock = {
@@ -34,10 +34,15 @@ describe('SubMultisigApprovalsSubscriberService', () => {
     getSubcalls: vi.fn(),
   };
 
+  const multisigAddress = 'f03661530';
+
+  const rkhConfigMock = {
+    indirectRKHAddresses: [multisigAddress, 'f03661512'],
+  };
+
   const commandBusMock = { send: vi.fn() };
   const applicationDetailsRepositoryMock = { getByAddress: vi.fn() };
   const issuesRepositoryMock = { findPendingBy: vi.fn() };
-  const multisigAddress = 'f03661530';
   const verifierAddress = 'f410fw325e6novwl57jcsbhz6koljylxuhqq5jnp5ftq';
   const messageCid = 'bafy2bzaceexample';
 
@@ -117,6 +122,9 @@ describe('SubMultisigApprovalsSubscriberService', () => {
     container
       .bind<IIssueDetailsRepository>(TYPES.IssueDetailsRepository)
       .toConstantValue(issuesRepositoryMock as unknown as IIssueDetailsRepository);
+    container
+      .bind<RkhConfig>(TYPES.RkhConfig)
+      .toConstantValue(rkhConfigMock as unknown as RkhConfig);
 
     container
       .bind<SubMultisigApprovalsSubscriberService>(TYPES.SubMultisigApprovalsSubscriberService)
@@ -133,16 +141,18 @@ describe('SubMultisigApprovalsSubscriberService', () => {
     });
     filfoxClientMock.getSubcalls.mockResolvedValue([fixtureSubcall]);
     issuesRepositoryMock.findPendingBy.mockResolvedValue(fixtureIssue);
+
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     vi.clearAllMocks();
     service.stop();
+    vi.useRealTimers();
   });
 
   describe('start', () => {
     it('should start the interval and return timeout id', () => {
-      vi.useFakeTimers();
       const intervalId = service.start();
 
       expect(intervalId).toBeDefined();
@@ -154,13 +164,12 @@ describe('SubMultisigApprovalsSubscriberService', () => {
     });
 
     it('should call handle method on interval', async () => {
-      vi.useFakeTimers();
       const handleSpy = vi.spyOn(service, 'handle').mockResolvedValue();
 
       service.start();
       await vi.advanceTimersByTimeAsync(1000);
 
-      expect(handleSpy).toHaveBeenCalledWith('f03661530');
+      expect(handleSpy).toHaveBeenCalled();
 
       vi.useRealTimers();
       handleSpy.mockRestore();
@@ -169,7 +178,6 @@ describe('SubMultisigApprovalsSubscriberService', () => {
 
   describe('stop', () => {
     it('should clear interval when stop is called', () => {
-      vi.useFakeTimers();
       const intervalId = service.start();
       expect(intervalId).toBeDefined();
 
@@ -182,7 +190,8 @@ describe('SubMultisigApprovalsSubscriberService', () => {
 
   describe('handle', () => {
     it('should process proposals successfully when issue is found', async () => {
-      await service.handle(multisigAddress);
+      await service.handle();
+      await vi.advanceTimersByTimeAsync(1000);
 
       expect(filfoxClientMock.getFilfoxMessages).toHaveBeenCalledWith(multisigAddress, {
         pageSize: 50,
@@ -200,7 +209,8 @@ describe('SubMultisigApprovalsSubscriberService', () => {
       issuesRepositoryMock.findPendingBy.mockResolvedValue(null);
       applicationDetailsRepositoryMock.getByAddress.mockResolvedValue(fixtureApplicationDetails);
 
-      await service.handle(multisigAddress);
+      await service.handle();
+      await vi.advanceTimersByTimeAsync(1000);
 
       expect(applicationDetailsRepositoryMock.getByAddress).toHaveBeenCalledWith(verifierAddress);
       expect(commandBusMock.send).toHaveBeenCalledWith(expect.any(UpdateRKHApprovalsCommand));
@@ -213,7 +223,8 @@ describe('SubMultisigApprovalsSubscriberService', () => {
         totalCount: 0,
       });
 
-      await service.handle(multisigAddress);
+      await service.handle();
+      await vi.advanceTimersByTimeAsync(1000);
 
       expect(filfoxClientMock.getSubcalls).not.toHaveBeenCalled();
       expect(commandBusMock.send).not.toHaveBeenCalled();
@@ -228,23 +239,19 @@ describe('SubMultisigApprovalsSubscriberService', () => {
 
       filfoxClientMock.getSubcalls.mockResolvedValue([fixtureSubcall, invalidSubcall]);
 
-      await service.handle(multisigAddress);
+      await service.handle();
+      await vi.advanceTimersByTimeAsync(1000);
 
-      expect(commandBusMock.send).toHaveBeenCalledTimes(1);
+      expect(commandBusMock.send).toHaveBeenCalledTimes(2);
       expect(commandBusMock.send).toHaveBeenCalledWith(expect.any(SignRefreshByRKHCommand));
-    });
-
-    it('should handle errors during processing gracefully', async () => {
-      filfoxClientMock.getFilfoxMessages.mockRejectedValue(new Error('API Error'));
-
-      await expect(service.handle(multisigAddress)).rejects.toThrow('API Error');
     });
 
     it('should handle both handlers failing', async () => {
       issuesRepositoryMock.findPendingBy.mockResolvedValue(null);
       applicationDetailsRepositoryMock.getByAddress.mockResolvedValue(null);
 
-      await service.handle(multisigAddress);
+      await service.handle();
+      await vi.advanceTimersByTimeAsync(1000);
 
       expect(loggerMock.error).toHaveBeenCalledWith('Both handlers failed:');
       expect(commandBusMock.send).not.toHaveBeenCalled();
@@ -261,9 +268,11 @@ describe('SubMultisigApprovalsSubscriberService', () => {
 
       filfoxClientMock.getSubcalls.mockResolvedValue([fixtureSubcall, secondSubcall]);
 
-      await service.handle(multisigAddress);
+      await service.handle();
+      await vi.advanceTimersByTimeAsync(1000);
 
-      expect(commandBusMock.send).toHaveBeenCalledTimes(2);
+      expect(commandBusMock.send).toHaveBeenCalledTimes(4);
+      await vi.advanceTimersByTimeAsync(1000);
     });
   });
 
@@ -296,15 +305,17 @@ describe('SubMultisigApprovalsSubscriberService', () => {
 
       filfoxClientMock.getSubcalls.mockResolvedValue([validSubcall, invalidSubcall]);
 
-      await service.handle(multisigAddress);
+      await service.handle();
+      await vi.advanceTimersByTimeAsync(1000);
 
-      expect(commandBusMock.send).toHaveBeenCalledTimes(1);
+      expect(commandBusMock.send).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('processProposal', () => {
     it('should create SignRefreshByRKHCommand when issue exists', async () => {
-      await service.handle(multisigAddress);
+      await service.handle();
+      await vi.advanceTimersByTimeAsync(1000);
 
       const sentCommand = commandBusMock.send.mock.calls[0][0];
       expect(sentCommand).toBeInstanceOf(SignRefreshByRKHCommand);
@@ -314,7 +325,7 @@ describe('SubMultisigApprovalsSubscriberService', () => {
       issuesRepositoryMock.findPendingBy.mockResolvedValue(null);
       applicationDetailsRepositoryMock.getByAddress.mockResolvedValue(fixtureApplicationDetails);
 
-      await service.handle(multisigAddress);
+      await service.handle();
 
       const sentCommand = commandBusMock.send.mock.calls[0][0];
       expect(sentCommand).toBeInstanceOf(UpdateRKHApprovalsCommand);

@@ -116,6 +116,7 @@ export const infrastructureModule = new AsyncContainerModule(async (bind: interf
   const rkhConfig: RkhConfig = {
     rkhAddress: config.RKH_ADDRESS,
     rkhThreshold: config.RKH_THRESHOLD,
+    indirectRKHAddresses: config.INDIRECT_RKH_ADDRESSES,
   };
   bind<RkhConfig>(TYPES.RkhConfig).toConstantValue(rkhConfig);
 

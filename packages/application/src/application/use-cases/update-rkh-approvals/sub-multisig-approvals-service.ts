@@ -13,6 +13,7 @@ import { IFilfoxClient } from '@src/infrastructure/clients/filfox';
 import { PendingTx } from '@src/infrastructure/clients/lotus';
 import { SignRefreshByRKHCommand } from './sign-refresh-by-rkh.command';
 import { UpdateRKHApprovalsCommand } from './update-rkh-approvals.command';
+import { RkhConfig } from '@src/infrastructure/interfaces';
 
 const RKH_MULTISIG_ACTOR_ADDRESS = 'f080';
 const VERIFIED_REGISTRY_ACTOR_METHODS = {
@@ -39,13 +40,14 @@ export class SubMultisigApprovalsSubscriberService
     @inject(TYPES.IssueDetailsRepository)
     private readonly issuesRepository: IIssueDetailsRepository,
     @inject(TYPES.FilfoxClient) private readonly filfoxClient: IFilfoxClient,
+    @inject(TYPES.RkhConfig) private readonly rkhConfig: RkhConfig,
   ) {}
 
   start(): NodeJS.Timeout {
     this.logger.info('Starting SubMultisigApprovalsSubscriberService');
     this.intervalId = setInterval(async () => {
       try {
-        await this.handle('f03661530');
+        await this.handle();
       } catch (err) {
         this.logger.error('SubMultisigApprovalsSubscriberService uncaught exception:');
         this.logger.error(err);
@@ -62,28 +64,36 @@ export class SubMultisigApprovalsSubscriberService
     }
   }
 
-  async handle(multisigAddress: string): Promise<void> {
-    this.logger.info(`Fetching subcalls from ${multisigAddress} for Approve method to f080`);
+  async handle(): Promise<void> {
+    this.logger.info(
+      `Fetching subcalls from ${this.rkhConfig.indirectRKHAddresses.join(', ')} for Approve method to f080`,
+    );
 
-    const approvedMessages = await this.getAllFilfoxApproveMessages(multisigAddress);
+    const approvedMessages = await this.getAllFilfoxApproveMessages();
     const subcalls = await this.getSubcallsForApproveMessages(approvedMessages);
     const filteredSubcalls = this.getSubcallsWithProposeAddVerifier(subcalls);
     this.logger.info(
-      `Found ${filteredSubcalls.length} subcalls with propose add verifier for ${multisigAddress}`,
+      `Found ${filteredSubcalls.length} subcalls with propose add verifier for ${this.rkhConfig.indirectRKHAddresses.join(', ')}`,
     );
     this.logger.info(filteredSubcalls);
 
     await this.processProposals(filteredSubcalls);
   }
 
-  private async getAllFilfoxApproveMessages(multisigAddress: string): Promise<Message[]> {
-    const result = await this.filfoxClient.getFilfoxMessages(multisigAddress, {
-      pageSize: 50,
-      page: 0,
-      method: 'Approve',
-    });
+  private async getAllFilfoxApproveMessages(): Promise<Message[]> {
+    const results = await Promise.allSettled(
+      this.rkhConfig.indirectRKHAddresses.map(address =>
+        this.filfoxClient.getFilfoxMessages(address, {
+          pageSize: 50,
+          page: 0,
+          method: 'Approve',
+        }),
+      ),
+    );
 
-    return result?.messages ?? [];
+    return results
+      .map(result => (result.status === 'fulfilled' ? result.value.messages : []))
+      .flat();
   }
 
   private async getSubcallsForApproveMessages(approveMessages: Message[]): Promise<Subcall[]> {
@@ -125,13 +135,13 @@ export class SubMultisigApprovalsSubscriberService
 
     this.logger.info(`Found verifier ${verifier}`);
     await executeWithFallback<Command>({
-      primary: () =>
-        this.handleSignRKHRefresh({
+      primary: async () =>
+        await this.handleSignRKHRefresh({
           address: verifier,
           tx,
         }),
-      fallback: () =>
-        this.handleSignRKHApplication({
+      fallback: async () =>
+        await this.handleSignRKHApplication({
           address: verifier,
           tx,
         }),
@@ -185,6 +195,8 @@ export class SubMultisigApprovalsSubscriberService
     const issue = await this.issuesRepository.findPendingBy({ msigAddress: address });
     if (!issue) throw new Error(`Issue not found for address ${address}`);
 
+    this.logger.info(`Found issue ${issue.githubIssueId} for address ${address}`);
+
     return new SignRefreshByRKHCommand(issue, tx);
   }
 
@@ -192,6 +204,8 @@ export class SubMultisigApprovalsSubscriberService
     const applicationDetails = await this.applicationDetailsRepository.getByAddress(address);
     if (!applicationDetails)
       throw new Error(`Application details not found for address ${address}`);
+
+    this.logger.info(`Found application details ${applicationDetails.id} for address ${address}`);
 
     return new UpdateRKHApprovalsCommand(applicationDetails.id, tx.id, tx.approved, 'Pending');
   }
