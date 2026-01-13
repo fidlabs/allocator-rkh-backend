@@ -1,6 +1,7 @@
 export interface RkhConfig {
   rkhAddress: string;
   rkhThreshold: number;
+  indirectRKHAddresses: string[];
 }
 
 export interface RpcProviderConfig {
@@ -24,4 +25,8 @@ export interface GovernanceConfig {
 
 export interface MetaAllocatorConfig {
   signers: string[];
+}
+
+export interface FilfoxClientConfig {
+  apiBase: string;
 }

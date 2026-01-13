@@ -50,6 +50,8 @@ import {
   IRefreshAuditPublisher,
   RefreshAuditPublisher,
 } from '../application/publishers/refresh-audit-publisher';
+import { FilfoxClient, IFilfoxClient } from './clients/filfox';
+import { FilfoxClientConfig } from './interfaces';
 
 export const infrastructureModule = new AsyncContainerModule(async (bind: interfaces.Bind) => {
   // MongoDB setup
@@ -114,6 +116,7 @@ export const infrastructureModule = new AsyncContainerModule(async (bind: interf
   const rkhConfig: RkhConfig = {
     rkhAddress: config.RKH_ADDRESS,
     rkhThreshold: config.RKH_THRESHOLD,
+    indirectRKHAddresses: config.INDIRECT_RKH_ADDRESSES,
   };
   bind<RkhConfig>(TYPES.RkhConfig).toConstantValue(rkhConfig);
 
@@ -126,6 +129,12 @@ export const infrastructureModule = new AsyncContainerModule(async (bind: interf
     signers: config.MA_ADDRESSES,
   };
   bind<MetaAllocatorConfig>(TYPES.MetaAllocatorConfig).toConstantValue(metaAllocatorConfig);
+
+  const filfoxClientConfig: FilfoxClientConfig = {
+    apiBase: config.FILFOX_API_BASE,
+  };
+  bind<FilfoxClientConfig>(TYPES.FilfoxClientConfig).toConstantValue(filfoxClientConfig);
+  bind<IFilfoxClient>(TYPES.FilfoxClient).to(FilfoxClient);
 
   // Bindings
   bind<IDatacapAllocatorEventStore>(TYPES.DatacapAllocatorEventStore)
