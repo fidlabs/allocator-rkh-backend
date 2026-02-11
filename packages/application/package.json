@@ -45,7 +45,7 @@
     "@zondax/filecoin-signing-tools": "^2.4.3",
     "airtable": "^0.12.2",
     "amqplib": "^0.10.4",
-    "axios": "^1.12.0",
+    "axios": "^1.13.5",
     "cbor": "^10.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
