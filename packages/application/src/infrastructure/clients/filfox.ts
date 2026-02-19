@@ -1,3 +1,63 @@
+import { inject, injectable } from 'inversify';
+import { Logger } from '@filecoin-plus/core';
+import { TYPES } from '@src/types';
+import { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import { FilfoxClientConfig } from '../interfaces';
+
+export interface FilfoxMessages {
+  messages: Message[];
+  methods: string[];
+  totalCount: number;
+}
+
+export interface Subcall {
+  from: string;
+  fromId: string;
+  fromActor: string;
+  to: string;
+  toId: string;
+  toActor: string;
+  value: string;
+  method: string;
+  methodNumber: number;
+  params: string;
+  receipt: {
+    exitCode: number;
+    return: string;
+  };
+  decodedParams: {
+    Method: number;
+    Value: string;
+    Params: string;
+    To: string;
+  };
+  decodedReturnValue: {
+    TxId: number;
+    Applied: boolean;
+    ExitCode: number;
+    Ret: string;
+  };
+  subcalls: Subcall[];
+}
+
+export interface Message {
+  cid: string;
+  height: number;
+  timestamp: number;
+  from: string;
+  to: string;
+  nonce: number;
+  value: string;
+  method: string;
+  evmMethod: string;
+  params: string;
+  receipt: {
+    exitCode: number;
+    return: string;
+  };
+}
+
 interface MultisigInfo {
   actor: string | undefined;
   address: string;
@@ -83,4 +143,48 @@ export async function getMultisigInfo(address: string): Promise<MultisigInfo> {
     signers: 'undefined',
     robust: undefined,
   };
+}
+
+export interface IFilfoxClient {
+  getFilfoxMessages(address: string, params: AxiosRequestConfig['params']): Promise<FilfoxMessages>;
+  getSubcalls(cid: string): Promise<Subcall[]>;
+}
+
+@injectable()
+export class FilfoxClient implements IFilfoxClient {
+  constructor(
+    @inject(TYPES.Logger)
+    private readonly logger: Logger,
+    @inject(TYPES.FilfoxClientConfig)
+    private readonly config: FilfoxClientConfig,
+  ) {}
+
+  async getFilfoxMessages(
+    address: string,
+    params: AxiosRequestConfig['params'] = {},
+  ): Promise<FilfoxMessages> {
+    const extendedParams = {
+      pageSize: 50,
+      page: 0,
+      ...params,
+    };
+
+    this.logger.info(
+      `Fetching Filfox messages for ${address} with params: ${JSON.stringify(extendedParams)}`,
+    );
+    const response = await axios.get<FilfoxMessages>(
+      `${this.config.apiBase}/address/${address}/messages`,
+      {
+        params: extendedParams,
+      },
+    );
+
+    return response?.data ?? {};
+  }
+
+  async getSubcalls(cid: string): Promise<Subcall[]> {
+    this.logger.info(`Fetching Filfox subcalls for ${cid}`);
+    const response = await axios.get(`${this.config.apiBase}/message/${cid}/subcalls`);
+    return response?.data ?? [];
+  }
 }

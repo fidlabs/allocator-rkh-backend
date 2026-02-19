@@ -50,6 +50,9 @@ export default {
   RKH_ADDRESSES: process.env.RKH_ADDRESSES
     ? process.env.RKH_ADDRESSES.split(',').map(handle => handle.trim())
     : [],
+  INDIRECT_RKH_ADDRESSES: process.env.INDIRECT_RKH_ADDRESSES
+    ? process.env.INDIRECT_RKH_ADDRESSES.split(',').map(handle => handle.trim())
+    : ['f03661530'],
   //MDMA addresses
   MA_ADDRESSES: process.env.MA_ADDRESSES
     ? process.env.MA_ADDRESSES.split(',').map(handle => handle.trim())
@@ -82,6 +85,8 @@ export default {
   SUBSCRIBE_REFRESH_META_ALLOCATOR_POLLING_INTERVAL:
     Number(process.env.SUBSCRIBE_REFRESH_META_ALLOCATOR_POLLING_INTERVAL) ||
     DEFAULT_POLLING_INTERVAL,
+  SUBSCRIBE_MULTISIG_APPROVALS_POLLING_INTERVAL:
+    Number(process.env.SUBSCRIBE_MULTISIG_APPROVALS_POLLING_INTERVAL) || DEFAULT_POLLING_INTERVAL,
 
   SUBSCRIBE_META_ALLOCATOR_APPROVALS_POLLING_INTERVAL:
     Number(process.env.SUBSCRIBE_META_ALLOCATOR_APPROVALS_POLLING_INTERVAL) ||
@@ -106,4 +111,7 @@ export default {
 
   RKH_ADDRESS: process.env.RKH_ADDRESS || 'f080',
   RKH_THRESHOLD: Number(process.env.RKH_THRESHOLD) || 2,
+
+  // Filfox client configuration
+  FILFOX_API_BASE: process.env.FILFOX_API_BASE || 'https://filfox.info/api/v1',
 };
