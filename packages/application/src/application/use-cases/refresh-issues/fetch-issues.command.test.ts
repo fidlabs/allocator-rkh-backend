@@ -19,6 +19,7 @@ describe('FetchIssuesCommand', () => {
 
   const fixtureMsigAddress = `f2${faker.string.alphanumeric(38)}`;
   const fixureAllocatorData = {
+    address: fixtureMsigAddress,
     pathway_addresses: { msig: fixtureMsigAddress },
     ma_address: 'f4',
     metapathway_type: 'AMA',
@@ -37,6 +38,7 @@ describe('FetchIssuesCommand', () => {
   ];
   const fixtureExtendedMappedIssue = {
     ...fixtureMappedIssues.at(0),
+    address: fixureAllocatorData.address,
     msigAddress: fixureAllocatorData.pathway_addresses.msig,
     maAddress: fixureAllocatorData.ma_address,
     metapathwayType: fixureAllocatorData.metapathway_type,
