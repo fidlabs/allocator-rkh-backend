@@ -56,7 +56,7 @@ export class IssueMapper implements IIssueMapper {
   ): IssueDetails {
     return {
       ...issue,
-      msigAddress: allocator?.pathway_addresses?.msig,
+      msigAddress: allocator?.address,
       maAddress: allocator?.ma_address,
       metapathwayType: allocator?.metapathway_type,
       actorId: allocator?.allocator_id,

@@ -36,6 +36,7 @@ describe('UpsertIssueCommand', () => {
 
   const fixtureMsigAddress = `f2${faker.string.alphanumeric(38)}`;
   const fixureAllocatorData = {
+    address: fixtureMsigAddress,
     pathway_addresses: { msig: fixtureMsigAddress },
     ma_address: 'f4',
     metapathway_type: 'AMA',
@@ -60,6 +61,7 @@ describe('UpsertIssueCommand', () => {
   const fixtureIssueDetails = DatabaseRefreshFactory.create();
   const fixtureExtendedMappedIssue = {
     ...fixtureIssueDetails,
+    address: fixureAllocatorData.address,
     msigAddress: fixureAllocatorData.pathway_addresses.msig,
     maAddress: fixureAllocatorData.ma_address,
     metapathwayType: fixureAllocatorData.metapathway_type,
