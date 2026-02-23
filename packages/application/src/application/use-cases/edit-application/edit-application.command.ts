@@ -1,4 +1,5 @@
 import {
+  ApplicationError,
   Command,
   EventSource,
   ICommandHandler,
@@ -10,6 +11,7 @@ import { inject, injectable } from 'inversify';
 
 import {
   ApplicationInstruction,
+  ApplicationStatus,
   DatacapAllocator,
   IDatacapAllocatorRepository,
 } from '@src/domain/application/application';
@@ -112,6 +114,22 @@ export class EditApplicationCommandHandler implements ICommandHandler<EditApplic
 
     this.logger.debug('application');
     this.logger.debug(application);
+
+    // FIXME: This is a band-aid, but it's a necessary one. Something in the 2-way
+    // logic decides to re-open completed Applications on DB or Airtable updates.
+    // Do not proceed with editing completed applications
+    if (
+      application.applicationStatus == ApplicationStatus.DC_ALLOCATED ||
+      application.applicationStatus == ApplicationStatus.REJECTED
+    ) {
+      this.logger.debug(`Cannot edit completed application`, application.guid);
+
+      return {
+        success: false,
+        error: new ApplicationError(400, '400', 'Cannot edit completed application'),
+      };
+    }
+
     const prevApplicationInstructions = application.applicationInstructions;
 
     // FIXME ? the original code ALWAYS forced it to META_ALLOCATOR but I think that was wrong (?)
