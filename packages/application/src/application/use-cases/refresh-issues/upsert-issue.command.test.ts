@@ -12,7 +12,6 @@ import { IAuditMapper } from '@src/infrastructure/mappers/audit-mapper';
 import { IUpsertStrategy } from './upsert-issue.strategy';
 import { SaveIssueCommand } from './save-issue.command';
 import { SaveIssueWithNewAuditCommand } from './save-issue-with-new-audit.command';
-import { Address } from 'iso-filecoin';
 
 vi.mock('nanoid', () => ({
   nanoid: vi.fn().mockReturnValue('guid'),
@@ -62,7 +61,7 @@ describe('UpsertIssueCommand', () => {
   const fixtureIssueDetails = DatabaseRefreshFactory.create();
   const fixtureExtendedMappedIssue = {
     ...fixtureIssueDetails,
-    Address: fixureAllocatorData.address,
+    address: fixureAllocatorData.address,
     msigAddress: fixureAllocatorData.pathway_addresses.msig,
     maAddress: fixureAllocatorData.ma_address,
     metapathwayType: fixureAllocatorData.metapathway_type,
